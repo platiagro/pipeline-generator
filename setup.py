@@ -1,20 +1,28 @@
 # -*- coding: utf-8 -*-
-import os
-from re import search
+import re
+from os.path import dirname, join
+from setuptools import find_packages, setup
 
-from setuptools import setup, find_packages
+with open(join(dirname(__file__), 'pipelines', '__init__.py')) as fp:
+    for line in fp:
+        m = re.search(r'^\s*__version__\s*=\s*([\'"])([^\'"]+)\1\s*$', line)
+        if m:
+            version = m.group(2)
+            break
+    else:
+        raise RuntimeError('Unable to find own __version__ string')
 
 def get_requirements(reqfile):
     with open(reqfile) as f:
         return f.read().splitlines()
 
 extras = {
-    "testing": get_requirements('requirements/requirements.test.txt')
+    'testing': get_requirements('requirements/requirements.test.txt')
 }
 
 setup(
     name='pipelines',
-    version='0.0.1',
+    version=version,
     description='Manage kubeflow pipelines.',
     license='Apache License 2.0',
 
