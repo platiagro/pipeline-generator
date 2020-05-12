@@ -5,15 +5,15 @@ PAPERMILL_YAML = Template("""
 name: $operatorName
 description: Parametrize and execute Jupyter notebooks
 inputs:
-- { name: Experiment Id, type: String, default: "", description: "" }
-- { name: Notebook Path, type: String, default: "", description: "" }
-- { name: Dataset, type: String, default: "", description: "" }
-- { name: Target, type: String, default: "", description: "" }
-- { name: Out Dataset, type: String, default: "", description: "" }
+- { name: Experiment Id, type: STRING, default: "", description: "" }
+- { name: Notebook Path, type: STRING, default: "", description: "" }
+- { name: Dataset, type: STRING, default: "", description: "" }
+- { name: Target, type: STRING, default: "", description: "" }
+- { name: Operator Id, type: STRING, default: "", description: "" }
 implementation:
     container:
         image: platiagro/datascience-1386e2046833-notebook-cpu:0.0.2
-        command: [ papermill, { inputValue: Notebook Path }, -, -p, experiment_id, { inputValue: Experiment Id }, -p, dataset, { inputValue: Dataset }, -p, target, { inputValue: Target }, -p, out_dataset, { inputValue: Out Dataset }, $parameters]
+        command: [ papermill, { inputValue: Notebook Path }, -, -p, experiment_id, { inputValue: Experiment Id }, -p, dataset, { inputValue: Dataset }, -p, target, { inputValue: Target }, -p, operator_id, { inputValue: Operator Id }, $parameters]
 """)
 
 SELDON_DEPLOYMENT = Template("""{
@@ -23,7 +23,8 @@ SELDON_DEPLOYMENT = Template("""{
         "labels": {
             "app": "seldon"
         },
-        "name": "$experimentId"
+        "name": "deploy-$experimentId",
+        "namespace": "$namespace"
     },
     "spec": {
         "annotations": {
@@ -33,7 +34,7 @@ SELDON_DEPLOYMENT = Template("""{
             "seldon.io/grpc-read-timeout": "60000",
             "seldon.io/engine-separate-pod": "true"
         },
-        "name": "$experimentId",
+        "name": "deploy-$experimentId",
         "predictors": [
             {
                 "componentSpecs": [$componentSpecs
@@ -42,7 +43,7 @@ SELDON_DEPLOYMENT = Template("""{
                 "labels": {
                     "version": "v1"
                 },
-                "name": "$experimentId",
+                "name": "model",
                 "replicas": 1,
                 "svcOrchSpec": {
                     "env": [
@@ -64,9 +65,12 @@ COMPONENT_SPEC = Template("""
         "containers": [
             {
                 "image": "$image",
-                "name": "$name",
+                "name": "deploy-$name",
                 "env": [
-                    {"PARAMETERS": "$parameters"}
+                    {
+                        "name": "PARAMETERS", 
+                        "value": "$parameters"
+                    }
                 ]
             }
         ]
@@ -74,8 +78,8 @@ COMPONENT_SPEC = Template("""
 }""")
 
 GRAPH = Template("""{
-    "name": "$name",
-    "type": "$type",
+    "name": "deploy-$name",
+    "type": "MODEL",
     "endpoint": {
         "type": "REST"
     },

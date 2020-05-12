@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 import yaml
+from json import dumps
 
 from kfp import components, dsl
 from kubernetes import client as k8s_client
@@ -16,7 +17,7 @@ class Component():
         container_op (kfp.dsl.ContainerOp): component operator.
     """
 
-    def __init__(self, experiment_id, operator_id, notebook_path, parameters, prev):
+    def __init__(self, experiment_id, dataset, target, operator_id, notebook_path, parameters, prev):
         """Create a new instance of Component.
 
         Args:
@@ -26,20 +27,18 @@ class Component():
             prev (Component): previous component in pipeline.
         """
         self._experiment_id = experiment_id
+        self._dataset = dataset
+        self._target = target
         self._operator_id = operator_id
         self._notebook_path = validate_notebook_path(notebook_path)
 
         self._parameters = parameters
         self.container_op = None
 
-        # TODO: Change image repo
-        self._image = 'miguelfferraz/platia-{}:latest'.format(
-            self._operator_id)
+        self._image = 'platia-{}:latest'.format(self._operator_id)
 
         self.next = None
         self.prev = prev
-
-        self.set_output_file()
 
     def _create_parameters_papermill(self):
         if self._parameters:
@@ -52,15 +51,17 @@ class Component():
             return ' '.join(parameters_string)
         return ''
 
-    def _create_parameters_seldon(self, dataset, target):
+    def _create_parameters_seldon(self):
         seldon_parameters = [
-            {'type': 'STRING', 'name': 'dataset', 'value': dataset},
-            {'type': 'STRING', 'name': 'target', 'value': target},
-            {'type': 'STRING', 'name': 'experiment_id', 'value': self._experiment_id}]
+            {"type": "STRING", "name": "dataset", "value": self._dataset},
+            {"type": "STRING", "name": "target", "value": self._target},
+            {"type": "STRING", "name": "experiment_id",
+                "value": self._experiment_id},
+        ]
 
         if self._parameters:
-            return seldon_parameters.extend(self._parameters)
-        return seldon_parameters
+            return dumps(seldon_parameters.extend(self._parameters)).replace('"', '\\"')
+        return dumps(seldon_parameters).replace('"', '\\"')
 
     def _create_component_yaml(self):
         yaml_template = yaml.load(PAPERMILL_YAML.substitute({
@@ -77,16 +78,16 @@ class Component():
 
         return file_path
 
-    def create_component_spec(self, dataset, target):
+    def create_component_spec(self):
         """Create a string from component spec.
 
         Returns:
             Component spec in JSON format."""
 
         component_spec = COMPONENT_SPEC.substitute({
-            'image': self._image,
+            'image': 'localhost:31381/{}'.format(self._image),
             'name': self._operator_id,
-            'parameters': self._create_parameters_seldon(dataset, target)
+            'parameters': self._create_parameters_seldon()
         })
 
         return component_spec
@@ -100,7 +101,6 @@ class Component():
         """
         component_graph = GRAPH.substitute({
             'name': self._operator_id,
-            'type': 'TRANSFORMER' if self.next else 'MODEL',
             'children': self.next.create_component_graph() if self.next else ""
         })
 
@@ -116,18 +116,16 @@ class Component():
         self.container_op = container(
             notebook_path=notebook_path,
             experiment_id=self._experiment_id,
-            dataset=self.dataset,
-            target=self.target,
-            out_dataset=self.out_dataset).set_image_pull_policy('Always')
+            operator_id=self._operator_id,
+            dataset=self._dataset,
+            target=self._target).set_image_pull_policy('Always')
 
-    def build_component(self, dataset, target):
-        image_name = self._image
+    def build_component(self):
+        image_name = 'registry.kubeflow:5000/{}'.format(self._image)
         notebook_path = self._notebook_path
+        output_path = 's3://anonymous/experiments/{}/operators/{}'.format(
+            self._experiment_id, self._operator_id)
 
-        secret = k8s_client.V1Volume(
-            name='docker-config-secret',
-            secret=k8s_client.V1SecretVolumeSource(secret_name='docker-config')
-        )
         wkdirop = dsl.VolumeOp(
             name='wkdirpvc' + self._operator_id,
             resource_name='wkdirpvc' + self._operator_id,
@@ -136,39 +134,32 @@ class Component():
         )
         export_notebook = dsl.ContainerOp(
             name='export-notebook',
-            # TODO: Change to PlatIAgro datascience image
             image='miguelfferraz/datascience-image',
             command=['sh', '-c'],
             arguments=[
-                'papermill {} - --log-level DEBUG'.format(notebook_path)],
+                'papermill {} {} --log-level DEBUG; touch -t 197001010000 Model.py;'.format(notebook_path, output_path)],
             pvolumes={'/home/jovyan': wkdirop.volume}
         )
         export_notebook.container.add_env_variable(k8s_client.V1EnvVar(name='EXPERIMENT_ID', value=self._experiment_id)).add_env_variable(
-            k8s_client.V1EnvVar(name='DATASET', value=dataset)).add_env_variable(k8s_client.V1EnvVar(name='TARGET', value=target))
+            k8s_client.V1EnvVar(name='DATASET', value=self._dataset)).add_env_variable(k8s_client.V1EnvVar(name='TARGET', value=self._target))
         clone = dsl.ContainerOp(
             name='clone',
             image='alpine/git:latest',
             command=['sh', '-c'],
-            # TODO: Change git repo to upstream master
-            arguments=['git clone --depth 1 --branch feature/deploy-inference-pipeline https://github.com/miguelfferraz/pipelines; cp ./pipelines/pipelines/resources/image_builder/* /workspace;'],
+            arguments=[
+                'git clone --depth 1 --branch master https://github.com/platiagro/pipelines; cp ./pipelines/pipelines/resources/image_builder/* /workspace;0'],
             pvolumes={'/workspace': export_notebook.pvolume}
         )
         build = dsl.ContainerOp(
             name='build',
-            image='gcr.io/kaniko-project/executor:debug',
-            arguments=['--dockerfile', 'Dockerfile', '--context',
-                       'dir://workspace', '--destination', image_name],
-            pvolumes={'/workspace': clone.pvolume, '/root/.docker/': secret}
+            image='gcr.io/kaniko-project/executor:latest',
+            arguments=['--dockerfile', 'Dockerfile', '--context', 'dir:///workspace',
+                       '--destination', image_name,
+                       '--insecure', '--cache=true', '--cache-repo=registry.kubeflow:5000/cache'],
+            pvolumes={'/workspace': clone.pvolume}
         )
 
         self.build = build
 
     def set_next_component(self, next_component):
         self.next = next_component
-
-    def set_input_file(self, dataset, target):
-        self.dataset = dataset
-        self.target = target
-
-    def set_output_file(self):
-        self.out_dataset = self._operator_id + '.csv'

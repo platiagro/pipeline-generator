@@ -66,12 +66,12 @@ class Pipeline():
 
             if index == 0:
                 # store the first component from pipeline
-                first = Component(self._experiment_id,
+                first = Component(self._experiment_id, self._dataset, self._target,
                                   operator_id, notebook_path, parameters, None)
                 previous = first
             else:
                 current_component = Component(
-                    self._experiment_id, operator_id, notebook_path, parameters, previous)
+                    self._experiment_id, self._dataset, self._target, operator_id, notebook_path, parameters, previous)
                 previous.set_next_component(current_component)
                 previous = current_component
 
@@ -87,8 +87,7 @@ class Pipeline():
         component = self._first
 
         while component:
-            specs.append(component.create_component_spec(
-                self._dataset, self._target))
+            specs.append(component.create_component_spec())
             component = component.next
 
         return ",".join(specs)
@@ -109,12 +108,6 @@ class Pipeline():
             component = self._first
 
             while component:
-                # set input file of component
-                if prev:
-                    component.set_input_file(prev.out_dataset, prev.target)
-                else:
-                    component.set_input_file(self._dataset, self._target)
-
                 component.create_container_op()
 
                 if prev:
@@ -131,9 +124,10 @@ class Pipeline():
         graph = self._create_graph_json()
 
         @dsl.pipeline(name='Common Seldon Deployment.')
-        def deploy_pipeline(experiment_id=''):
+        def deploy_pipeline():
             seldonserving = SELDON_DEPLOYMENT.substitute({
-                "experimentId": experiment_id,
+                "namespace": "anonymous",
+                "experimentId": self._experiment_id,
                 "componentSpecs": component_specs,
                 "graph": graph
             })
@@ -143,11 +137,11 @@ class Pipeline():
                 name="deploy",
                 k8s_resource=seldon_deployment,
                 success_condition="status.state == Available"
-            )
+            ).set_timeout(300)
 
             component = self._first
             while component:
-                component.build_component(self._dataset, self._target)
+                component.build_component()
                 serve_op.after(component.build)
                 component = component.next
 
