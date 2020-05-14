@@ -52,19 +52,14 @@ paths:
       tags:
         - "Deploy"
       parameters:
-        - name: pod
-          in: query
-          required: true
-          schema:
-            type: string
-        - name: container
+        - name: experimentId
           in: query
           required: true
           schema:
             type: string
       responses:
         "200":
-          $ref: "#/components/responses/Log"
+          $ref: "#/components/responses/DeployLog"
         "500":
           $ref: "#/components/responses/InternalServerError"
         "503":
@@ -116,11 +111,24 @@ components:
           type: boolean
         path:
           type: object
-    Log:
-      type: object
-      properties:
-        log:
-          type: string
+    DeployLog:
+      type: array
+      items:
+        type: object
+        properties:
+          containerName:
+            type: string
+          logs:
+            type: array
+            items:
+              type: object
+              properties:
+                level:
+                  type: string
+                message:
+                  type: string
+                timestamp:
+                  type: string
     Parameter:
       type: object
       properties:
@@ -415,12 +423,12 @@ components:
               target:
                 type: string
   responses:
-    Log:
+    DeployLog:
       description: ""
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Log"
+            $ref: "#/components/schemas/DeployLog"
     Run:
       description: ""
       content:

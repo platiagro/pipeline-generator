@@ -50,10 +50,9 @@ def handle_deploy_pipeline():
 @app.route("/deployments/logs", methods=["GET"])
 def handle_get_deployment_log():
     """Handles GET requests to "/deployments/logs."""
-    pod = request.args.get('pod')
-    container = request.args.get('container')
-    log = get_deployment_log(pod, container)
-    return jsonify({"log": log})
+    experiment_id = request.args.get('experimentId')
+    log = get_deployment_log(experiment_id)
+    return jsonify(log)
 
 
 @app.errorhandler(BadRequest)

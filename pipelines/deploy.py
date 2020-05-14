@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
+import io
 import json
+import re 
 
 from werkzeug.exceptions import BadRequest
 from kubernetes import client, config
@@ -7,7 +9,7 @@ from kubernetes.client import Configuration, ApiClient
 from kubernetes.client.rest import ApiException
 
 from .pipeline import Pipeline
-from .utils import init_pipeline_client, format_pipeline_run
+from .utils import init_pipeline_client, is_date, format_pipeline_run
 
 
 def deploy_pipeline(pipeline_parameters):
@@ -63,18 +65,16 @@ def get_deploys():
     return {'runs': runs}
 
 
-def get_deployment_log(pod, container):
+def get_deployment_log(experiment_id):
     """Get logs from deployment.
 
     Args:
-        pod (str): pod name.
-        container (str): container name.
+        experiment_id (str): PlatIAgro experiment's uuid.
     """
-    if not pod:    
-        raise BadRequest('Missing the parameter: pod')
+    if not experiment_id:    
+        raise BadRequest('Missing the parameter: experimentId')
 
-    if not container:    
-        raise BadRequest('Missing the parameter: container') 
+    regex = re.compile('[-@_!#$%^&*()<>?/\|}{~:]') 
 
     config.load_incluster_config()
     v1 = client.CoreV1Api()
@@ -82,16 +82,61 @@ def get_deployment_log(pod, container):
         namespace = 'anonymous'
 
         # get full pod name
+        pod_name = experiment_id
         pods = v1.list_namespaced_pod(namespace)
         for i in pods.items:
-            pod_name = i.metadata.name
-            if pod_name.startswith(pod):
-                pod = pod_name
+            name = i.metadata.name
+            if name.startswith(experiment_id):
+                pod_name = name
                 break
 
-        return v1.read_namespaced_pod_log(pod, namespace, container=container, pretty='true', tail_lines=512, timestamps=True)
+        response = []
+        api_response = v1.read_namespaced_pod(pod_name, namespace, pretty='true')
+        pod_containers = api_response.spec.containers
+        for container in pod_containers:
+            name = container.name
+            if name != 'istio-proxy' and name != 'seldon-container-engine':
+                pod_log = v1.read_namespaced_pod_log(pod_name, namespace, container=name, pretty='true', tail_lines=512, timestamps=True)
+                
+                logs = []
+                buf = io.StringIO(pod_log)
+                line = buf.readline()
+                while line:
+                    line = line.replace('\n', '')
+                    words = line.split()
+                    timestamp = ''
+                    level = ''
+                    message = ''
+                    for word in words:
+                        if len(word) > 4 and is_date(word):
+                            if not timestamp:
+                                timestamp = word
+                            else:
+                                timestamp += ' ' + word
+                        elif 'INFO' in word or 'WARN' in word or 'ERROR' in word:
+                            level = word
+                        else:
+                            if len(word) == 1 and regex.search(word) != None:
+                                word = ''
+
+                            if not message:
+                                message = word
+                            else:
+                                message += ' ' + word
+
+                    log = {}
+                    log['timestamp'] = timestamp
+                    log['level'] = level
+                    log['message'] = message
+                    logs.append(log)
+                    line = buf.readline()
+
+                resp = {}
+                resp['containerName'] = name
+                resp['logs'] = logs
+                response.append(resp)
+        return response
     except ApiException as e:
         body = json.loads(e.body)
         error_message = body['message']
         raise BadRequest('{}'.format(error_message))
-    
