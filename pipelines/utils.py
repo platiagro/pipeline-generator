@@ -3,16 +3,15 @@ import json
 import re
 
 from os import getenv
-from unicodedata import normalize
 
 from dateutil.parser import parse
-from kfp import compiler, dsl, Client
-from schema import Schema, SchemaError, Use, Or, Optional
+from kfp import Client
+from schema import Schema, SchemaError, Or, Optional
 from werkzeug.exceptions import BadRequest
 
 
 def init_pipeline_client():
-    """Create a new kfp client. 
+    """Create a new kfp client.
 
     Returns:
         An instance of kfp client.
@@ -152,7 +151,7 @@ def is_date(string, fuzzy=False):
     :param string: str, string to check for date
     :param fuzzy: bool, ignore unknown tokens in string if True
     """
-    try: 
+    try:
         parse(string, fuzzy=fuzzy)
         return True
 

@@ -121,14 +121,17 @@ components:
           logs:
             type: array
             items:
-              type: object
-              properties:
-                level:
-                  type: string
-                message:
-                  type: string
-                timestamp:
-                  type: string
+              oneOf:
+                - $ref: "#/components/schemas/Log"
+    Log:
+      type: object
+      properties:
+        level:
+          type: string
+        message:
+          type: string
+        timestamp:
+          type: string
     Parameter:
       type: object
       properties:

@@ -18,6 +18,7 @@ v1 = client.CoreV1Api()
 To this one
 
 ```python
+from kubernetes.client import Configuration, ApiClient
 myconfig=Configuration()
 myconfig.host = "http://<machine_ip>:8001"
 myapiclient = ApiClient(myconfig)

@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 import io
 import json
-import re 
+import re
 
 from werkzeug.exceptions import BadRequest
 from kubernetes import client, config
-from kubernetes.client import Configuration, ApiClient
 from kubernetes.client.rest import ApiException
 
 from .pipeline import Pipeline
@@ -71,10 +70,10 @@ def get_deployment_log(experiment_id):
     Args:
         experiment_id (str): PlatIAgro experiment's uuid.
     """
-    if not experiment_id:    
+    if not experiment_id:
         raise BadRequest('Missing the parameter: experimentId')
 
-    regex = re.compile('[-@_!#$%^&*()<>?/\|}{~:]') 
+    regex = re.compile('[-@_!#$%^&*()<>?/|}{~:]')
 
     config.load_incluster_config()
     v1 = client.CoreV1Api()
@@ -96,8 +95,14 @@ def get_deployment_log(experiment_id):
         for container in pod_containers:
             name = container.name
             if name != 'istio-proxy' and name != 'seldon-container-engine':
-                pod_log = v1.read_namespaced_pod_log(pod_name, namespace, container=name, pretty='true', tail_lines=512, timestamps=True)
-                
+                pod_log = v1.read_namespaced_pod_log(
+                    pod_name,
+                    namespace,
+                    container=name,
+                    pretty='true',
+                    tail_lines=512,
+                    timestamps=True)
+
                 logs = []
                 buf = io.StringIO(pod_log)
                 line = buf.readline()
@@ -116,13 +121,13 @@ def get_deployment_log(experiment_id):
                         elif 'INFO' in word or 'WARN' in word or 'ERROR' in word:
                             level = word
                         else:
-                            if len(word) == 1 and regex.search(word) != None:
+                            if len(word) == 1 and regex.search(word) is not None:
                                 word = ''
-
-                            if not message:
-                                message = word
-                            else:
-                                message += ' ' + word
+                            if word:
+                                if not message:
+                                    message = word
+                                else:
+                                    message += ' ' + word
 
                     log = {}
                     log['timestamp'] = timestamp
