@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import base64
 import os
 import yaml
 from json import dumps
@@ -41,15 +42,17 @@ class Component():
         self.prev = prev
 
     def _create_parameters_papermill(self):
+        parameters_dict = {
+            'dataset': self._dataset,
+            'target': self._target,
+        }
+
         if self._parameters:
-            parameters_string = []
 
             for parameter in self._parameters:
-                parameters_string.append('-p ' + parameter['name'] + ' '
-                                         + parameter['value'] + ',')
+                parameters_dict[parameter['name']] = parameter['value']
 
-            return ' '.join(parameters_string)
-        return ''
+        return base64.b64encode(yaml.dump(parameters_dict).encode()).decode()
 
     def _create_parameters_seldon(self):
         seldon_parameters = [
@@ -67,8 +70,6 @@ class Component():
         yaml_template = yaml.load(PAPERMILL_YAML.substitute({
             'operatorName': 'PlatIA-' + self._operator_id,
             'parameters': self._create_parameters_papermill(),
-            'experimentId': self._experiment_id,
-            'operatorId': self._operator_id,
         }), Loader=yaml.FullLoader)
 
         file_name = '{}.yaml'.format(self._operator_id)
@@ -115,12 +116,14 @@ class Component():
         fpath = self._create_component_yaml()
         container = components.load_component_from_file(fpath)
 
-        self.container_op = container(
-            notebook_path=notebook_path,
-            experiment_id=self._experiment_id,
-            operator_id=self._operator_id,
-            dataset=self._dataset,
-            target=self._target).set_image_pull_policy('Always')
+        self.container_op = container(notebook_path=notebook_path) \
+            .set_image_pull_policy('Always') \
+            .add_env_variable(k8s_client.V1EnvVar(
+                name='EXPERIMENT_ID',
+                value=self._experiment_id)) \
+            .add_env_variable(k8s_client.V1EnvVar(
+                name='OPERATOR_ID',
+                value=self._operator_id))
 
     def build_component(self):
         image_name = 'registry.kubeflow:5000/{}'.format(self._image)
