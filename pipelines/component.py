@@ -54,9 +54,7 @@ class Component():
     def _create_parameters_seldon(self):
         seldon_parameters = [
             {"type": "STRING", "name": "dataset", "value": self._dataset},
-            {"type": "STRING", "name": "target", "value": self._target},
-            {"type": "STRING", "name": "experiment_id",
-                "value": self._experiment_id},
+            {"type": "STRING", "name": "target", "value": self._target}
         ]
 
         if self._parameters:
