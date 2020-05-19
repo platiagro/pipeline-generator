@@ -139,6 +139,20 @@ class Pipeline():
                 success_condition="status.state == Available"
             ).set_timeout(300)
 
+            serve_op \
+                .add_env_variable(
+                    k8s_client.V1EnvVar(
+                        name='EXPERIMENT_ID',
+                        value=self._experiment_id)) \
+                .add_env_variable(
+                    k8s_client.V1EnvVar(
+                        name='DATASET',
+                        value=self._dataset)) \
+                .add_env_variable(
+                    k8s_client.V1EnvVar(
+                        name='TARGET',
+                        value=self._target))
+
             component = self._first
             while component:
                 component.build_component()
