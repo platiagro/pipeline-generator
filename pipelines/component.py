@@ -140,14 +140,25 @@ class Component():
                 'papermill {} {} --log-level DEBUG; touch -t 197001010000 Model.py;'.format(notebook_path, output_path)],
             pvolumes={'/home/jovyan': wkdirop.volume}
         )
-        export_notebook.container.add_env_variable(k8s_client.V1EnvVar(name='EXPERIMENT_ID', value=self._experiment_id)).add_env_variable(
-            k8s_client.V1EnvVar(name='DATASET', value=self._dataset)).add_env_variable(k8s_client.V1EnvVar(name='TARGET', value=self._target))
+        export_notebook.container \
+            .add_env_variable(
+                k8s_client.V1EnvVar(
+                    name='EXPERIMENT_ID',
+                    value=self._experiment_id)) \
+            .add_env_variable(
+                k8s_client.V1EnvVar(
+                    name='DATASET',
+                    value=self._dataset)) \
+            .add_env_variable(
+                k8s_client.V1EnvVar(
+                    name='TARGET',
+                    value=self._target))
         clone = dsl.ContainerOp(
             name='clone',
             image='alpine/git:latest',
             command=['sh', '-c'],
             arguments=[
-                'git clone --depth 1 --branch master https://github.com/platiagro/pipelines; cp ./pipelines/pipelines/resources/image_builder/* /workspace;0'],
+                'git clone --depth 1 --branch master https://github.com/platiagro/pipelines; cp ./pipelines/pipelines/resources/image_builder/* /workspace;'],
             pvolumes={'/workspace': export_notebook.pvolume}
         )
         build = dsl.ContainerOp(
