@@ -12,15 +12,17 @@ Change this
 
 ```python
 config.load_incluster_config()
-v1 = client.CoreV1Api()
+custom_api = client.CustomObjectsApi()
+core_api = client.CoreV1Api()
 ```
 
 To this one
 
 ```python
 from kubernetes.client import Configuration, ApiClient
-myconfig=Configuration()
+myconfig = Configuration()
 myconfig.host = "http://<machine_ip>:8001"
 myapiclient = ApiClient(myconfig)
-v1 = client.CoreV1Api(api_client=myapiclient)
+custom_api = client.CustomObjectsApi(api_client=myapiclient)
+core_api = client.CoreV1Api(api_client=myapiclient)
 ```
