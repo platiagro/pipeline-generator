@@ -43,32 +43,46 @@ def get_deployments():
         Deployments list.
     """
     res = []
-    client = init_pipeline_client()
-    runs = client.list_runs(sort_by='created_at').runs
+    kfp_client = init_pipeline_client()
+    token = ''
 
     # Get cluster Ip
     try:
-        config.load_incluster_config()
+        # config.load_incluster_config()
+        config.load_kube_config('/home/miguel/.kube/config')
+
         v1 = client.CoreV1Api()
         service = v1.read_namespaced_service(
             name='istio-ingressgateway', namespace='istio-system')
         ip = service.status.load_balancer.ingress[0].ip
-    except:
-        ip = ""
+    except Exception as _:
+        return "Failed to connect to Kubernetes API."
 
-    if runs:
-        for run in runs:
-            manifest = run.pipeline_spec.workflow_manifest
-            if 'SeldonDeployment' in manifest:
-                res.append({
-                    'experimentId': run.resource_references[0].name,
-                    'name': run.name,
-                    'status': run.status,
-                    'url':
-                        'http://{}/seldon/anonymous/{}/api/v1.0/predictions'.format(
-                            ip, 'deployment-' + run.name),
-                    'createdAt': run.created_at
-                })
+    while True:
+        list_runs = kfp_client.list_runs(
+            page_token=token, sort_by='created_at', page_size=100)
+
+        if list_runs.runs:
+            for run in list_runs.runs:
+                manifest = run.pipeline_spec.workflow_manifest
+                if 'SeldonDeployment' in manifest:
+                    experiment_id = run.resource_references[0].name
+                    res.append({
+                        'experimentId': experiment_id,
+                        'name': run.name,
+                        'status': run.status,
+                        'url':
+                            'http://{}/seldon/anonymous/{}/api/v1.0/predictions'.format(
+                                ip, experiment_id),
+                        'createdAt': run.created_at
+                    })
+
+            token = list_runs.next_page_token
+            runs_size = len(list_runs.runs)
+            if runs_size == 0 or token is None:
+                break
+        else:
+            break
 
     return res
 
