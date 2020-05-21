@@ -3,7 +3,7 @@ import io
 import json
 import re
 
-from werkzeug.exceptions import BadRequest
+from werkzeug.exceptions import BadRequest, InternalServerError
 from kubernetes import client, config
 from kubernetes.client.rest import ApiException
 
@@ -56,7 +56,7 @@ def get_deployments():
             name='istio-ingressgateway', namespace='istio-system')
         ip = service.status.load_balancer.ingress[0].ip
     except Exception as _:
-        return "Failed to connect to Kubernetes API."
+        raise InternalServerError('Failed to connect to cluster')
 
     while True:
         list_runs = kfp_client.list_runs(
