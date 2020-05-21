@@ -5,7 +5,7 @@ import sys
 
 from flask import Flask, jsonify, request
 from flask_cors import CORS
-from werkzeug.exceptions import BadRequest, InternalServerError
+from werkzeug.exceptions import BadRequest, InternalServerError, NotFound
 
 from .training import create_training, get_training
 from .deployment import create_deployment, get_deployments, get_deployment_log
@@ -50,13 +50,14 @@ def handle_create_deployment():
 @app.route("/deployments/logs", methods=["GET"])
 def handle_get_deployment_log():
     """Handles GET requests to "/deployments/logs."""
-    experiment_id = request.args.get('experimentId')
-    log = get_deployment_log(experiment_id)
+    deploy_name = request.args.get('name')
+    log = get_deployment_log(deploy_name)
     return jsonify(log)
 
 
 @app.errorhandler(BadRequest)
 @app.errorhandler(InternalServerError)
+@app.errorhandler(NotFound)
 def handle_errors(err):
     """Handles exceptions raised by the API."""
     return jsonify({"message": err.description}), err.code

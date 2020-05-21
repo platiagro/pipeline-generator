@@ -4,7 +4,6 @@ import re
 
 from os import getenv
 
-from dateutil.parser import parse
 from kfp import Client
 from schema import Schema, SchemaError, Or, Optional
 from werkzeug.exceptions import BadRequest
@@ -73,18 +72,3 @@ def format_pipeline_run_details(run_details):
                 7:]] = str(component['phase'])
 
     return {"status": components_status}
-
-
-def is_date(string, fuzzy=False):
-    """
-    Return whether the string can be interpreted as a date.
-
-    :param string: str, string to check for date
-    :param fuzzy: bool, ignore unknown tokens in string if True
-    """
-    try:
-        parse(string, fuzzy=fuzzy)
-        return True
-
-    except ValueError:
-        return False

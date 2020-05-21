@@ -52,7 +52,7 @@ paths:
       tags:
         - "Deployment"
       parameters:
-        - name: experimentId
+        - name: name
           in: query
           required: true
           schema:

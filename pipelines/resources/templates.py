@@ -5,15 +5,11 @@ PAPERMILL_YAML = Template("""
 name: $operatorName
 description: Parametrize and execute Jupyter notebooks
 inputs:
-- { name: Experiment Id, type: STRING, default: "", description: "" }
 - { name: Notebook Path, type: STRING, default: "", description: "" }
-- { name: Dataset, type: STRING, default: "", description: "" }
-- { name: Target, type: STRING, default: "", description: "" }
-- { name: Operator Id, type: STRING, default: "", description: "" }
 implementation:
     container:
         image: platiagro/datascience-1386e2046833-notebook-cpu:0.0.2
-        command: [ papermill, { inputValue: Notebook Path }, -, -p, experiment_id, { inputValue: Experiment Id }, -p, dataset, { inputValue: Dataset }, -p, target, { inputValue: Target }, -p, operator_id, { inputValue: Operator Id }, $parameters]
+        command: [ papermill, { inputValue: Notebook Path }, -, -b, $parameters]
 """)
 
 SELDON_DEPLOYMENT = Template("""{
