@@ -5,8 +5,9 @@ import re
 from os import getenv
 
 from kfp import Client
+from kubernetes import config
 from schema import Schema, SchemaError, Or, Optional
-from werkzeug.exceptions import BadRequest
+from werkzeug.exceptions import BadRequest, InternalServerError
 
 
 def init_pipeline_client():
@@ -16,6 +17,23 @@ def init_pipeline_client():
         An instance of kfp client.
     """
     return Client(getenv("KF_PIPELINES_ENDPOINT", '0.0.0.0:31380/pipeline'))
+
+
+def load_kube_config():
+    try:
+        config.load_kube_config()  # default is ~/.kube/config
+        success = True
+    except Exception as e:
+        print(e)
+        success = False
+
+    if success:
+        return
+
+    try:
+        config.load_incluster_config()
+    except:
+        raise InternalServerError('Failed to connect to cluster')
 
 
 parameter_schema = Schema({

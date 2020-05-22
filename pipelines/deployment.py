@@ -4,10 +4,10 @@ import json
 import re
 
 from kubernetes.client.rest import ApiException
-from kubernetes import client, config
-from werkzeug.exceptions import BadRequest, InternalServerError, NotFound
+from kubernetes import client
+from werkzeug.exceptions import BadRequest, NotFound
 
-from .utils import init_pipeline_client
+from .utils import load_kube_config, init_pipeline_client
 from .pipeline import Pipeline
 
 
@@ -47,16 +47,13 @@ def get_deployments():
     token = ''
 
     # Get cluster Ip
-    try:
-        # config.load_incluster_config()
-        config.load_kube_config('/home/miguel/.kube/config')
+    load_kube_config()
 
-        v1 = client.CoreV1Api()
-        service = v1.read_namespaced_service(
-            name='istio-ingressgateway', namespace='istio-system')
-        ip = service.status.load_balancer.ingress[0].ip
-    except Exception as _:
-        raise InternalServerError('Failed to connect to cluster')
+    v1 = client.CoreV1Api()
+    service = v1.read_namespaced_service(
+        name='istio-ingressgateway', namespace='istio-system')
+
+    ip = service.status.load_balancer.ingress[0].ip
 
     while True:
         list_runs = kfp_client.list_runs(
@@ -78,8 +75,7 @@ def get_deployments():
                     })
 
             token = list_runs.next_page_token
-            runs_size = len(list_runs.runs)
-            if runs_size == 0 or token is None:
+            if token is None:
                 break
         else:
             break
@@ -110,7 +106,7 @@ def get_deployment_log(deploy_name):
 
     log_message_regex = r'[a-zA-Z0-9\"\'.\-@_!#$%^&*()<>?\/|}{~:]{1,}'
 
-    config.load_incluster_config()
+    load_kube_config()
     custom_api = client.CustomObjectsApi()
     core_api = client.CoreV1Api()
     try:
