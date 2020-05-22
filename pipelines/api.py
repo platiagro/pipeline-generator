@@ -7,8 +7,8 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 from werkzeug.exceptions import BadRequest, InternalServerError, NotFound
 
-from .train import train_pipeline, train_pipeline_status
-from .deploy import deploy_pipeline, get_deploys, get_deployment_log
+from .training import create_training, get_training
+from .deployment import create_deployment, get_deployments, get_deployment_log
 
 app = Flask(__name__)
 
@@ -19,31 +19,31 @@ def index():
     return jsonify(message='PlatIAgro Pipelines v0.0.1')
 
 
-@app.route("/train/<experiment_id>", methods=["GET"])
-def handle_train_pipeline_status(experiment_id):
-    """Handles GET requests to /train/<experiment_id>."""
-    return jsonify(train_pipeline_status(experiment_id))
+@app.route("/training/<experiment_id>", methods=["GET"])
+def handle_get_training(experiment_id):
+    """Handles GET requests to /training/<experiment_id>."""
+    return jsonify(get_training(experiment_id))
 
 
-@app.route('/train', methods=['POST'])
-def handle_train_pipeline():
-    """Handles POST requests to /train."""
+@app.route('/training', methods=['POST'])
+def handle_create_training():
+    """Handles POST requests to /training."""
     req_data = request.get_json()
-    run_id = train_pipeline(req_data)
+    run_id = create_training(req_data)
     return jsonify({"message": "Pipeline running.", "runId": run_id})
 
 
-@app.route("/deploys", methods=["GET"])
-def handle_get_deploys():
-    """Handles GET requests to /deploys."""
-    return jsonify(get_deploys())
+@app.route("/deployments", methods=["GET"])
+def handle_get_deployments():
+    """Handles GET requests to /deployments."""
+    return jsonify(get_deployments())
 
 
-@app.route('/deploy', methods=['POST'])
-def handle_deploy_pipeline():
-    """Handles POST requests to /deploy."""
+@app.route('/deployment', methods=['POST'])
+def handle_create_deployment():
+    """Handles POST requests to /deployment."""
     req_data = request.get_json()
-    run_id = deploy_pipeline(req_data)
+    run_id = create_deployment(req_data)
     return jsonify({"message": "Pipeline running.", "runId": run_id})
 
 

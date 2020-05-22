@@ -5,8 +5,9 @@ import re
 from os import getenv
 
 from kfp import Client
+from kubernetes import config
 from schema import Schema, SchemaError, Or, Optional
-from werkzeug.exceptions import BadRequest
+from werkzeug.exceptions import BadRequest, InternalServerError
 
 
 def init_pipeline_client():
@@ -16,6 +17,23 @@ def init_pipeline_client():
         An instance of kfp client.
     """
     return Client(getenv("KF_PIPELINES_ENDPOINT", '0.0.0.0:31380/pipeline'))
+
+
+def load_kube_config():
+    try:
+        config.load_kube_config()  # default is ~/.kube/config
+        success = True
+    except Exception as e:
+        print(e)
+        success = False
+
+    if success:
+        return
+
+    try:
+        config.load_incluster_config()
+    except:
+        raise InternalServerError('Failed to connect to cluster')
 
 
 parameter_schema = Schema({
@@ -59,84 +77,15 @@ def validate_notebook_path(notebook_path):
         raise BadRequest('Invalid notebook path. ' + notebook_path)
 
 
-def format_pipeline_run(run):
-    # format run response
-    resp_run = {}
-    resp_run['id'] = run.id
-    resp_run['name'] = run.name
-    resp_run['createdAt'] = run.created_at
-    resp_run['finishedAt'] = run.finished_at
-    resp_run['description'] = run.description
-    resp_run['error'] = run.error
-    resp_run['status'] = run.status
-    resp_run['scheduledAt'] = run.scheduled_at
-    resp_run['storageState'] = run.storage_state
-
-    # format run pipeline spec response
-    pipeline_spec = run.pipeline_spec
-    resp_pipeline_spec = {}
-    if pipeline_spec is not None:
-        resp_pipeline_spec['pipelineId'] = pipeline_spec.pipeline_id
-        resp_pipeline_spec['pipelineManifest'] = pipeline_spec.pipeline_manifest
-        resp_pipeline_spec['pipelineName'] = pipeline_spec.pipeline_name
-        resp_pipeline_spec['workflowManifest'] = json.loads(
-            pipeline_spec.workflow_manifest)
-        parameters = []
-        if pipeline_spec.parameters is not None:
-            for parameter in pipeline_spec.parameters:
-                _parameter = {
-                    'name':  parameter.name,
-                    'value': parameter.value
-                }
-                parameters.append(_parameter)
-        resp_pipeline_spec['parameters'] = parameters
-    resp_run['pipelineSpec'] = resp_pipeline_spec
-
-    # format run metrics response
-    metrics = []
-    if run.metrics is not None:
-        for metric in run.metrics:
-            _metric = {
-                'format':  metric.format,
-                'name': metric.name,
-                'nodeId': metric.node_id,
-                'numberValue': metric.number_value
-            }
-            metrics.append(_metric)
-    resp_run['metrics'] = metrics
-
-    # format run resource references response
-    resource_references = []
-    if run.resource_references is not None:
-        for references in run.resource_references:
-            _reference = {
-                'name': references.name,
-                'relationship': references.relationship,
-                'key': {
-                    'id': references.key.id,
-                    'type': references.key.type
-                }
-            }
-            resource_references.append(_reference)
-    resp_run['resourceReferences'] = resource_references
-
-    return resp_run
-
-
 def format_pipeline_run_details(run_details):
-    run = run_details.run
-
     workflow_manifest = json.loads(
         run_details.pipeline_runtime.workflow_manifest)
     nodes = workflow_manifest['status']['nodes']
 
-    pipeline_status = ''
     components_status = {}
 
     for index, component in enumerate(nodes.values()):
-        if index == 0:
-            pipeline_status = component['phase']
-        else:
+        if index != 0:
             components_status[str(component['displayName'])[
                 7:]] = str(component['phase'])
 

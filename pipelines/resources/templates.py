@@ -19,7 +19,7 @@ SELDON_DEPLOYMENT = Template("""{
         "labels": {
             "app": "seldon"
         },
-        "name": "deploy-$experimentId",
+        "name": "$experimentId",
         "namespace": "$namespace"
     },
     "spec": {
@@ -30,7 +30,7 @@ SELDON_DEPLOYMENT = Template("""{
             "seldon.io/grpc-read-timeout": "60000",
             "seldon.io/engine-separate-pod": "true"
         },
-        "name": "deploy-$experimentId",
+        "name": "$experimentId",
         "predictors": [
             {
                 "componentSpecs": [$componentSpecs
@@ -61,7 +61,7 @@ COMPONENT_SPEC = Template("""
         "containers": [
             {
                 "image": "$image",
-                "name": "deploy-$name",
+                "name": "$name",
                 "env": [
                     {
                         "name": "PARAMETERS",
@@ -74,7 +74,7 @@ COMPONENT_SPEC = Template("""
 }""")
 
 GRAPH = Template("""{
-    "name": "deploy-$name",
+    "name": "$name",
     "type": "MODEL",
     "endpoint": {
         "type": "REST"

@@ -7,7 +7,7 @@ from json import dumps
 from kfp import components, dsl
 from kubernetes import client as k8s_client
 
-from .utils import init_pipeline_client, validate_notebook_path
+from .utils import validate_notebook_path
 from .resources.templates import PAPERMILL_YAML, COMPONENT_SPEC, GRAPH
 
 
@@ -57,9 +57,7 @@ class Component():
     def _create_parameters_seldon(self):
         seldon_parameters = [
             {"type": "STRING", "name": "dataset", "value": self._dataset},
-            {"type": "STRING", "name": "target", "value": self._target},
-            {"type": "STRING", "name": "experiment_id",
-                "value": self._experiment_id},
+            {"type": "STRING", "name": "target", "value": self._target}
         ]
 
         if self._parameters:
@@ -123,7 +121,10 @@ class Component():
                 value=self._experiment_id)) \
             .add_env_variable(k8s_client.V1EnvVar(
                 name='OPERATOR_ID',
-                value=self._operator_id))
+                value=self._operator_id)) \
+            .add_env_variable(k8s_client.V1EnvVar(
+                name='RUN_ID',
+                value=dsl.RUN_ID_PLACEHOLDER))
 
     def build_component(self):
         image_name = 'registry.kubeflow:5000/{}'.format(self._image)
@@ -145,14 +146,25 @@ class Component():
                 'papermill {} {} --log-level DEBUG; touch -t 197001010000 Model.py;'.format(notebook_path, output_path)],
             pvolumes={'/home/jovyan': wkdirop.volume}
         )
-        export_notebook.container.add_env_variable(k8s_client.V1EnvVar(name='EXPERIMENT_ID', value=self._experiment_id)).add_env_variable(
-            k8s_client.V1EnvVar(name='DATASET', value=self._dataset)).add_env_variable(k8s_client.V1EnvVar(name='TARGET', value=self._target))
+        export_notebook.container \
+            .add_env_variable(
+                k8s_client.V1EnvVar(
+                    name='EXPERIMENT_ID',
+                    value=self._experiment_id)) \
+            .add_env_variable(
+                k8s_client.V1EnvVar(
+                    name='DATASET',
+                    value=self._dataset)) \
+            .add_env_variable(
+                k8s_client.V1EnvVar(
+                    name='TARGET',
+                    value=self._target))
         clone = dsl.ContainerOp(
             name='clone',
             image='alpine/git:latest',
             command=['sh', '-c'],
             arguments=[
-                'git clone --depth 1 --branch master https://github.com/platiagro/pipelines; cp ./pipelines/pipelines/resources/image_builder/* /workspace;0'],
+                'git clone --depth 1 --branch master https://github.com/platiagro/pipelines; cp ./pipelines/pipelines/resources/image_builder/* /workspace;'],
             pvolumes={'/workspace': export_notebook.pvolume}
         )
         build = dsl.ContainerOp(

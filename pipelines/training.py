@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
-from werkzeug.exceptions import BadRequest, NotFound
+from werkzeug.exceptions import BadRequest
 
 from .pipeline import Pipeline
 from .utils import init_pipeline_client, format_pipeline_run_details
 
 
-def train_pipeline(pipeline_parameters):
-    """Compile and run a train pipeline.
+def create_training(pipeline_parameters):
+    """Compile and run a training pipeline.
 
     Args:
         pipeline_parameters (dict): request body json, format:
@@ -29,11 +29,11 @@ def train_pipeline(pipeline_parameters):
         )
 
     pipeline = Pipeline(experiment_id, components, dataset, target)
-    pipeline.compile_train_pipeline()
+    pipeline.compile_training_pipeline()
     return pipeline.run_pipeline()
 
 
-def train_pipeline_status(experiment_id):
+def get_training(experiment_id):
     """Get run details.
 
     Args:

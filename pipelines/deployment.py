@@ -3,15 +3,15 @@ import io
 import json
 import re
 
-from werkzeug.exceptions import BadRequest, NotFound
-from kubernetes import client, config
 from kubernetes.client.rest import ApiException
+from kubernetes import client
+from werkzeug.exceptions import BadRequest, NotFound
 
+from .utils import load_kube_config, init_pipeline_client
 from .pipeline import Pipeline
-from .utils import init_pipeline_client, format_pipeline_run
 
 
-def deploy_pipeline(pipeline_parameters):
+def create_deployment(pipeline_parameters):
     """Compile and run a deployment pipeline.
 
     Args:
@@ -32,41 +32,59 @@ def deploy_pipeline(pipeline_parameters):
         )
 
     pipeline = Pipeline(experiment_id, components, dataset, target)
-    pipeline.compile_deploy_pipeline()
+    pipeline.compile_deployment_pipeline()
     return pipeline.run_pipeline()
 
 
-def get_deploys():
-    """Get deploy list.
+def get_deployments():
+    """Get deployments list.
 
     Returns:
-        Deploy list.
+        Deployments list.
     """
-    client = init_pipeline_client()
-    runs = []
+    res = []
+    kfp_client = init_pipeline_client()
     token = ''
+
+    # Get cluster Ip
+    load_kube_config()
+
+    v1 = client.CoreV1Api()
+    service = v1.read_namespaced_service(
+        name='istio-ingressgateway', namespace='istio-system')
+
+    ip = service.status.load_balancer.ingress[0].ip
+
     while True:
-        list_runs = client.list_runs(
-            page_token=token, sort_by='created_at desc', page_size=100)
-        if list_runs.runs is not None:
+        list_runs = kfp_client.list_runs(
+            page_token=token, sort_by='created_at', page_size=100)
+
+        if list_runs.runs:
             for run in list_runs.runs:
-                # check if run is type deployment
                 manifest = run.pipeline_spec.workflow_manifest
                 if 'SeldonDeployment' in manifest:
-                    _run = format_pipeline_run(run)
-                    runs.append(_run)
+                    experiment_id = run.resource_references[0].name
+                    res.append({
+                        'experimentId': experiment_id,
+                        'name': run.name,
+                        'status': run.status,
+                        'url':
+                            'http://{}/seldon/anonymous/{}/api/v1.0/predictions'.format(
+                                ip, experiment_id),
+                        'createdAt': run.created_at
+                    })
+
             token = list_runs.next_page_token
-            runs_size = len(list_runs.runs)
-            if runs_size == 0 or token is None:
+            if token is None:
                 break
         else:
             break
-    return {'runs': runs}
+
+    return res
 
 
 def get_deployment_log(deploy_name):
     """Get logs from deployment.
-
     Args:
         deploy_name (str): Deployment name.
     """
@@ -88,7 +106,7 @@ def get_deployment_log(deploy_name):
 
     log_message_regex = r'[a-zA-Z0-9\"\'.\-@_!#$%^&*()<>?\/|}{~:]{1,}'
 
-    config.load_incluster_config()
+    load_kube_config()
     custom_api = client.CustomObjectsApi()
     core_api = client.CoreV1Api()
     try:
