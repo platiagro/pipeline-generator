@@ -121,7 +121,10 @@ class Component():
                 value=self._experiment_id)) \
             .add_env_variable(k8s_client.V1EnvVar(
                 name='OPERATOR_ID',
-                value=self._operator_id))
+                value=self._operator_id)) \
+            .add_env_variable(k8s_client.V1EnvVar(
+                name='RUN_ID',
+                value=dsl.RUN_ID_PLACEHOLDER))
 
     def build_component(self):
         image_name = 'registry.kubeflow:5000/{}'.format(self._image)
