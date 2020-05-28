@@ -100,10 +100,10 @@ class Pipeline():
         """
         return self._first.create_component_graph()
 
-    def compile_train_pipeline(self):
-        """Compile the pipeline in a train format."""
+    def compile_training_pipeline(self):
+        """Compile the pipeline in a training format."""
         @dsl.pipeline(name='Common pipeline')
-        def train_pipeline():
+        def training_pipeline():
             prev = None
             component = self._first
 
@@ -116,15 +116,15 @@ class Pipeline():
                 prev = component
                 component = component.next
 
-        compiler.Compiler().compile(train_pipeline, self._experiment_id + '.tar.gz')
+        compiler.Compiler().compile(training_pipeline, self._experiment_id + '.tar.gz')
 
-    def compile_deploy_pipeline(self):
-        """Compile pipeline in a deploy format."""
+    def compile_deployment_pipeline(self):
+        """Compile pipeline in a deployment format."""
         component_specs = self._create_component_specs_json()
         graph = self._create_graph_json()
 
         @dsl.pipeline(name='Common Seldon Deployment.')
-        def deploy_pipeline():
+        def deployment_pipeline():
             seldonserving = SELDON_DEPLOYMENT.substitute({
                 "namespace": "anonymous",
                 "experimentId": self._experiment_id,
@@ -134,10 +134,24 @@ class Pipeline():
 
             seldon_deployment = json.loads(seldonserving)
             serve_op = dsl.ResourceOp(
-                name="deploy",
+                name="deployment",
                 k8s_resource=seldon_deployment,
                 success_condition="status.state == Available"
             ).set_timeout(300)
+
+            serve_op \
+                .add_env_variable(
+                    k8s_client.V1EnvVar(
+                        name='EXPERIMENT_ID',
+                        value=self._experiment_id)) \
+                .add_env_variable(
+                    k8s_client.V1EnvVar(
+                        name='DATASET',
+                        value=self._dataset)) \
+                .add_env_variable(
+                    k8s_client.V1EnvVar(
+                        name='TARGET',
+                        value=self._target))
 
             component = self._first
             while component:
@@ -145,10 +159,10 @@ class Pipeline():
                 serve_op.after(component.build)
                 component = component.next
 
-        compiler.Compiler().compile(deploy_pipeline, self._experiment_id + '.tar.gz')
+        compiler.Compiler().compile(deployment_pipeline, self._experiment_id + '.tar.gz')
 
     def run_pipeline(self):
-        """Run this pipeline on the KubeFlow instance. 
+        """Run this pipeline on the KubeFlow instance.
 
         Returns:
             KubeFlow run object.

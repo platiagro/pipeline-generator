@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import base64
 import os
 import yaml
 from json import dumps
@@ -6,7 +7,7 @@ from json import dumps
 from kfp import components, dsl
 from kubernetes import client as k8s_client
 
-from .utils import init_pipeline_client, validate_notebook_path
+from .utils import validate_notebook_path
 from .resources.templates import PAPERMILL_YAML, COMPONENT_SPEC, GRAPH
 
 
@@ -41,22 +42,22 @@ class Component():
         self.prev = prev
 
     def _create_parameters_papermill(self):
+        parameters_dict = {
+            'dataset': self._dataset,
+            'target': self._target,
+        }
+
         if self._parameters:
-            parameters_string = []
 
             for parameter in self._parameters:
-                parameters_string.append('-p ' + parameter['name'] + ' '
-                                         + parameter['value'] + ',')
+                parameters_dict[parameter['name']] = parameter['value']
 
-            return ' '.join(parameters_string)
-        return ''
+        return base64.b64encode(yaml.dump(parameters_dict).encode()).decode()
 
     def _create_parameters_seldon(self):
         seldon_parameters = [
             {"type": "STRING", "name": "dataset", "value": self._dataset},
-            {"type": "STRING", "name": "target", "value": self._target},
-            {"type": "STRING", "name": "experiment_id",
-                "value": self._experiment_id},
+            {"type": "STRING", "name": "target", "value": self._target}
         ]
 
         if self._parameters:
@@ -66,7 +67,7 @@ class Component():
     def _create_component_yaml(self):
         yaml_template = yaml.load(PAPERMILL_YAML.substitute({
             'operatorName': 'PlatIA-' + self._operator_id,
-            'parameters': self._create_parameters_papermill()
+            'parameters': self._create_parameters_papermill(),
         }), Loader=yaml.FullLoader)
 
         file_name = '{}.yaml'.format(self._operator_id)
@@ -113,12 +114,17 @@ class Component():
         fpath = self._create_component_yaml()
         container = components.load_component_from_file(fpath)
 
-        self.container_op = container(
-            notebook_path=notebook_path,
-            experiment_id=self._experiment_id,
-            operator_id=self._operator_id,
-            dataset=self._dataset,
-            target=self._target).set_image_pull_policy('Always')
+        self.container_op = container(notebook_path=notebook_path) \
+            .set_image_pull_policy('Always') \
+            .add_env_variable(k8s_client.V1EnvVar(
+                name='EXPERIMENT_ID',
+                value=self._experiment_id)) \
+            .add_env_variable(k8s_client.V1EnvVar(
+                name='OPERATOR_ID',
+                value=self._operator_id)) \
+            .add_env_variable(k8s_client.V1EnvVar(
+                name='RUN_ID',
+                value=dsl.RUN_ID_PLACEHOLDER))
 
     def build_component(self):
         image_name = 'registry.kubeflow:5000/{}'.format(self._image)
@@ -146,8 +152,27 @@ class Component():
                 'papermill {} output.ipynb --log-level DEBUG; echo CURL REQUESTS; bash upload-to-jupyter.sh {} {}; touch -t 197001010000 Model.py;'.format(notebook_path, self._experiment_id, self._operator_id)],
             pvolumes={'/home/jovyan': clone.pvolume}
         )
-        export_notebook.container.add_env_variable(k8s_client.V1EnvVar(name='EXPERIMENT_ID', value=self._experiment_id)).add_env_variable(
-            k8s_client.V1EnvVar(name='DATASET', value=self._dataset)).add_env_variable(k8s_client.V1EnvVar(name='TARGET', value=self._target))
+        export_notebook.container \
+            .add_env_variable(
+                k8s_client.V1EnvVar(
+                    name='EXPERIMENT_ID',
+                    value=self._experiment_id)) \
+            .add_env_variable(
+                k8s_client.V1EnvVar(
+                    name='DATASET',
+                    value=self._dataset)) \
+            .add_env_variable(
+                k8s_client.V1EnvVar(
+                    name='TARGET',
+                    value=self._target))
+        clone = dsl.ContainerOp(
+            name='clone',
+            image='alpine/git:latest',
+            command=['sh', '-c'],
+            arguments=[
+                'git clone --depth 1 --branch master https://github.com/platiagro/pipelines; cp ./pipelines/pipelines/resources/image_builder/* /workspace;'],
+            pvolumes={'/workspace': export_notebook.pvolume}
+        )
         build = dsl.ContainerOp(
             name='build',
             image='gcr.io/kaniko-project/executor:latest',

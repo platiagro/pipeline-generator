@@ -5,15 +5,11 @@ PAPERMILL_YAML = Template("""
 name: $operatorName
 description: Parametrize and execute Jupyter notebooks
 inputs:
-- { name: Experiment Id, type: STRING, default: "", description: "" }
 - { name: Notebook Path, type: STRING, default: "", description: "" }
-- { name: Dataset, type: STRING, default: "", description: "" }
-- { name: Target, type: STRING, default: "", description: "" }
-- { name: Operator Id, type: STRING, default: "", description: "" }
 implementation:
     container:
         image: platiagro/datascience-1386e2046833-notebook-cpu:0.0.2
-        command: [ papermill, { inputValue: Notebook Path }, -, -p, experiment_id, { inputValue: Experiment Id }, -p, dataset, { inputValue: Dataset }, -p, target, { inputValue: Target }, -p, operator_id, { inputValue: Operator Id }, $parameters]
+        command: [ papermill, { inputValue: Notebook Path }, -, -b, $parameters]
 """)
 
 SELDON_DEPLOYMENT = Template("""{
@@ -23,7 +19,7 @@ SELDON_DEPLOYMENT = Template("""{
         "labels": {
             "app": "seldon"
         },
-        "name": "deploy-$experimentId",
+        "name": "$experimentId",
         "namespace": "$namespace"
     },
     "spec": {
@@ -34,7 +30,7 @@ SELDON_DEPLOYMENT = Template("""{
             "seldon.io/grpc-read-timeout": "60000",
             "seldon.io/engine-separate-pod": "true"
         },
-        "name": "deploy-$experimentId",
+        "name": "$experimentId",
         "predictors": [
             {
                 "componentSpecs": [$componentSpecs
@@ -65,10 +61,10 @@ COMPONENT_SPEC = Template("""
         "containers": [
             {
                 "image": "$image",
-                "name": "deploy-$name",
+                "name": "$name",
                 "env": [
                     {
-                        "name": "PARAMETERS", 
+                        "name": "PARAMETERS",
                         "value": "$parameters"
                     }
                 ]
@@ -78,7 +74,7 @@ COMPONENT_SPEC = Template("""
 }""")
 
 GRAPH = Template("""{
-    "name": "deploy-$name",
+    "name": "$name",
     "type": "MODEL",
     "endpoint": {
         "type": "REST"

@@ -11,46 +11,64 @@ info:
 servers:
   - url: http://localhost:8080
 tags:
-  - name: "Deploy"
+  - name: "Deployment"
     description: >
-      Deploy is an inference notebook.
-  - name: "Train"
+      Manage deployment notebooks.
+  - name: "Training"
     description: >
-      Train is a training notebook.
+      Manage training notebooks.
 paths:
-  /deploys:
+  /deployments:
     get:
-      summary: "List all deploys."
+      summary: "List all deployments."
       tags:
-        - "Deploy"
+        - "Deployment"
       responses:
         "200":
-          $ref: "#/components/responses/Runs"
+          $ref: "#/components/responses/Deployments"
         "500":
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
-  /deploy:
+  /deployment:
     post:
       summary: "Run a deployment pipeline"
       tags:
-        - "Deploy"
+        - "Deployment"
       requestBody:
-        $ref: "#/components/requestBodies/DeployPost"
+        $ref: "#/components/requestBodies/DeploymentPost"
       responses:
         "200":
-          $ref: "#/components/responses/Runs"
+          $ref: "#/components/responses/Run"
         "400":
           $ref: "#/components/responses/BadRequest"
         "500":
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
-  /train/<run_id>:
+  /deployments/logs:
     get:
-      summary: "Get the run status."
+      summary: "Get logs from deployment."
       tags:
-        - "Train"
+        - "Deployment"
+      parameters:
+        - name: name
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/DeploymentLog"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /training/<run_id>:
+    get:
+      summary: "Get the training run status."
+      tags:
+        - "Training"
       parameters:
         - name: run_id
           in: path
@@ -59,23 +77,23 @@ paths:
             type: string
       responses:
         "200":
-          $ref: "#/components/responses/RunDetail"
+          $ref: "#/components/responses/TrainingStatus"
         "400":
           $ref: "#/components/responses/BadRequest"
         "500":
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
-  /train:
+  /training:
     post:
-      summary: "Run a train pipeline"
+      summary: "Run a training pipeline"
       tags:
-        - "Train"
+        - "Training"
       requestBody:
-        $ref: "#/components/requestBodies/TrainPost"
+        $ref: "#/components/requestBodies/TrainingPost"
       responses:
         "200":
-          $ref: "#/components/responses/Runs"
+          $ref: "#/components/responses/Run"
         "400":
           $ref: "#/components/responses/BadRequest"
         "500":
@@ -84,277 +102,67 @@ paths:
           $ref: "#/components/responses/ServiceUnavailable"
 components:
   schemas:
-    Artifact:
-      type: object
-      properties:
-        name:
-          type: string
-        optional:
-          type: boolean
-        path:
-          type: object
-    Parameter:
-      type: object
-      properties:
-        name:
-          type: string
-        value:
-          type: string
-        valueFrom:
-          type: object
-    Template:
-      type: object
-      properties:
-        dag:
-          type: object
-          properties:
-            tasks:
-              type: array
-              items:
-                type: object
-                properties:
-                  arguments:
-                    type: object
-                    properties:
-                      parameters:
-                        type: array
-                        items:
-                          oneOf:
-                            - $ref: "#/components/schemas/Parameter"
-                  dependencies:
-                    type: array
-                    items:
-                      type: string
-                  name:
-                    type: string
-                  template:
-                    type: string
-        container:
-          type: object
-          properties:
-            command:
-              type: array
-              items:
-                type: string
-            image:
-              type: string
-            imagePullPolicy:
-              type: string
-            name:
-              type: string
-            resources:
-              type: object
-        inputs:
-          type: object
-          properties:
-            parameters:
-              type: array
-              items:
-                oneOf:
-                  - $ref: "#/components/schemas/Parameter"
-        metadata:
-          type: string
-        name:
-          type: string
-        outputs:
-          type: object
-          properties:
-            artifacts:
-              type: array
-              items:
-                oneOf:
-                  - $ref: "#/components/schemas/Artifact"
-            parameters:
-              type: array
-              items:
-                oneOf:
-                  - $ref: "#/components/schemas/Parameter"
-        resource:
-          type: object
-          properties:
-            action:
-              type: string
-            manifest:
-              type: string
-            successCondition:
-              type: string
-    Spec:
-      type: object
-      properties:
-        arguments:
-          type: object
-          properties:
-            parameters:
-              type: array
-              items:
-                oneOf:
-                  - $ref: "#/components/schemas/Parameter"
-        entrypoint:
-          type: string
-        serviceAccountName:
-          type: string
-        templates:
-          type: array
-          items:
-            oneOf:
-              - $ref: "#/components/schemas/Template"
     Run:
       type: object
       properties:
-        createdAt:
+        message:
           type: string
-          format: date-time
-        description:
-          type: string
-        error:
-          type: string
-        finishedAt:
-          type: string
-          format: date-time
-        id:
+          example: "Pipeline running."
+        runId:
           type: string
           format: uuid
-        metrics:
-          type: array
-          items:
-            type: object
-            properties:
-              format:
-                type: string
-              name:
-                type: string
-              nodeId:
-                type: string
-              numberValue:
-                type: number
-        name:
+    Deployments:
+      type: array
+      items:
+        $ref: "#/components/schemas/DeploymentStatus"
+    DeploymentStatus:
+      type: object
+      properties:
+        experimentId:
           type: string
-        pipelineSpec:
-          type: object
-          properties:
-            parameters:
-              type: array
-              items:
-                oneOf:
-                  - $ref: "#/components/schemas/Parameter"
-            pipelineId:
-              type: string
-            pipelineManifest:
-              type: string
-            pipelineName:
-              type: string
-            workflowManifest:
-              type: object
-              properties:
-                apiVersion:
-                  type: string
-                kind:
-                  type: string
-                metadata:
-                  type: object
-                  properties:
-                    creationTimestamp:
-                      type: string
-                      format: date-time
-                    generateName:
-                      type: string
-                spec:
-                  allOf:
-                    - $ref: "#/components/schemas/Spec"
-                status:
-                  type: object
-                  properties:
-                    finishedAt:
-                      type: string
-                      format: date-time
-                    startedAt:
-                      type: string
-                      format: date-time
-        resourceReferences:
-          type: array
-          items:
-            type: object
-            properties:
-              key:
-                type: object
-                properties:
-                  id:
-                    type: string
-                  type:
-                    type: string
-              name:
-                type: string
-              relationship:
-                type: string
-        scheduledAt:
+          format: uuid
+        name:
           type: string
         status:
           type: string
-        storageState:
+        url:
           type: string
-    RunDetail:
-      type: object
-      properties:
-        pipelineRuntime:
-          type: object
-          properties:
-            pipelineManifest:
-              type: string
-            workflowManifest:
-              type: object
-              properties:
-                apiVersion:
-                  type: string
-                kind:
-                  type: string
-                metadata:
-                  type: object
-                  properties:
-                    creationTimestamp:
-                      type: string
-                      format: date-time
-                    generateName:
-                      type: string
-                    generation:
-                      type: number
-                    labels:
-                      type: object
-                    name:
-                      type: string
-                    namespace:
-                      type: string
-                    resourceVersion:
-                      type: string
-                    selfLink:
-                      type: string
-                    uid:
-                      type: string
-            spec:
-              allOf:
-                - $ref: "#/components/schemas/Spec"
-            status:
-              type: object
-              properties:
-                finishedAt:
-                  type: string
-                  format: date-time
-                nodes:
-                  type: object
-                phase:
-                  type: string
-                startedAt:
-                  type: string
-                  format: date-time
-        run:
-          allOf:
-            - $ref: "#/components/schemas/Run"
-    Runs:
+        createdAt:
+          type: string
+          format: date-time
+    DeploymentLog:
       type: array
       items:
-        oneOf:
-          - $ref: "#/components/schemas/Run"
+        type: object
+        properties:
+          containerName:
+            type: string
+          logs:
+            type: array
+            items:
+              oneOf:
+                - $ref: "#/components/schemas/Log"
+    Log:
+      type: object
+      properties:
+        level:
+          type: string
+        message:
+          type: string
+        timestamp:
+          type: string
+    TrainingStatus:
+      type: object
+      properties:
+        status:
+          type: object
+          additionalProperties:
+            type: string
+          example:
+            c9a4e6a05-a788-4efa-b94b-693e28608618: "Succeeded"
+            caadb1d13-0666-4d84-a365-356b258e4433: "Succeeded"
   requestBodies:
-    DeployPost:
+    DeploymentPost:
       content:
         application/json:
           schema:
@@ -370,7 +178,7 @@ components:
                 type: string
               target:
                 type: string
-    TrainPost:
+    TrainingPost:
       content:
         application/json:
           schema:
@@ -387,24 +195,30 @@ components:
               target:
                 type: string
   responses:
+    DeploymentLog:
+      description: ""
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/DeploymentLog"
     Run:
       description: ""
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/Run"
-    RunDetail:
+    Deployments:
       description: ""
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/RunDetail"
-    Runs:
+            $ref: "#/components/schemas/Deployments"
+    TrainingStatus:
       description: ""
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Runs"
+            $ref: "#/components/schemas/TrainingStatus"
     Message:
       description: ""
       content:

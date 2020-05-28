@@ -1,17 +1,14 @@
 # PlatIAgro Pipelines
 
-## Introduction
-
-[![Build Status](https://travis-ci.com/platiagro/pipelines.svg?branch=master)](https://travis-ci.com/platiagro/pipelines)
-[![codecov](https://codecov.io/gh/platiagro/pipelines/branch/master/graph/badge.svg)](https://codecov.io/gh/platiagro/pipelines)
+[![Build Status](https://github.com/platiagro/pipelines/workflows/Python%20application/badge.svg)](https://github.com/platiagro/pipelines/actions?query=workflow%3A%22Python+application%22)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=platiagro_pipelines&metric=alert_status)](https://sonarcloud.io/dashboard?id=platiagro_pipelines)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Gitter](https://badges.gitter.im/platiagro/community.svg)](https://gitter.im/platiagro/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
-
-PlatIAgro Pipelines microservice.
+[![Known Vulnerabilities](https://snyk.io/test/github/platiagro/pipelines/badge.svg?targetFile=requirements.txt)](https://snyk.io/test/github/platiagro/pipelines?targetFile=requirements.txt)
 
 ## Requirements
 
-You can run the application locally or in a docker container, the requirements for each setup are listed below.
+You may start the server locally or using a docker container, the requirements for each setup are listed below.
 
 ### Local
 
@@ -23,78 +20,76 @@ You can run the application locally or in a docker container, the requirements f
 
 ## Quick Start
 
-Make sure you have all requirements installed on your computer, then you may run the server in a [docker container](#run-docker) or in your [local machine](#run-local).<br>
+Make sure you have all requirements installed on your computer. Then, you may start the server using either a [Docker container](#run-using-docker) or in your [local machine](#run-local).
 
-### Run Docker
+### Run using Docker
 
-Run it :
+Export this environment variable:
 
 ```bash
-$ docker build -t platiagro/pipelines:0.0.1 .
-$ docker run -it -p 8080:8080 platiagro/pipelines:0.0.1
+export KF_PIPELINES_ENDPOINT=0.0.0.0:31380/pipeline
+```
+
+Build a docker image that launches the API server:
+
+```bash
+docker build -t platiagro/pipelines:0.0.2 .
+```
+
+Finally, start the API server:
+
+```bash
+docker run -it -p 8080:8080 \
+  --name pipelines \
+  platiagro/pipelines:0.0.2
 ```
 
 ### Run Local:
 
-Run it :
+Export this environment variable:
 
 ```bash
-$ pip install .
-$ python -m pipelines.api
+export KF_PIPELINES_ENDPOINT=0.0.0.0:31380/pipeline
+```
+
+(Optional) Create a virtualenv:
+
+```bash
+virtualenv -p python3 venv
+. venv/bin/activate
+```
+
+Install Python modules:
+
+```bash
+pip install .
+```
+
+Then, start the API server:
+
+```bash
+python -m pipelines.api.main
 ```
 
 ## Testing
 
-Firstly install the requirements:
+Install the testing requirements:
 
 ```bash
-$ pip install .[testing]
+pip install .[testing]
 ```
 
-Then run all the tests:
+Use the following command to run all tests:
 
 ```bash
-$ pytest
+pytest
 ```
 
-## API
+Use the following command to run lint:
 
-API usage examples.
-
-### Train Pipeline
-
-method: POST
-url: /v1/pipelines
-
+```bash
+flake8
 ```
-curl -X POST \
-  http://localhost:8080/pipelines \
-  --H 'content-type: application/json' \
-  --d '{
-	"experiment_id": "b1596851-3951-42ea-bd60-6b7e9ef25d72",
-	"csv": "dataset.csv",
-	"txt": "header.txt",
-	"components": [
-		{
-			"component_name": "Filter",
-		 	"notebook_path": "Filter.ipynb",
-		},
-		{
-			"component_name": "AutoML",
-		 	"notebook_path": "AutoML.ipynb"
-            "parameters": [
-                {
-                    "name": "price",
-                    "type": "Int",
-                    "value": "3"
-                }
-            ]
-        }
-	]
-}'
-```
-
-This endpoint creates a pipeline following the components list order.
 
 ## API
 
