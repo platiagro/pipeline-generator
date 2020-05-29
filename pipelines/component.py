@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
 import base64
-import os
 import yaml
 from json import dumps
 
-from kfp import components, dsl
+from kfp import dsl
 from kubernetes import client as k8s_client
 
 from .utils import validate_notebook_path
-from .resources.templates import PAPERMILL_YAML, COMPONENT_SPEC, GRAPH
+from .resources.templates import COMPONENT_SPEC, GRAPH
 
 
 class Component():
@@ -64,21 +63,6 @@ class Component():
             return dumps(seldon_parameters.extend(self._parameters)).replace('"', '\\"')
         return dumps(seldon_parameters).replace('"', '\\"')
 
-    def _create_component_yaml(self):
-        yaml_template = yaml.load(PAPERMILL_YAML.substitute({
-            'operatorName': 'PlatIA-' + self._operator_id,
-            'parameters': self._create_parameters_papermill(),
-        }), Loader=yaml.FullLoader)
-
-        file_name = '{}.yaml'.format(self._operator_id)
-        file_path = os.path.join(os.path.dirname(
-            __file__), 'resources', file_name)
-
-        with open(file_path, 'w') as f:
-            yaml.dump(yaml_template, f)
-
-        return file_path
-
     def create_component_spec(self):
         """Create a string from component spec.
 
@@ -110,13 +94,20 @@ class Component():
 
     def create_container_op(self):
         """Create component operator from YAML file."""
-        notebook_path = self._notebook_path
 
-        fpath = self._create_component_yaml()
-        container = components.load_component_from_file(fpath)
-
-        self.container_op = container(notebook_path=notebook_path) \
-            .set_image_pull_policy('Always') \
+        container_op = dsl.ContainerOp(
+            name=self._operator_id,
+            image='platiagro/platiagro-notebook-image:0.0.2',
+            command=['sh', '-c'],
+            arguments=[
+                '''papermill {} output.ipynb -b {};
+                   bash upload-to-jupyter.sh {} {} Training.ipynb;'''.format(
+                        self._notebook_path, self._create_parameters_papermill(),
+                        self._experiment_id, self._operator_id)
+            ],
+        )
+        
+        container_op.container.set_image_pull_policy('Always') \
             .add_env_variable(k8s_client.V1EnvVar(
                 name='EXPERIMENT_ID',
                 value=self._experiment_id)) \
@@ -126,6 +117,8 @@ class Component():
             .add_env_variable(k8s_client.V1EnvVar(
                 name='RUN_ID',
                 value=dsl.RUN_ID_PLACEHOLDER))
+
+        self.container_op = container_op
 
     def build_component(self):
         image_name = 'registry.kubeflow:5000/{}'.format(self._image)
