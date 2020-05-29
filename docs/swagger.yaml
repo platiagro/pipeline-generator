@@ -11,18 +11,18 @@ info:
 servers:
   - url: http://localhost:8080
 tags:
-  - name: "Deployment"
+  - name: "Deployments"
     description: >
-      Manage deployment notebooks.
-  - name: "Training"
+      Manage deployment pipelines.
+  - name: "Trainings"
     description: >
-      Manage training notebooks.
+      Manage training pipelines.
 paths:
   /deployments:
     get:
       summary: "List all deployments."
       tags:
-        - "Deployment"
+        - "Deployments"
       responses:
         "200":
           $ref: "#/components/responses/Deployments"
@@ -30,11 +30,10 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
-  /deployment:
     post:
       summary: "Run a deployment pipeline"
       tags:
-        - "Deployment"
+        - "Deployments"
       requestBody:
         $ref: "#/components/requestBodies/DeploymentPost"
       responses:
@@ -48,9 +47,9 @@ paths:
           $ref: "#/components/responses/ServiceUnavailable"
   /deployments/logs:
     get:
-      summary: "Get logs from deployment."
+      summary: "Get logs from a deployment."
       tags:
-        - "Deployment"
+        - "Deployments"
       parameters:
         - name: name
           in: query
@@ -64,11 +63,27 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
-  /training/<run_id>:
-    get:
-      summary: "Get the training run status."
+  /trainings:
+    post:
+      summary: "Run a training pipeline"
       tags:
-        - "Training"
+        - "Trainings"
+      requestBody:
+        $ref: "#/components/requestBodies/TrainingPost"
+      responses:
+        "200":
+          $ref: "#/components/responses/Run"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /trainings/<run_id>:
+    get:
+      summary: "Get the training status of a run."
+      tags:
+        - "Trainings"
       parameters:
         - name: run_id
           in: path
@@ -78,22 +93,6 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/TrainingStatus"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
-  /training:
-    post:
-      summary: "Run a training pipeline"
-      tags:
-        - "Training"
-      requestBody:
-        $ref: "#/components/requestBodies/TrainingPost"
-      responses:
-        "200":
-          $ref: "#/components/responses/Run"
         "400":
           $ref: "#/components/responses/BadRequest"
         "500":
