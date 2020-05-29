@@ -1,17 +1,6 @@
 # -*- coding: utf-8 -*-
 from string import Template
 
-PAPERMILL_YAML = Template("""
-name: $operatorName
-description: Parametrize and execute Jupyter notebooks
-inputs:
-- { name: Notebook Path, type: STRING, default: "", description: "" }
-implementation:
-    container:
-        image: platiagro/datascience-1386e2046833-notebook-cpu:0.0.2
-        command: [ papermill, { inputValue: Notebook Path }, -, -b, $parameters]
-""")
-
 SELDON_DEPLOYMENT = Template("""{
     "apiVersion": "machinelearning.seldon.io/v1alpha2",
     "kind": "SeldonDeployment",
