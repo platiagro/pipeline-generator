@@ -19,15 +19,15 @@ def index():
     return jsonify(message='PlatIAgro Pipelines v0.0.1')
 
 
-@app.route("/training/<experiment_id>", methods=["GET"])
+@app.route("/trainings/<experiment_id>", methods=["GET"])
 def handle_get_training(experiment_id):
-    """Handles GET requests to /training/<experiment_id>."""
+    """Handles GET requests to /trainings/<experiment_id>."""
     return jsonify(get_training(experiment_id))
 
 
-@app.route('/training', methods=['POST'])
+@app.route('/trainings', methods=['POST'])
 def handle_create_training():
-    """Handles POST requests to /training."""
+    """Handles POST requests to /trainings."""
     req_data = request.get_json()
     run_id = create_training(req_data)
     return jsonify({"message": "Pipeline running.", "runId": run_id})
@@ -39,9 +39,9 @@ def handle_get_deployments():
     return jsonify(get_deployments())
 
 
-@app.route('/deployment', methods=['POST'])
+@app.route('/deployments', methods=['POST'])
 def handle_create_deployment():
-    """Handles POST requests to /deployment."""
+    """Handles POST requests to /deployments."""
     req_data = request.get_json()
     run_id = create_deployment(req_data)
     return jsonify({"message": "Pipeline running.", "runId": run_id})
