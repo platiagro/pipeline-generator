@@ -87,7 +87,8 @@ class Component():
 
         component_spec = COMPONENT_SPEC.substitute({
             'image': 'localhost:31381/{}'.format(self._image),
-            'name': self._operator_id,
+            'experimentId': self._experiment_id,
+            'operatorId': self._operator_id,
             'parameters': self._create_parameters_seldon()
         })
 
@@ -136,21 +137,13 @@ class Component():
             size='50Mi',
             modes=dsl.VOLUME_MODE_RWO
         )
-        clone = dsl.ContainerOp(
-            name='clone',
-            image='alpine/git:latest',
-            command=['sh', '-c'],
-            arguments=[
-                'git clone --depth 1 --branch feature/upload-to-jupyter https://github.com/platiagro/pipelines; cp ./pipelines/pipelines/resources/image_builder/* /workspace;'],
-            pvolumes={'/workspace': wkdirop.volume}
-        )
         export_notebook = dsl.ContainerOp(
             name='export-notebook',
             image='miguelfferraz/datascience-image',
             command=['sh', '-c'],
             arguments=[
                 'papermill {} output.ipynb --log-level DEBUG; echo CURL REQUESTS; bash upload-to-jupyter.sh {} {}; touch -t 197001010000 Model.py;'.format(notebook_path, self._experiment_id, self._operator_id)],
-            pvolumes={'/home/jovyan': clone.pvolume}
+            pvolumes={'/home/jovyan': wkdirop.volume}
         )
         export_notebook.container \
             .add_env_variable(
@@ -179,7 +172,7 @@ class Component():
             arguments=['--dockerfile', 'Dockerfile', '--context', 'dir:///workspace',
                        '--destination', image_name,
                        '--insecure', '--cache=true', '--cache-repo=registry.kubeflow:5000/cache'],
-            pvolumes={'/workspace': export_notebook.pvolume}
+            pvolumes={'/workspace': clone.pvolume}
         )
 
         self.build = build

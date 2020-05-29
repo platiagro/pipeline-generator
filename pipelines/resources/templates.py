@@ -61,8 +61,16 @@ COMPONENT_SPEC = Template("""
         "containers": [
             {
                 "image": "$image",
-                "name": "$name",
+                "name": "$operatorId",
                 "env": [
+                    {
+                        "name": "EXPERIMENT_ID",
+                        "value": "$experimentId"
+                    },
+                    {
+                        "name": "OPERATOR_ID",
+                        "value": "$operatorId"
+                    },
                     {
                         "name": "PARAMETERS",
                         "value": "$parameters"
