@@ -87,7 +87,8 @@ class Component():
 
         component_spec = COMPONENT_SPEC.substitute({
             'image': 'localhost:31381/{}'.format(self._image),
-            'name': self._operator_id,
+            'experimentId': self._experiment_id,
+            'operatorId': self._operator_id,
             'parameters': self._create_parameters_seldon()
         })
 
