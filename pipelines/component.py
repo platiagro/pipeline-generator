@@ -128,7 +128,6 @@ class Component():
 
     def build_component(self):
         image_name = 'registry.kubeflow:5000/{}'.format(self._image)
-        notebook_path = self._notebook_path
 
         wkdirop = dsl.VolumeOp(
             name='wkdirpvc' + self._operator_id,
@@ -136,21 +135,17 @@ class Component():
             size='50Mi',
             modes=dsl.VOLUME_MODE_RWO
         )
-        clone = dsl.ContainerOp(
-            name='clone',
-            image='alpine/git:latest',
-            command=['sh', '-c'],
-            arguments=[
-                'git clone --depth 1 --branch feature/upload-to-jupyter https://github.com/platiagro/pipelines; cp ./pipelines/pipelines/resources/image_builder/* /workspace;'],
-            pvolumes={'/workspace': wkdirop.volume}
-        )
         export_notebook = dsl.ContainerOp(
             name='export-notebook',
-            image='miguelfferraz/datascience-image',
+            image='platiagro/platiagro-notebook-image:0.0.2',
             command=['sh', '-c'],
             arguments=[
-                'papermill {} output.ipynb --log-level DEBUG; echo CURL REQUESTS; bash upload-to-jupyter.sh {} {}; touch -t 197001010000 Model.py;'.format(notebook_path, self._experiment_id, self._operator_id)],
-            pvolumes={'/home/jovyan': clone.pvolume}
+                '''papermill {} output.ipynb --log-level DEBUG;
+                   bash upload-to-jupyter.sh {} {} Inference.ipynb;
+                   touch -t 197001010000 Model.py;'''.format(
+                       self._notebook_path, self._experiment_id, self._operator_id)
+            ],
+            pvolumes={'/home/jovyan': wkdirop.volume}
         )
         export_notebook.container \
             .add_env_variable(
@@ -170,7 +165,9 @@ class Component():
             image='alpine/git:latest',
             command=['sh', '-c'],
             arguments=[
-                'git clone --depth 1 --branch master https://github.com/platiagro/pipelines; cp ./pipelines/pipelines/resources/image_builder/* /workspace;'],
+                '''git clone --depth 1 --branch master https://github.com/platiagro/pipelines;
+                   cp ./pipelines/pipelines/resources/image_builder/* /workspace;'''
+            ],
             pvolumes={'/workspace': export_notebook.pvolume}
         )
         build = dsl.ContainerOp(
@@ -179,7 +176,7 @@ class Component():
             arguments=['--dockerfile', 'Dockerfile', '--context', 'dir:///workspace',
                        '--destination', image_name,
                        '--insecure', '--cache=true', '--cache-repo=registry.kubeflow:5000/cache'],
-            pvolumes={'/workspace': export_notebook.pvolume}
+            pvolumes={'/workspace': clone.pvolume}
         )
 
         self.build = build
