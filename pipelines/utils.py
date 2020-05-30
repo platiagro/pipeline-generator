@@ -80,6 +80,10 @@ def validate_notebook_path(notebook_path):
 def format_pipeline_run_details(run_details):
     workflow_manifest = json.loads(
         run_details.pipeline_runtime.workflow_manifest)
+
+    if 'nodes' not in workflow_manifest['status']:
+        return {'status': {}}
+
     nodes = workflow_manifest['status']['nodes']
 
     components_status = {}
