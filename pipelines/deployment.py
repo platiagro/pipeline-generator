@@ -68,9 +68,7 @@ def get_deployments():
                         'experimentId': experiment_id,
                         'name': run.name,
                         'status': run.status,
-                        'url':
-                            'http://{}/seldon/anonymous/{}/api/v1.0/predictions'.format(
-                                ip, experiment_id),
+                        'url': f'http://{ip}/seldon/deployments/{experiment_id}/api/v1.0/predictions',
                         'createdAt': run.created_at
                     })
 
@@ -110,7 +108,7 @@ def get_deployment_log(deploy_name):
     custom_api = client.CustomObjectsApi()
     core_api = client.CoreV1Api()
     try:
-        namespace = 'anonymous'
+        namespace = 'deployments'
         api_response = custom_api.get_namespaced_custom_object(
             'machinelearning.seldon.io',
             'v1',
