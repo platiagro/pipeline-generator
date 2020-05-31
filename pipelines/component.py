@@ -151,6 +151,10 @@ class Component():
                     value=self._experiment_id)) \
             .add_env_variable(
                 k8s_client.V1EnvVar(
+                    name='OPERATOR_ID',
+                    value=self._operator_id)) \
+            .add_env_variable(
+                k8s_client.V1EnvVar(
                     name='DATASET',
                     value=self._dataset)) \
             .add_env_variable(
