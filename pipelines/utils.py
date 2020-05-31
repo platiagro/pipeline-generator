@@ -90,7 +90,6 @@ def format_pipeline_run_details(run_details):
 
     for index, component in enumerate(nodes.values()):
         if index != 0:
-            components_status[str(component['displayName'])[
-                7:]] = str(component['phase'])
+            components_status[str(component['displayName'])] = str(component['phase'])
 
     return {"status": components_status}

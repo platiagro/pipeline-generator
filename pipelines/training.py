@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import json
 from werkzeug.exceptions import BadRequest
 
 from .pipeline import Pipeline
@@ -47,10 +48,17 @@ def get_training(experiment_id):
         client = init_pipeline_client()
 
         experiment = client.get_experiment(experiment_name=experiment_id)
-        experiment_runs = client.list_runs(
-            page_size='1', sort_by='created_at desc', experiment_id=experiment.id)
 
-        run = experiment_runs.runs[0]
+        # lists runs for trainings and deployments of an experiment
+        experiment_runs = client.list_runs(
+            page_size='100', sort_by='created_at desc', experiment_id=experiment.id)
+
+        # find the latest training run
+        for run in experiment_runs.runs:
+            workflow_manifest = json.loads(
+                run.pipeline_spec.workflow_manifest)
+            if workflow_manifest['metadata']['generateName'] == 'common-pipeline-':
+                break
 
         run_id = run.id
         run_details = client.get_run(run_id)
