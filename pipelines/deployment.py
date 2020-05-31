@@ -67,7 +67,7 @@ def get_deployments():
                     res.append({
                         'experimentId': experiment_id,
                         'name': run.name,
-                        'status': run.status,
+                        'status': run.status or 'Running',
                         'url': f'http://{ip}/seldon/deployments/{experiment_id}/api/v1.0/predictions',
                         'createdAt': run.created_at
                     })
