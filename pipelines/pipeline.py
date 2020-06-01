@@ -126,7 +126,7 @@ class Pipeline():
         @dsl.pipeline(name='Common Seldon Deployment.')
         def deployment_pipeline():
             seldonserving = SELDON_DEPLOYMENT.substitute({
-                "namespace": "anonymous",
+                "namespace": "deployments",
                 "experimentId": self._experiment_id,
                 "componentSpecs": component_specs,
                 "graph": graph

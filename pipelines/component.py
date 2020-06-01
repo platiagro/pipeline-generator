@@ -100,13 +100,14 @@ class Component():
             image='platiagro/platiagro-notebook-image:0.0.2',
             command=['sh', '-c'],
             arguments=[
-                '''papermill {} output.ipynb -b {};
-                   bash upload-to-jupyter.sh {} {} Training.ipynb;'''.format(
-                        self._notebook_path, self._create_parameters_papermill(),
-                        self._experiment_id, self._operator_id)
+                f'''papermill {self._notebook_path} output.ipynb -b {self._create_parameters_papermill()};
+                    status=$?;
+                    bash upload-to-jupyter.sh {self._experiment_id} {self._operator_id} Training.ipynb;
+                    exit $status
+                 '''
             ],
         )
-        
+
         container_op.container.set_image_pull_policy('Always') \
             .add_env_variable(k8s_client.V1EnvVar(
                 name='EXPERIMENT_ID',
@@ -134,10 +135,12 @@ class Component():
             image='platiagro/platiagro-notebook-image:0.0.2',
             command=['sh', '-c'],
             arguments=[
-                '''papermill {} output.ipynb --log-level DEBUG;
-                   bash upload-to-jupyter.sh {} {} Inference.ipynb;
-                   touch -t 197001010000 Model.py;'''.format(
-                       self._notebook_path, self._experiment_id, self._operator_id)
+                f'''papermill {self._notebook_path} output.ipynb --log-level DEBUG;
+                    status=$?;
+                    bash upload-to-jupyter.sh {self._experiment_id} {self._operator_id} Inference.ipynb;
+                    touch -t 197001010000 Model.py;
+                    exit $status
+                 '''
             ],
             pvolumes={'/home/jovyan': wkdirop.volume}
         )
@@ -146,6 +149,10 @@ class Component():
                 k8s_client.V1EnvVar(
                     name='EXPERIMENT_ID',
                     value=self._experiment_id)) \
+            .add_env_variable(
+                k8s_client.V1EnvVar(
+                    name='OPERATOR_ID',
+                    value=self._operator_id)) \
             .add_env_variable(
                 k8s_client.V1EnvVar(
                     name='DATASET',

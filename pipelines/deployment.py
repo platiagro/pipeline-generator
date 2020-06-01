@@ -57,7 +57,7 @@ def get_deployments():
 
     while True:
         list_runs = kfp_client.list_runs(
-            page_token=token, sort_by='created_at', page_size=100)
+            page_token=token, sort_by='created_at desc', page_size=100)
 
         if list_runs.runs:
             for run in list_runs.runs:
@@ -67,10 +67,8 @@ def get_deployments():
                     res.append({
                         'experimentId': experiment_id,
                         'name': run.name,
-                        'status': run.status,
-                        'url':
-                            'http://{}/seldon/anonymous/{}/api/v1.0/predictions'.format(
-                                ip, experiment_id),
+                        'status': run.status or 'Running',
+                        'url': f'http://{ip}/seldon/deployments/{experiment_id}/api/v1.0/predictions',
                         'createdAt': run.created_at
                     })
 
@@ -110,7 +108,7 @@ def get_deployment_log(deploy_name):
     custom_api = client.CustomObjectsApi()
     core_api = client.CoreV1Api()
     try:
-        namespace = 'anonymous'
+        namespace = 'deployments'
         api_response = custom_api.get_namespaced_custom_object(
             'machinelearning.seldon.io',
             'v1',

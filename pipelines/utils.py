@@ -80,13 +80,20 @@ def validate_notebook_path(notebook_path):
 def format_pipeline_run_details(run_details):
     workflow_manifest = json.loads(
         run_details.pipeline_runtime.workflow_manifest)
+
+    if 'nodes' not in workflow_manifest['status']:
+        # nodes are creating, returns the tasks with no dependencies as Pending
+        template = list(filter(lambda t: t['name'] == 'common-pipeline', workflow_manifest['spec']['templates']))[0]
+        tasks = filter(lambda t: 'dependencies' not in t, template['dag']['tasks'])
+        status = dict((t['name'], 'Pending') for t in tasks)
+        return {'status': status}
+
     nodes = workflow_manifest['status']['nodes']
 
     components_status = {}
 
     for index, component in enumerate(nodes.values()):
         if index != 0:
-            components_status[str(component['displayName'])[
-                7:]] = str(component['phase'])
+            components_status[str(component['displayName'])] = str(component['phase'])
 
     return {"status": components_status}
