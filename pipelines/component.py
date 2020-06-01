@@ -35,8 +35,6 @@ class Component():
         self._parameters = parameters
         self.container_op = None
 
-        self._image = 'platia-{}:latest'.format(self._operator_id)
-
         self.next = None
         self.prev = prev
 
@@ -67,10 +65,9 @@ class Component():
         """Create a string from component spec.
 
         Returns:
-            Component spec in JSON format."""
-
+            Component spec in JSON format.
+        """
         component_spec = COMPONENT_SPEC.substitute({
-            'image': 'localhost:31381/{}'.format(self._image),
             'experimentId': self._experiment_id,
             'operatorId': self._operator_id,
             'parameters': self._create_parameters_seldon()
@@ -122,11 +119,9 @@ class Component():
         self.container_op = container_op
 
     def build_component(self):
-        image_name = 'registry.kubeflow:5000/{}'.format(self._image)
-
         wkdirop = dsl.VolumeOp(
-            name='wkdirpvc' + self._operator_id,
-            resource_name='wkdirpvc' + self._operator_id,
+            name=self._operator_id,
+            resource_name=self._operator_id,
             size='50Mi',
             modes=dsl.VOLUME_MODE_RWO
         )
@@ -161,26 +156,7 @@ class Component():
                 k8s_client.V1EnvVar(
                     name='TARGET',
                     value=self._target))
-        clone = dsl.ContainerOp(
-            name='clone',
-            image='alpine/git:latest',
-            command=['sh', '-c'],
-            arguments=[
-                '''git clone --depth 1 --branch master https://github.com/platiagro/pipelines;
-                   cp ./pipelines/pipelines/resources/image_builder/* /workspace;'''
-            ],
-            pvolumes={'/workspace': export_notebook.pvolume}
-        )
-        build = dsl.ContainerOp(
-            name='build',
-            image='gcr.io/kaniko-project/executor:latest',
-            arguments=['--dockerfile', 'Dockerfile', '--context', 'dir:///workspace',
-                       '--destination', image_name,
-                       '--insecure', '--cache=true', '--cache-repo=registry.kubeflow:5000/cache'],
-            pvolumes={'/workspace': clone.pvolume}
-        )
-
-        self.build = build
+        self.export_notebook = export_notebook
 
     def set_next_component(self, next_component):
         self.next = next_component

@@ -142,10 +142,14 @@ class Pipeline():
             component = self._first
             while component:
                 component.build_component()
-                serve_op.after(component.build)
+                serve_op.after(component.export_notebook)
                 component = component.next
 
-        compiler.Compiler().compile(deployment_pipeline, self._experiment_id + '.tar.gz')
+        try:
+            # compiler raises execption, but produces a valid yaml
+            compiler.Compiler().compile(deployment_pipeline, f'{self._experiment_id}.yaml')
+        except RuntimeError:
+            pass
 
     def run_pipeline(self):
         """Run this pipeline on the KubeFlow instance.
@@ -154,6 +158,6 @@ class Pipeline():
             KubeFlow run object.
         """
         run = self._client.run_pipeline(self._experiment.id, self._experiment_id,
-                                        self._experiment_id + '.tar.gz')
+                                        f'{self._experiment_id}.yaml')
 
         return run.id

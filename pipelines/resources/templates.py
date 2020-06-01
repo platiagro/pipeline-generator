@@ -49,7 +49,7 @@ COMPONENT_SPEC = Template("""
     "spec": {
         "containers": [
             {
-                "image": "$image",
+                "image": "platiagro/platiagro-deployment-image:0.0.2",
                 "name": "$operatorId",
                 "env": [
                     {
@@ -64,7 +64,21 @@ COMPONENT_SPEC = Template("""
                         "name": "PARAMETERS",
                         "value": "$parameters"
                     }
+                ],
+                "volumeMounts": [
+                    {
+                        "name": "workspace",
+                        "mountPath": "/app"
+                    }
                 ]
+            }
+        ],
+        "volumes": [
+            {
+                "name": "workspace",
+                "persistentVolumeClaim": {
+                    "claimName": "{{workflow.name}}-$operatorId"
+                }
             }
         ]
     }
