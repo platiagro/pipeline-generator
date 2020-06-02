@@ -198,7 +198,7 @@ components:
           schema:
             type: object
             properties:
-              experiment_id:
+              experimentId:
                 type: string
                 format: uuid
               components:
@@ -216,7 +216,7 @@ components:
           schema:
             type: object
             properties:
-              experiment_id:
+              experimentId:
                 type: string
                 format: uuid
               components:
