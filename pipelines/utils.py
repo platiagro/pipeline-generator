@@ -38,9 +38,7 @@ def load_kube_config():
 
 parameter_schema = Schema({
     'name': str,
-    'type': str,
-    'value': Or(str, int, float),
-    Optional('description'): str
+    'value': Or(str, int, float, bool),
 })
 
 

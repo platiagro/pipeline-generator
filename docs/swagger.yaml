@@ -112,6 +112,9 @@ components:
           format: uuid
     Component:
       type: object
+      required:
+        - operatorId
+        - notebookPath
       properties:
         operatorId:
           type: string
@@ -130,11 +133,8 @@ components:
           type: string
           example: "time"
         value:
-          type: string
-          example: "8"
-        type:
-          type: string
-          example: "INT"
+          type: integer
+          example: 8
     Deployments:
       type: array
       items:
