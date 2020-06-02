@@ -11,6 +11,6 @@ ENV LOG_LEVEL DEBUG
 
 EXPOSE 5000
 
-COPY Model.py /app/Model.py
+COPY *.py /app/
 
 CMD ["sh", "-c", "seldon-core-microservice \"$MODEL_NAME\" \"$API_TYPE\" --service-type \"$SERVICE_TYPE\" --persistence \"$PERSISTENCE\" --parameters \"$PARAMETERS\" --log-level \"$LOG_LEVEL\""]
