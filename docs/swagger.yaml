@@ -133,7 +133,13 @@ components:
           type: string
           example: "time"
         value:
-          type: integer
+          oneOf:
+            - type: string
+            - type: number
+            - type: integer
+            - type: boolean
+            - type: array
+            - type: object
           example: 8
     Deployments:
       type: array
