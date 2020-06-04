@@ -128,6 +128,37 @@ components:
         runId:
           type: string
           format: uuid
+    Component:
+      type: object
+      required:
+        - operatorId
+        - notebookPath
+      properties:
+        operatorId:
+          type: string
+          format: uuid
+        notebookPath:
+          type: string
+        parameters:
+          type: array
+          items:
+            anyOf:
+              - $ref: "#/components/schemas/Parameter"
+    Parameter:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "time"
+        value:
+          oneOf:
+            - type: string
+            - type: number
+            - type: integer
+            - type: boolean
+            - type: array
+            - type: object
+          example: 8
     Deployments:
       type: array
       items:
@@ -188,12 +219,14 @@ components:
           schema:
             type: object
             properties:
-              experiment_id:
+              experimentId:
                 type: string
+                format: uuid
               components:
                 type: array
                 items:
-                  type: string
+                  oneOf:
+                    - $ref: "#/components/schemas/Component"
               dataset:
                 type: string
               target:
@@ -204,12 +237,14 @@ components:
           schema:
             type: object
             properties:
-              experiment_id:
+              experimentId:
                 type: string
+                format: uuid
               components:
                 type: array
                 items:
-                  type: string
+                  oneOf:
+                    - $ref: "#/components/schemas/Component"
               dataset:
                 type: string
               target:
