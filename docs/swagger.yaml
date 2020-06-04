@@ -45,6 +45,24 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
+  /deployments/<deployment_name>:
+    delete:
+      summary: "Delete deployment pipeline."
+      tags:
+        - "Deployments"
+      parameters:
+        - name: deployment_name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/DeleteDeployment"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
   /deployments/logs:
     get:
       summary: "Get logs from a deployment."
@@ -129,6 +147,9 @@ components:
         createdAt:
           type: string
           format: date-time
+        runId:
+          type: string
+          format: uuid
     DeploymentLog:
       type: array
       items:
@@ -212,6 +233,16 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Deployments"
+    DeleteDeployment:
+      description: ""
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: "Deployment pipeline deleted."
     TrainingStatus:
       description: ""
       content:
