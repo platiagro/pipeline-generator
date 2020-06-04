@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 import base64
 import yaml
+import json
 from json import dumps
 
 from kfp import dsl
 from kubernetes import client as k8s_client
 
 from .utils import validate_notebook_path
-from .resources.templates import COMPONENT_SPEC, GRAPH
+from .resources.templates import COMPONENT_SPEC, GRAPH, POD_DEPLOYMENT, POD_DEPLOYMENT_VOLUME
 
 
 class Component():
@@ -119,43 +120,28 @@ class Component():
         self.container_op = container_op
 
     def build_component(self):
-        wkdirop = dsl.VolumeOp(
+        volume_spec = POD_DEPLOYMENT_VOLUME.substitute({
+            "namespace": "deployments",
+            'operatorId': self._operator_id,
+        })
+        dsl.ResourceOp(
             name=self._operator_id,
-            resource_name=self._operator_id,
-            size='50Mi',
-            modes=dsl.VOLUME_MODE_RWO
+            k8s_resource=json.loads(volume_spec)
         )
-        export_notebook = dsl.ContainerOp(
-            name='export-notebook',
-            image='platiagro/platiagro-notebook-image:0.0.2',
-            command=['sh', '-c'],
-            arguments=[
-                f'''papermill {self._notebook_path} output.ipynb --log-level DEBUG;
-                    status=$?;
-                    bash upload-to-jupyter.sh {self._experiment_id} {self._operator_id} Inference.ipynb;
-                    touch -t 197001010000 Model.py;
-                    exit $status
-                 '''
-            ],
-            pvolumes={'/home/jovyan': wkdirop.volume}
+        component_spec = POD_DEPLOYMENT.substitute({
+            "namespace": "deployments",
+            'notebookPath': self._notebook_path,
+            'status': "$?",
+            'experimentId': self._experiment_id,
+            'operatorId': self._operator_id,
+            'dataset': self._dataset,
+            'target': self._target,
+            'statusEnv': "$status",
+        })
+        export_notebook = dsl.ResourceOp(
+            name="export-notebook",
+            k8s_resource=json.loads(component_spec)
         )
-        export_notebook.container \
-            .add_env_variable(
-                k8s_client.V1EnvVar(
-                    name='EXPERIMENT_ID',
-                    value=self._experiment_id)) \
-            .add_env_variable(
-                k8s_client.V1EnvVar(
-                    name='OPERATOR_ID',
-                    value=self._operator_id)) \
-            .add_env_variable(
-                k8s_client.V1EnvVar(
-                    name='DATASET',
-                    value=self._dataset)) \
-            .add_env_variable(
-                k8s_client.V1EnvVar(
-                    name='TARGET',
-                    value=self._target))
         self.export_notebook = export_notebook
 
     def set_next_component(self, next_component):
