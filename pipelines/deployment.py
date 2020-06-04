@@ -37,7 +37,7 @@ def create_deployment(pipeline_parameters):
     return pipeline.run_pipeline()
 
 
-def get_deployments_runs():
+def get_deployments_run_details():
     """Get deployments run list.
 
     Returns:
@@ -76,9 +76,12 @@ def get_deployment_by_name(deployment_name):
     Returns:
         Deployment run.
     """
-    deployments = get_deployments_runs()
-    deployment = list(filter(lambda d: d['name'] == deployment_name, deployments))[0]
-
+    deployments = get_deployments_run_details()
+    try:
+        deployment = list(filter(lambda d: d['name'] == deployment_name, deployments))[0]
+    except IndexError:
+        raise NotFound("Deployment not found.") 
+    
     return deployment
 
 
@@ -92,7 +95,7 @@ def get_deployments():
 
     ip = get_cluster_ip()
 
-    deployments = get_deployments_runs()
+    deployments = get_deployments_run_details()
 
     for deployment in deployments:
         experiment_id = deployment['experimentId']
@@ -144,6 +147,10 @@ def delete_deployment(deployment_name):
     # Delete deployment run
     deployment_run_id = get_deployment_by_name(deployment_name)['runId']
     kfp_client.runs.delete_run(deployment_run_id)
+
+    return {
+        "message": "Deployment pipeline deleted."
+    }
 
 
 def get_deployment_log(deploy_name):
