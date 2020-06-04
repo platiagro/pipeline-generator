@@ -8,7 +8,7 @@ from flask_cors import CORS
 from werkzeug.exceptions import BadRequest, InternalServerError, NotFound
 
 from .training import create_training, get_training
-from .deployment import create_deployment, get_deployments, get_deployment_log
+from .deployment import create_deployment, get_deployments, get_deployment_log, delete_deployment
 
 app = Flask(__name__)
 
@@ -46,6 +46,10 @@ def handle_create_deployment():
     run_id = create_deployment(req_data)
     return jsonify({"message": "Pipeline running.", "runId": run_id})
 
+@app.route('/deployments/<experiment_id>', methods=['DELETE'])
+def handle_delete_deployment(experiment_id):
+    """Handles DELETE requests to /deploymments."""
+    return jsonify(delete_deployment(experiment_id))
 
 @app.route("/deployments/logs", methods=["GET"])
 def handle_get_deployment_log():

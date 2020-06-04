@@ -3,11 +3,12 @@ import io
 import json
 import re
 
+from kfp import dsl
 from kubernetes.client.rest import ApiException
 from kubernetes import client
 from werkzeug.exceptions import BadRequest, NotFound
 
-from .utils import load_kube_config, init_pipeline_client
+from .utils import load_kube_config, init_pipeline_client, format_deployment_pipeline, get_cluster_ip
 from .pipeline import Pipeline
 
 
@@ -36,24 +37,16 @@ def create_deployment(pipeline_parameters):
     return pipeline.run_pipeline()
 
 
-def get_deployments():
-    """Get deployments list.
+def get_deployments_runs():
+    """Get deployments run list.
 
     Returns:
-        Deployments list.
+        Seldon deployment runs list.
     """
-    res = []
     kfp_client = init_pipeline_client()
     token = ''
 
-    # Get cluster Ip
-    load_kube_config()
-
-    v1 = client.CoreV1Api()
-    service = v1.read_namespaced_service(
-        name='istio-ingressgateway', namespace='istio-system')
-
-    ip = service.status.load_balancer.ingress[0].ip
+    deployment_runs = []
 
     while True:
         list_runs = kfp_client.list_runs(
@@ -63,14 +56,9 @@ def get_deployments():
             for run in list_runs.runs:
                 manifest = run.pipeline_spec.workflow_manifest
                 if 'SeldonDeployment' in manifest:
-                    experiment_id = run.resource_references[0].name
-                    res.append({
-                        'experimentId': experiment_id,
-                        'name': run.name,
-                        'status': run.status or 'Running',
-                        'url': f'http://{ip}/seldon/deployments/{experiment_id}/api/v1.0/predictions',
-                        'createdAt': run.created_at
-                    })
+                    deployment_details = format_deployment_pipeline(run)
+                    if deployment_details:
+                        deployment_runs.append(deployment_details)
 
             token = list_runs.next_page_token
             if token is None:
@@ -78,7 +66,84 @@ def get_deployments():
         else:
             break
 
+    return deployment_runs
+
+def get_deployment_by_name(deployment_name):
+    """Get deployment run by seldon deployment name.
+    Args:
+        deployment_name (str): deployment name.
+
+    Returns:
+        Deployment run.
+    """
+    deployments = get_deployments_runs()
+    deployment = list(filter(lambda d: d['name'] == deployment_name, deployments))[0]
+
+    return deployment
+
+
+def get_deployments():
+    """Get deployments list.
+
+    Returns:
+        Deployments list.
+    """
+    res = []
+
+    ip = get_cluster_ip()
+
+    deployments = get_deployments_runs()
+
+    for deployment in deployments:
+        experiment_id = deployment['experimentId']
+
+        if deployment:
+            deployment['url'] = f'http://{ip}/seldon/deployments/{experiment_id}/api/v1.0/predictions'
+            res.append(deployment)
+
     return res
+
+
+def delete_deployment(deployment_name):
+    """Delete
+    Args:
+        deployment_name (str): deployment name.
+    """
+    kfp_client = init_pipeline_client()
+
+    # Get all SeldonDeployment resources.
+    load_kube_config()
+    custom_api = client.CustomObjectsApi()
+    ret = custom_api.list_namespaced_custom_object(
+        "machinelearning.seldon.io",
+        "v1alpha2",
+        "deployments",
+        "seldondeployments"
+    )
+    deployments = ret['items']
+
+    # Delete SeldonDeployment resource.
+    if deployments:
+        for deployment in deployments:
+            if deployment['metadata']['name'] == deployment_name:
+                @dsl.pipeline(name='Undeploy')
+                def undeploy_pipeline():
+                    undeploy = dsl.ResourceOp(
+                        name='undeploy',
+                        k8s_resource=deployment,
+                        action='delete'
+                    )
+            
+                kfp_client.create_run_from_pipeline_func(
+                    undeploy_pipeline,
+                    {},
+                    run_name='undeploy',
+                    namespace='deployment'
+                )
+
+    # Delete deployment run
+    deployment_run_id = get_deployment_by_name(deployment_name)['runId']
+    kfp_client.runs.delete_run(deployment_run_id)
 
 
 def get_deployment_log(deploy_name):
