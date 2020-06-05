@@ -124,6 +124,26 @@ def get_deployments():
     return res
 
 
+def undeploy_pipeline(deployment_resource):
+    """Delete deployment resource."""
+    kfp_client = init_pipeline_client()
+
+    @dsl.pipeline(name='Undeploy')
+    def undeploy():
+        dsl.ResourceOp(
+            name='undeploy',
+            k8s_resource=deployment_resource,
+            action='delete'
+        )
+
+    kfp_client.create_run_from_pipeline_func(
+        undeploy,
+        {},
+        run_name='undeploy',
+        namespace='deployment'
+    )
+
+
 def delete_deployment(deployment_name):
     """Delete
     Args:
@@ -146,21 +166,8 @@ def delete_deployment(deployment_name):
     if deployments:
         for deployment in deployments:
             if deployment['metadata']['name'] == deployment_name:
-                @dsl.pipeline(name='Undeploy')
-                def undeploy_pipeline(deployment=deployment):
-                    dsl.ResourceOp(
-                        name='undeploy',
-                        k8s_resource=deployment,
-                        action='delete'
-                    )
-            
-                kfp_client.create_run_from_pipeline_func(
-                    undeploy_pipeline,
-                    {},
-                    run_name='undeploy',
-                    namespace='deployment'
-                )
-
+                undeploy_pipeline(deployment)
+                
     # Delete deployment run
     deployment_run_id = get_deployment_by_name(deployment_name)['runId']
     kfp_client.runs.delete_run(deployment_run_id)
