@@ -37,7 +37,27 @@ def create_deployment(pipeline_parameters):
     return pipeline.run_pipeline()
 
 
-def get_deployments_run_details():
+def get_deployment_runs_details(runs):
+    """Get deployments run list.
+    Args:
+        Runs list.
+
+    Returns:
+        Deployment runs details.
+    """
+    deployment_runs = []
+
+    for run in runs:
+        manifest = run.pipeline_spec.workflow_manifest
+        if 'SeldonDeployment' in manifest:
+            deployment_details = format_deployment_pipeline(run)
+            if deployment_details:
+                deployment_runs.append(deployment_details) 
+
+    return deployment_runs
+
+
+def get_deployment_runs():
     """Get deployments run list.
 
     Returns:
@@ -53,20 +73,17 @@ def get_deployments_run_details():
             page_token=token, sort_by='created_at desc', page_size=100)
 
         if list_runs.runs:
-            for run in list_runs.runs:
-                manifest = run.pipeline_spec.workflow_manifest
-                if 'SeldonDeployment' in manifest:
-                    deployment_details = format_deployment_pipeline(run)
-                    if deployment_details:
-                        deployment_runs.append(deployment_details)
+            runs = get_deployment_runs_details(list_runs.runs)
+            deployment_runs.extend(runs)
 
             token = list_runs.next_page_token
             if token is None:
                 break
         else:
             break
-
+    
     return deployment_runs
+
 
 def get_deployment_by_name(deployment_name):
     """Get deployment run by seldon deployment name.
@@ -76,7 +93,7 @@ def get_deployment_by_name(deployment_name):
     Returns:
         Deployment run.
     """
-    deployments = get_deployments_run_details()
+    deployments = get_deployment_runs()
     try:
         deployment = list(filter(lambda d: d['name'] == deployment_name, deployments))[0]
     except IndexError:
@@ -95,7 +112,7 @@ def get_deployments():
 
     ip = get_cluster_ip()
 
-    deployments = get_deployments_run_details()
+    deployments = get_deployment_runs()
 
     for deployment in deployments:
         experiment_id = deployment['experimentId']
@@ -130,8 +147,8 @@ def delete_deployment(deployment_name):
         for deployment in deployments:
             if deployment['metadata']['name'] == deployment_name:
                 @dsl.pipeline(name='Undeploy')
-                def undeploy_pipeline():
-                    undeploy = dsl.ResourceOp(
+                def undeploy_pipeline(deployment=deployment):
+                    dsl.ResourceOp(
                         name='undeploy',
                         k8s_resource=deployment,
                         action='delete'

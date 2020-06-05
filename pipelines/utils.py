@@ -117,7 +117,7 @@ def format_deployment_pipeline(run):
             'createdAt': run.created_at,
             'runId': run.id
         }
-    except IndexError as e:
+    except IndexError:
         return {}
 
 
