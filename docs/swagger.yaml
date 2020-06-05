@@ -277,7 +277,7 @@ components:
             properties:
               message:
                 type: string
-                example: "Deployment pipeline deleted."
+                example: "Deployment deleted."
     TrainingStatus:
       description: ""
       content:

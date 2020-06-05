@@ -173,7 +173,7 @@ def delete_deployment(deployment_name):
     kfp_client.runs.delete_run(deployment_run_id)
 
     return {
-        "message": "Deployment pipeline deleted."
+        "message": "Deployment deleted."
     }
 
 
