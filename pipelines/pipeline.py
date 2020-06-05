@@ -116,7 +116,7 @@ class Pipeline():
                 prev = component
                 component = component.next
 
-        compiler.Compiler().compile(training_pipeline, self._experiment_id + '.tar.gz')
+        compiler.Compiler().compile(training_pipeline, self._experiment_id + '.yaml')
 
     def compile_deployment_pipeline(self):
         """Compile pipeline in a deployment format."""
