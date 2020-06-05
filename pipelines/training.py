@@ -29,6 +29,9 @@ def create_training(pipeline_parameters):
             'Invalid request body, missing the parameter: {}'.format(e)
         )
 
+    if len(components) == 0:
+        raise BadRequest('Necessary at least one component')
+
     pipeline = Pipeline(experiment_id, components, dataset, target)
     pipeline.compile_training_pipeline()
     return pipeline.run_pipeline()
