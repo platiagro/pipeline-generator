@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 import json
 import re
+import yaml
 
 from os import getenv
 
 from kfp import Client
-from kubernetes import config
+from kubernetes import config, client
 from schema import Schema, SchemaError, Or, Optional
 from werkzeug.exceptions import BadRequest, InternalServerError
 
@@ -95,3 +96,36 @@ def format_pipeline_run_details(run_details):
             components_status[str(component['displayName'])] = str(component['phase'])
 
     return {"status": components_status}
+
+
+def format_deployment_pipeline(run):
+    experiment_id = run.resource_references[0].name
+
+    workflow_manifest = json.loads(
+        run.pipeline_spec.workflow_manifest)
+
+    try:
+        template = list(filter(lambda t: t['name'] == 'deployment', workflow_manifest['spec']['templates']))[0]
+
+        deployment_manifest = yaml.load(template['resource']['manifest'])
+
+        name = deployment_manifest['metadata']['name']
+        return {
+            'experimentId': experiment_id, 
+            'name': name,
+            'status': run.status or 'Running',
+            'createdAt': run.created_at,
+            'runId': run.id
+        }
+    except IndexError:
+        return {}
+
+
+def get_cluster_ip():
+    load_kube_config()
+
+    v1 = client.CoreV1Api()
+    service = v1.read_namespaced_service(
+        name='istio-ingressgateway', namespace='istio-system')
+
+    return service.status.load_balancer.ingress[0].ip

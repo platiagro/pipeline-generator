@@ -3,11 +3,12 @@ import io
 import json
 import re
 
+from kfp import dsl
 from kubernetes.client.rest import ApiException
 from kubernetes import client
 from werkzeug.exceptions import BadRequest, NotFound
 
-from .utils import load_kube_config, init_pipeline_client
+from .utils import load_kube_config, init_pipeline_client, format_deployment_pipeline, get_cluster_ip
 from .pipeline import Pipeline
 
 
@@ -36,6 +37,71 @@ def create_deployment(pipeline_parameters):
     return pipeline.run_pipeline()
 
 
+def get_deployment_runs_details(runs):
+    """Get deployments run list.
+    Args:
+        Runs list.
+
+    Returns:
+        Deployment runs details.
+    """
+    deployment_runs = []
+
+    for run in runs:
+        manifest = run.pipeline_spec.workflow_manifest
+        if 'SeldonDeployment' in manifest:
+            deployment_details = format_deployment_pipeline(run)
+            if deployment_details:
+                deployment_runs.append(deployment_details) 
+
+    return deployment_runs
+
+
+def get_deployment_runs():
+    """Get deployments run list.
+
+    Returns:
+        Seldon deployment runs list.
+    """
+    kfp_client = init_pipeline_client()
+    token = ''
+
+    deployment_runs = []
+
+    while True:
+        list_runs = kfp_client.list_runs(
+            page_token=token, sort_by='created_at desc', page_size=100)
+
+        if list_runs.runs:
+            runs = get_deployment_runs_details(list_runs.runs)
+            deployment_runs.extend(runs)
+
+            token = list_runs.next_page_token
+            if token is None:
+                break
+        else:
+            break
+    
+    return deployment_runs
+
+
+def get_deployment_by_name(deployment_name):
+    """Get deployment run by seldon deployment name.
+    Args:
+        deployment_name (str): deployment name.
+
+    Returns:
+        Deployment run.
+    """
+    deployments = get_deployment_runs()
+    try:
+        deployment = list(filter(lambda d: d['name'] == deployment_name, deployments))[0]
+    except IndexError:
+        raise NotFound("Deployment not found.") 
+    
+    return deployment
+
+
 def get_deployments():
     """Get deployments list.
 
@@ -43,42 +109,72 @@ def get_deployments():
         Deployments list.
     """
     res = []
-    kfp_client = init_pipeline_client()
-    token = ''
 
-    # Get cluster Ip
-    load_kube_config()
+    ip = get_cluster_ip()
 
-    v1 = client.CoreV1Api()
-    service = v1.read_namespaced_service(
-        name='istio-ingressgateway', namespace='istio-system')
+    deployments = get_deployment_runs()
 
-    ip = service.status.load_balancer.ingress[0].ip
+    for deployment in deployments:
+        experiment_id = deployment['experimentId']
 
-    while True:
-        list_runs = kfp_client.list_runs(
-            page_token=token, sort_by='created_at desc', page_size=100)
-
-        if list_runs.runs:
-            for run in list_runs.runs:
-                manifest = run.pipeline_spec.workflow_manifest
-                if 'SeldonDeployment' in manifest:
-                    experiment_id = run.resource_references[0].name
-                    res.append({
-                        'experimentId': experiment_id,
-                        'name': run.name,
-                        'status': run.status or 'Running',
-                        'url': f'http://{ip}/seldon/deployments/{experiment_id}/api/v1.0/predictions',
-                        'createdAt': run.created_at
-                    })
-
-            token = list_runs.next_page_token
-            if token is None:
-                break
-        else:
-            break
+        if deployment:
+            deployment['url'] = f'http://{ip}/seldon/deployments/{experiment_id}/api/v1.0/predictions'
+            res.append(deployment)
 
     return res
+
+
+def undeploy_pipeline(deployment_resource):
+    """Delete deployment resource."""
+    kfp_client = init_pipeline_client()
+
+    @dsl.pipeline(name='Undeploy')
+    def undeploy():
+        dsl.ResourceOp(
+            name='undeploy',
+            k8s_resource=deployment_resource,
+            action='delete'
+        )
+
+    kfp_client.create_run_from_pipeline_func(
+        undeploy,
+        {},
+        run_name='undeploy',
+        namespace='deployment'
+    )
+
+
+def delete_deployment(deployment_name):
+    """Delete
+    Args:
+        deployment_name (str): deployment name.
+    """
+    kfp_client = init_pipeline_client()
+
+    # Get all SeldonDeployment resources.
+    load_kube_config()
+    custom_api = client.CustomObjectsApi()
+    ret = custom_api.list_namespaced_custom_object(
+        "machinelearning.seldon.io",
+        "v1alpha2",
+        "deployments",
+        "seldondeployments"
+    )
+    deployments = ret['items']
+
+    # Delete SeldonDeployment resource.
+    if deployments:
+        for deployment in deployments:
+            if deployment['metadata']['name'] == deployment_name:
+                undeploy_pipeline(deployment)
+                
+    # Delete deployment run
+    deployment_run_id = get_deployment_by_name(deployment_name)['runId']
+    kfp_client.runs.delete_run(deployment_run_id)
+
+    return {
+        "message": "Deployment deleted."
+    }
 
 
 def get_deployment_log(deploy_name):
