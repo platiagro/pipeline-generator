@@ -20,19 +20,17 @@ def create_deployment(pipeline_parameters):
             experiment_id (str): PlatIAgro experiment's uuid.
             components (list): list of pipeline components.
             dataset (str): dataset id.
-            target (str): target column from dataset.
     """
     try:
         experiment_id = pipeline_parameters['experimentId']
         components = pipeline_parameters['components']
         dataset = pipeline_parameters['dataset']
-        target = pipeline_parameters['target']
     except KeyError as e:
         raise BadRequest(
             'Invalid request body, missing the parameter: {}'.format(e)
         )
 
-    pipeline = Pipeline(experiment_id, components, dataset, target)
+    pipeline = Pipeline(experiment_id, components, dataset)
     pipeline.compile_deployment_pipeline()
     return pipeline.run_pipeline()
 
@@ -52,7 +50,7 @@ def get_deployment_runs_details(runs):
         if 'SeldonDeployment' in manifest:
             deployment_details = format_deployment_pipeline(run)
             if deployment_details:
-                deployment_runs.append(deployment_details) 
+                deployment_runs.append(deployment_details)
 
     return deployment_runs
 
@@ -81,7 +79,7 @@ def get_deployment_runs():
                 break
         else:
             break
-    
+
     return deployment_runs
 
 
@@ -97,8 +95,8 @@ def get_deployment_by_name(deployment_name):
     try:
         deployment = list(filter(lambda d: d['name'] == deployment_name, deployments))[0]
     except IndexError:
-        raise NotFound("Deployment not found.") 
-    
+        raise NotFound("Deployment not found.")
+
     return deployment
 
 
@@ -167,7 +165,7 @@ def delete_deployment(deployment_name):
         for deployment in deployments:
             if deployment['metadata']['name'] == deployment_name:
                 undeploy_pipeline(deployment)
-                
+
     # Delete deployment run
     deployment_run_id = get_deployment_by_name(deployment_name)['runId']
     kfp_client.runs.delete_run(deployment_run_id)
