@@ -110,6 +110,8 @@ class Pipeline():
             while component:
                 component.create_container_op()
 
+                component.container_op.container.set_memory_request("256M")
+
                 if prev:
                     component.container_op.after(prev.container_op)
 
