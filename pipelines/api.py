@@ -46,10 +46,10 @@ def handle_create_deployment():
     run_id = create_deployment(req_data)
     return jsonify({"message": "Pipeline running.", "runId": run_id})
 
-@app.route('/deployments/<experiment_id>', methods=['DELETE'])
-def handle_delete_deployment(experiment_id):
-    """Handles DELETE requests to /deploymments."""
-    return jsonify(delete_deployment(experiment_id))
+@app.route('/deployments/<deployment_name>', methods=['DELETE'])
+def handle_delete_deployment(deployment_name):
+    """Handles DELETE requests to /deploymments/<deployment_name>."""
+    return jsonify(delete_deployment(deployment_name))
 
 @app.route("/deployments/logs", methods=["GET"])
 def handle_get_deployment_log():
