@@ -14,7 +14,6 @@ def create_training(pipeline_parameters):
             experiment_id (str): PlatIAgro experiment's uuid.
             components (list): list of pipeline components.
             dataset (str): dataset id.
-            target (str): target column from dataset.
 
     Returns:
         Pipeline run id.
@@ -23,7 +22,6 @@ def create_training(pipeline_parameters):
         experiment_id = pipeline_parameters['experimentId']
         components = pipeline_parameters['components']
         dataset = pipeline_parameters['dataset']
-        target = pipeline_parameters['target']
     except KeyError as e:
         raise BadRequest(
             'Invalid request body, missing the parameter: {}'.format(e)
@@ -32,7 +30,7 @@ def create_training(pipeline_parameters):
     if len(components) == 0:
         raise BadRequest('Necessary at least one component')
 
-    pipeline = Pipeline(experiment_id, components, dataset, target)
+    pipeline = Pipeline(experiment_id, components, dataset)
     pipeline.compile_training_pipeline()
     return pipeline.run_pipeline()
 

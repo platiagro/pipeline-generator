@@ -155,10 +155,6 @@ POD_DEPLOYMENT = Template("""
                     {
                         "name": "DATASET",
                         "value": "$dataset"
-                    },
-                    {
-                        "name": "TARGET",
-                        "value": "$target"
                     }
                 ]
             }

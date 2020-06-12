@@ -15,19 +15,17 @@ class Pipeline():
     Train or deploy in KubeFlow the given pipeline.
     """
 
-    def __init__(self, experiment_id, components, dataset, target):
+    def __init__(self, experiment_id, components, dataset):
         """Create a new instance of Pipeline.
 
         Args:
             experiment_id (str): PlatIAgro experiment's uuid.
             components (list): list of pipeline components.
             dataset (str): dataset id.
-            target (str): target column from dataset.
         """
         # Instantiate pipeline's components
         self._experiment_id = experiment_id
         self._dataset = dataset
-        self._target = target
 
         self._first = self._init_components(components)
 
@@ -66,12 +64,12 @@ class Pipeline():
 
             if index == 0:
                 # store the first component from pipeline
-                first = Component(self._experiment_id, self._dataset, self._target,
+                first = Component(self._experiment_id, self._dataset,
                                   operator_id, notebook_path, parameters, None)
                 previous = first
             else:
                 current_component = Component(
-                    self._experiment_id, self._dataset, self._target, operator_id, notebook_path, parameters, previous)
+                    self._experiment_id, self._dataset, operator_id, notebook_path, parameters, previous)
                 previous.set_next_component(current_component)
                 previous = current_component
 
