@@ -133,7 +133,7 @@ POD_DEPLOYMENT = Template("""
                 "args": [
                     "papermill $notebookPath output.ipynb --log-level DEBUG; \
                      status=$status; \
-                     bash upload-to-jupyter.sh $experimentId $operatorId Inference.ipynb; \
+                     bash upload-to-jupyter.sh $experimentId $operatorId Deployment.ipynb; \
                      touch -t 197001010000 Model.py; \
                      exit $statusEnv"
                 ],

@@ -97,7 +97,7 @@ class Component():
             arguments=[
                 f'''papermill {self._notebook_path} output.ipynb -b {self._create_parameters_papermill()};
                     status=$?;
-                    bash upload-to-jupyter.sh {self._experiment_id} {self._operator_id} Training.ipynb;
+                    bash upload-to-jupyter.sh {self._experiment_id} {self._operator_id} Experiment.ipynb;
                     exit $status
                  '''
             ],
