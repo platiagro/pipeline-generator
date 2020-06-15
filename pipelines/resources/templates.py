@@ -20,6 +20,11 @@ SELDON_DEPLOYMENT = Template("""{
             "seldon.io/engine-separate-pod": "true"
         },
         "name": "$experimentId",
+        "resources": {
+            "requests": {
+                "memory": "2G"
+            }
+        },
         "predictors": [
             {
                 "componentSpecs": [$componentSpecs
@@ -143,6 +148,11 @@ POD_DEPLOYMENT = Template("""
                         "mountPath": "/home/jovyan"
                     }
                 ],
+                "resources": {
+                    "requests": {
+                        "memory": "2G"
+                    }
+                },
                 "env": [
                     {
                         "name": "EXPERIMENT_ID",
