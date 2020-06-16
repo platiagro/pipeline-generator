@@ -52,7 +52,7 @@ paths:
         - "Deployments"
       parameters:
         - in: path
-          name: deployment_id
+          name: deploymentId
           required: true
           schema:
             type: string
@@ -69,7 +69,7 @@ paths:
       tags:
         - "Deployments"
       parameters:
-        - name: deployment_id
+        - name: deploymentId
           in: path
           required: true
           schema:
@@ -115,13 +115,13 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
-  /trainings/{runId}:
+  /trainings/{trainingId}:
     get:
       summary: "Get the training status of a run."
       tags:
         - "Trainings"
       parameters:
-        - name: run_id
+        - name: trainingId
           in: path
           required: true
           schema:

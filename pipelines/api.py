@@ -18,12 +18,10 @@ def index():
     """Handles GET requests to /."""
     return jsonify(message='PlatIAgro Pipelines v0.0.1')
 
-
-@app.route('/trainings/<experiment_id>', methods=['GET'])
+@app.route('/trainings/<training_id>', methods=['GET'])
 def handle_get_training(experiment_id):
     """Handles GET requests to /trainings/<experiment_id>."""
-    return jsonify(get_training(experiment_id))
-
+    return jsonify(get_training(training_id))
 
 @app.route('/trainings', methods=['POST'])
 def handle_create_training():
