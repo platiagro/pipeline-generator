@@ -18,7 +18,7 @@ class Component():
         container_op (kfp.dsl.ContainerOp): component operator.
     """
 
-    def __init__(self, experiment_id, dataset, target, operator_id, notebook_path, parameters, prev):
+    def __init__(self, experiment_id, dataset, operator_id, notebook_path, parameters, prev):
         """Create a new instance of Component.
 
         Args:
@@ -29,7 +29,6 @@ class Component():
         """
         self._experiment_id = experiment_id
         self._dataset = dataset
-        self._target = target
         self._operator_id = operator_id
         self._notebook_path = validate_notebook_path(notebook_path)
 
@@ -42,7 +41,6 @@ class Component():
     def _create_parameters_papermill(self):
         parameters_dict = {
             'dataset': self._dataset,
-            'target': self._target,
         }
 
         if self._parameters:
@@ -54,8 +52,7 @@ class Component():
 
     def _create_parameters_seldon(self):
         seldon_parameters = [
-            {"type": "STRING", "name": "dataset", "value": self._dataset},
-            {"type": "STRING", "name": "target", "value": self._target}
+            {"type": "STRING", "name": "dataset", "value": self._dataset}
         ]
 
         if self._parameters:
@@ -100,7 +97,7 @@ class Component():
             arguments=[
                 f'''papermill {self._notebook_path} output.ipynb -b {self._create_parameters_papermill()};
                     status=$?;
-                    bash upload-to-jupyter.sh {self._experiment_id} {self._operator_id} Training.ipynb;
+                    bash upload-to-jupyter.sh {self._experiment_id} {self._operator_id} Experiment.ipynb;
                     exit $status
                  '''
             ],
@@ -135,7 +132,6 @@ class Component():
             'experimentId': self._experiment_id,
             'operatorId': self._operator_id,
             'dataset': self._dataset,
-            'target': self._target,
             'statusEnv': "$status",
         })
         export_notebook = dsl.ResourceOp(

@@ -248,8 +248,6 @@ components:
                     - $ref: "#/components/schemas/Component"
               dataset:
                 type: string
-              target:
-                type: string
     TrainingPost:
       content:
         application/json:
@@ -265,8 +263,6 @@ components:
                   oneOf:
                     - $ref: "#/components/schemas/Component"
               dataset:
-                type: string
-              target:
                 type: string
   responses:
     DeploymentLog:

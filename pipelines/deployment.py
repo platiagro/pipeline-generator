@@ -20,19 +20,17 @@ def create_deployment(pipeline_parameters):
             experiment_id (str): PlatIAgro experiment's uuid.
             components (list): list of pipeline components.
             dataset (str): dataset id.
-            target (str): target column from dataset.
     """
     try:
         experiment_id = pipeline_parameters['experimentId']
         components = pipeline_parameters['components']
         dataset = pipeline_parameters['dataset']
-        target = pipeline_parameters['target']
     except KeyError as e:
         raise BadRequest(
             'Invalid request body, missing the parameter: {}'.format(e)
         )
 
-    pipeline = Pipeline(experiment_id, components, dataset, target)
+    pipeline = Pipeline(experiment_id, components, dataset)
     pipeline.compile_deployment_pipeline()
     return pipeline.run_pipeline()
 
@@ -85,7 +83,7 @@ def get_deployments():
                 break
         else:
             break
-    
+
     return deployment_runs
 
 
@@ -100,8 +98,8 @@ def get_deployment_by_id(deployment_id):
     try:
         deployment = list(filter(lambda d: d['experimentId'] == deployment_id, get_deployments()))[0]
     except IndexError:
-        raise NotFound("Deployment not found.") 
-    
+        raise NotFound("Deployment not found.")
+
     return deployment
 
 
