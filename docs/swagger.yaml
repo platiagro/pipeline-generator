@@ -45,7 +45,7 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
-  /deployments/{deployment_id}:
+  /deployments/{deploymentId}:
     get:
       summary: "Get a deployment by uuid."
       tags:
@@ -115,7 +115,7 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
-  /trainings/{run_id}:
+  /trainings/{runId}:
     get:
       summary: "Get the training status of a run."
       tags:
