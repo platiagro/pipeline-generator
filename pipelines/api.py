@@ -19,7 +19,7 @@ def index():
     return jsonify(message='PlatIAgro Pipelines v0.0.1')
 
 @app.route('/trainings/<training_id>', methods=['GET'])
-def handle_get_training(experiment_id):
+def handle_get_training(training_id):
     """Handles GET requests to /trainings/<experiment_id>."""
     return jsonify(get_training(training_id))
 
