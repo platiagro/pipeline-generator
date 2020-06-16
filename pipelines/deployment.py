@@ -35,7 +35,7 @@ def create_deployment(pipeline_parameters):
     return pipeline.run_pipeline()
 
 
-def get_deployment_runs_details(runs):
+def get_deployment_details(runs, ip):
     """Get deployments run list.
     Args:
         Runs list.
@@ -50,28 +50,37 @@ def get_deployment_runs_details(runs):
         if 'SeldonDeployment' in manifest:
             deployment_details = format_deployment_pipeline(run)
             if deployment_details:
-                deployment_runs.append(deployment_details)
+                experiment_id = deployment_details['experimentId']
+
+                created_at = deployment_details['createdAt']
+                deployment_details['createdAt'] = str(created_at.isoformat(timespec='milliseconds')).replace('+00:00', 'Z')
+
+                deployment_details['url'] = f'http://{ip}/seldon/deployments/{experiment_id}/api/v1.0/predictions'
+
+                deployment_runs.append(deployment_details) 
 
     return deployment_runs
 
 
-def get_deployment_runs():
-    """Get deployments run list.
+def get_deployments():
+    """Get deployments list.
 
     Returns:
-        Seldon deployment runs list.
+        Deployments list.
     """
     kfp_client = init_pipeline_client()
     token = ''
 
     deployment_runs = []
 
+    ip = get_cluster_ip()
+
     while True:
         list_runs = kfp_client.list_runs(
             page_token=token, sort_by='created_at desc', page_size=100)
 
         if list_runs.runs:
-            runs = get_deployment_runs_details(list_runs.runs)
+            runs = get_deployment_details(list_runs.runs, ip)
             deployment_runs.extend(runs)
 
             token = list_runs.next_page_token
@@ -83,69 +92,26 @@ def get_deployment_runs():
     return deployment_runs
 
 
-def get_deployment_by_name(deployment_name):
-    """Get deployment run by seldon deployment name.
+def get_deployment_by_id(deployment_id):
+    """Get deployment run by seldon deployment uuid.
     Args:
-        deployment_name (str): deployment name.
+        deployment_id (str): deployment uuid.
 
     Returns:
         Deployment run.
     """
-    deployments = get_deployment_runs()
     try:
-        deployment = list(filter(lambda d: d['name'] == deployment_name, deployments))[0]
+        deployment = list(filter(lambda d: d['experimentId'] == deployment_id, get_deployments()))[0]
     except IndexError:
         raise NotFound("Deployment not found.")
 
     return deployment
 
 
-def get_deployments():
-    """Get deployments list.
-
-    Returns:
-        Deployments list.
-    """
-    res = []
-
-    ip = get_cluster_ip()
-
-    deployments = get_deployment_runs()
-
-    for deployment in deployments:
-        experiment_id = deployment['experimentId']
-
-        if deployment:
-            deployment['url'] = f'http://{ip}/seldon/deployments/{experiment_id}/api/v1.0/predictions'
-            res.append(deployment)
-
-    return res
-
-
-def undeploy_pipeline(deployment_resource):
-    """Delete deployment resource."""
-    kfp_client = init_pipeline_client()
-
-    @dsl.pipeline(name='Undeploy')
-    def undeploy():
-        dsl.ResourceOp(
-            name='undeploy',
-            k8s_resource=deployment_resource,
-            action='delete'
-        )
-
-    kfp_client.create_run_from_pipeline_func(
-        undeploy,
-        {},
-        run_name='undeploy',
-        namespace='deployment'
-    )
-
-
-def delete_deployment(deployment_name):
+def delete_deployment(deployment_id):
     """Delete
     Args:
-        deployment_name (str): deployment name.
+        deployment_id (str): deployment id.
     """
     kfp_client = init_pipeline_client()
 
@@ -163,16 +129,36 @@ def delete_deployment(deployment_name):
     # Delete SeldonDeployment resource.
     if deployments:
         for deployment in deployments:
-            if deployment['metadata']['name'] == deployment_name:
-                undeploy_pipeline(deployment)
-
+            if deployment['metadata']['name'] == deployment_id:
+                delete_deployment_resource(deployment)
+                
     # Delete deployment run
-    deployment_run_id = get_deployment_by_name(deployment_name)['runId']
+    deployment_run_id = get_deployment_by_id(deployment_id)['runId']
     kfp_client.runs.delete_run(deployment_run_id)
 
     return {
         "message": "Deployment deleted."
     }
+
+
+def delete_deployment_resource(deployment_resource):
+    """Delete deployment resource."""
+    kfp_client = init_pipeline_client()
+
+    @dsl.pipeline(name='Undeploy')
+    def undeploy():
+        dsl.ResourceOp(
+            name='undeploy',
+            k8s_resource=deployment_resource,
+            action='delete'
+        )
+
+    kfp_client.create_run_from_pipeline_func(
+        undeploy,
+        {},
+        run_name='undeploy',
+        namespace='deployment'
+    )
 
 
 def get_deployment_log(deploy_name):

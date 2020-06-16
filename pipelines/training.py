@@ -35,11 +35,11 @@ def create_training(pipeline_parameters):
     return pipeline.run_pipeline()
 
 
-def get_training(experiment_id):
+def get_training(training_id):
     """Get run details.
 
     Args:
-        experiment_id (str): PlatIA experiment_id.
+        training_id (str): PlatIA experiment_id.
 
     Returns:
        Run details.
@@ -48,7 +48,7 @@ def get_training(experiment_id):
     try:
         client = init_pipeline_client()
 
-        experiment = client.get_experiment(experiment_name=experiment_id)
+        experiment = client.get_experiment(experiment_name=training_id)
 
         # lists runs for trainings and deployments of an experiment
         experiment_runs = client.list_runs(

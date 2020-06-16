@@ -8,7 +8,7 @@ from flask_cors import CORS
 from werkzeug.exceptions import BadRequest, InternalServerError, NotFound
 
 from .training import create_training, get_training
-from .deployment import create_deployment, get_deployments, get_deployment_log, delete_deployment
+from .deployment import get_deployments, get_deployment_by_id, create_deployment, get_deployment_log, delete_deployment
 
 app = Flask(__name__)
 
@@ -18,12 +18,10 @@ def index():
     """Handles GET requests to /."""
     return jsonify(message='PlatIAgro Pipelines v0.0.1')
 
-
-@app.route("/trainings/<experiment_id>", methods=["GET"])
-def handle_get_training(experiment_id):
+@app.route('/trainings/<training_id>', methods=['GET'])
+def handle_get_training(training_id):
     """Handles GET requests to /trainings/<experiment_id>."""
-    return jsonify(get_training(experiment_id))
-
+    return jsonify(get_training(training_id))
 
 @app.route('/trainings', methods=['POST'])
 def handle_create_training():
@@ -32,12 +30,15 @@ def handle_create_training():
     run_id = create_training(req_data)
     return jsonify({"message": "Pipeline running.", "runId": run_id})
 
+@app.route('/deployments/<deployment_id>', methods=['GET'])
+def handle_get_deployment(deployment_id):
+    """Handles GET requests to /deployments/<deployment_id>."""
+    return jsonify(get_deployment_by_id(deployment_id))
 
-@app.route("/deployments", methods=["GET"])
+@app.route('/deployments', methods=["GET"])
 def handle_get_deployments():
     """Handles GET requests to /deployments."""
     return jsonify(get_deployments())
-
 
 @app.route('/deployments', methods=['POST'])
 def handle_create_deployment():
@@ -46,10 +47,10 @@ def handle_create_deployment():
     run_id = create_deployment(req_data)
     return jsonify({"message": "Pipeline running.", "runId": run_id})
 
-@app.route('/deployments/<deployment_name>', methods=['DELETE'])
-def handle_delete_deployment(deployment_name):
-    """Handles DELETE requests to /deploymments/<deployment_name>."""
-    return jsonify(delete_deployment(deployment_name))
+@app.route('/deployments/<deployment_id>', methods=['DELETE'])
+def handle_delete_deployment(deployment_id):
+    """Handles DELETE requests to /deploymments/<deployment_id>."""
+    return jsonify(delete_deployment(deployment_id))
 
 @app.route("/deployments/logs", methods=["GET"])
 def handle_get_deployment_log():
