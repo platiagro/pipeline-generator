@@ -51,7 +51,12 @@ def get_deployment_details(runs, ip):
             deployment_details = format_deployment_pipeline(run)
             if deployment_details:
                 experiment_id = deployment_details['experimentId']
+
+                created_at = deployment_details['createdAt']
+                deployment_details['createdAt'] = str(created_at.isoformat(timespec='milliseconds')).replace('+00:00', 'Z')
+
                 deployment_details['url'] = f'http://{ip}/seldon/deployments/{experiment_id}/api/v1.0/predictions'
+
                 deployment_runs.append(deployment_details) 
 
     return deployment_runs
