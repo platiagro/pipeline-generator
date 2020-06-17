@@ -110,8 +110,10 @@ def format_deployment_pipeline(run):
         deployment_manifest = yaml.load(template['resource']['manifest'])
 
         name = deployment_manifest['metadata']['name']
+        if 'deployName' in deployment_manifest['metadata']:
+            name = deployment_manifest['metadata']['deployName']
         return {
-            'experimentId': experiment_id, 
+            'experimentId': experiment_id,
             'name': name,
             'status': run.status or 'Running',
             'createdAt': run.created_at,

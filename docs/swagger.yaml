@@ -30,12 +30,20 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
-    post:
+  /deployments/{deploymentId}:
+    put:
       summary: "Run a deployment pipeline"
       tags:
         - "Deployments"
+      parameters:
+        - in: path
+          name: deploymentId
+          required: true
+          schema:
+            type: string
+            format: uuid
       requestBody:
-        $ref: "#/components/requestBodies/DeploymentPost"
+        $ref: "#/components/requestBodies/DeploymentPut"
       responses:
         "200":
           $ref: "#/components/responses/Run"
@@ -45,7 +53,6 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
-  /deployments/{deploymentId}:
     get:
       summary: "Get a deployment by uuid."
       tags:
@@ -231,15 +238,14 @@ components:
             c9a4e6a05-a788-4efa-b94b-693e28608618: "Succeeded"
             caadb1d13-0666-4d84-a365-356b258e4433: "Succeeded"
   requestBodies:
-    DeploymentPost:
+    DeploymentPut:
       content:
         application/json:
           schema:
             type: object
             properties:
-              experimentId:
+              name:
                 type: string
-                format: uuid
               components:
                 type: array
                 items:

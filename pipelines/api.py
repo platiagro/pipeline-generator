@@ -18,10 +18,12 @@ def index():
     """Handles GET requests to /."""
     return jsonify(message='PlatIAgro Pipelines v0.0.1')
 
+
 @app.route('/trainings/<training_id>', methods=['GET'])
 def handle_get_training(training_id):
     """Handles GET requests to /trainings/<experiment_id>."""
     return jsonify(get_training(training_id))
+
 
 @app.route('/trainings', methods=['POST'])
 def handle_create_training():
@@ -30,27 +32,32 @@ def handle_create_training():
     run_id = create_training(req_data)
     return jsonify({"message": "Pipeline running.", "runId": run_id})
 
+
 @app.route('/deployments/<deployment_id>', methods=['GET'])
 def handle_get_deployment(deployment_id):
     """Handles GET requests to /deployments/<deployment_id>."""
     return jsonify(get_deployment_by_id(deployment_id))
+
 
 @app.route('/deployments', methods=["GET"])
 def handle_get_deployments():
     """Handles GET requests to /deployments."""
     return jsonify(get_deployments())
 
-@app.route('/deployments', methods=['POST'])
-def handle_create_deployment():
-    """Handles POST requests to /deployments."""
+
+@app.route('/deployments/<deployment_id>', methods=['PUT'])
+def handle_create_deployment(deployment_id):
+    """Handles PUT requests to /deployments."""
     req_data = request.get_json()
-    run_id = create_deployment(req_data)
+    run_id = create_deployment(deployment_id, req_data)
     return jsonify({"message": "Pipeline running.", "runId": run_id})
+
 
 @app.route('/deployments/<deployment_id>', methods=['DELETE'])
 def handle_delete_deployment(deployment_id):
     """Handles DELETE requests to /deploymments/<deployment_id>."""
     return jsonify(delete_deployment(deployment_id))
+
 
 @app.route("/deployments/logs", methods=["GET"])
 def handle_get_deployment_log():
