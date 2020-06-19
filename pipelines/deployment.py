@@ -18,7 +18,7 @@ def create_deployment(deployment_id, pipeline_parameters):
     Args:
         deployment_id (str): deployment id.
         pipeline_parameters (dict): request body json, format:
-            name (str): deploy name.
+            name (str): deployment name.
             components (list): list of pipeline components.
             dataset (str): dataset id.
     """

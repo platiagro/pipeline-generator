@@ -20,7 +20,7 @@ class Pipeline():
 
         Args:
             experiment_id (str): PlatIAgro experiment's uuid.
-            name (str): deploy name.
+            name (str): deployment name.
             components (list): list of pipeline components.
             dataset (str): dataset id.
         """
@@ -134,7 +134,7 @@ class Pipeline():
             seldonserving = SELDON_DEPLOYMENT.substitute({
                 "namespace": "deployments",
                 "experimentId": self._experiment_id,
-                "deployName": self._name,
+                "deploymentName": self._name,
                 "componentSpecs": component_specs,
                 "graph": graph
             })
