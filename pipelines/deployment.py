@@ -12,17 +12,20 @@ from .utils import load_kube_config, init_pipeline_client, format_deployment_pip
 from .pipeline import Pipeline
 
 
-def create_deployment(pipeline_parameters):
+def create_deployment(deployment_id, pipeline_parameters):
     """Compile and run a deployment pipeline.
 
     Args:
+        deployment_id (str): deployment id.
         pipeline_parameters (dict): request body json, format:
-            experiment_id (str): PlatIAgro experiment's uuid.
+            name (str): deployment name.
             components (list): list of pipeline components.
             dataset (str): dataset id.
     """
     try:
-        experiment_id = pipeline_parameters['experimentId']
+        name = deployment_id
+        if 'name' in pipeline_parameters:
+            name = pipeline_parameters['name']
         components = pipeline_parameters['components']
         dataset = pipeline_parameters['dataset']
     except KeyError as e:
@@ -30,7 +33,7 @@ def create_deployment(pipeline_parameters):
             'Invalid request body, missing the parameter: {}'.format(e)
         )
 
-    pipeline = Pipeline(experiment_id, components, dataset)
+    pipeline = Pipeline(deployment_id, name, components, dataset)
     pipeline.compile_deployment_pipeline()
     return pipeline.run_pipeline()
 
@@ -57,7 +60,7 @@ def get_deployment_details(runs, ip):
 
                 deployment_details['url'] = f'http://{ip}/seldon/deployments/{experiment_id}/api/v1.0/predictions'
 
-                deployment_runs.append(deployment_details) 
+                deployment_runs.append(deployment_details)
 
     return deployment_runs
 
@@ -131,7 +134,7 @@ def delete_deployment(deployment_id):
         for deployment in deployments:
             if deployment['metadata']['name'] == deployment_id:
                 delete_deployment_resource(deployment)
-                
+
     # Delete deployment run
     deployment_run_id = get_deployment_by_id(deployment_id)['runId']
     kfp_client.runs.delete_run(deployment_run_id)

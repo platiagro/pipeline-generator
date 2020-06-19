@@ -9,6 +9,7 @@ SELDON_DEPLOYMENT = Template("""{
             "app": "seldon"
         },
         "name": "$experimentId",
+        "deploymentName": "$deploymentName",
         "namespace": "$namespace"
     },
     "spec": {

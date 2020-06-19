@@ -30,7 +30,7 @@ def create_training(pipeline_parameters):
     if len(components) == 0:
         raise BadRequest('Necessary at least one component')
 
-    pipeline = Pipeline(experiment_id, components, dataset)
+    pipeline = Pipeline(experiment_id, None, components, dataset)
     pipeline.compile_training_pipeline()
     return pipeline.run_pipeline()
 

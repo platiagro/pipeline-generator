@@ -15,16 +15,18 @@ class Pipeline():
     Train or deploy in KubeFlow the given pipeline.
     """
 
-    def __init__(self, experiment_id, components, dataset):
+    def __init__(self, experiment_id, name, components, dataset):
         """Create a new instance of Pipeline.
 
         Args:
             experiment_id (str): PlatIAgro experiment's uuid.
+            name (str): deployment name.
             components (list): list of pipeline components.
             dataset (str): dataset id.
         """
         # Instantiate pipeline's components
         self._experiment_id = experiment_id
+        self._name = name
         self._dataset = dataset
 
         self._first = self._init_components(components)
@@ -132,6 +134,7 @@ class Pipeline():
             seldonserving = SELDON_DEPLOYMENT.substitute({
                 "namespace": "deployments",
                 "experimentId": self._experiment_id,
+                "deploymentName": self._name,
                 "componentSpecs": component_specs,
                 "graph": graph
             })
