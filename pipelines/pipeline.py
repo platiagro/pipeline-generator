@@ -5,7 +5,7 @@ from kfp import compiler, dsl
 from werkzeug.exceptions import BadRequest
 
 from .utils import init_pipeline_client, validate_component, validate_parameters
-from .resources.templates import SELDON_DEPLOYMENT
+from .resources.templates import SELDON_DEPLOYMENT, PYTHON_DOWNLOAD_DATASET
 from .component import Component
 
 
@@ -104,6 +104,30 @@ class Pipeline():
         """Compile the pipeline in a training format."""
         @dsl.pipeline(name='Common pipeline')
         def training_pipeline():
+            wrkdirop = dsl.VolumeOp(
+                name='datasets',
+                resource_name='datasets' + self._experiment_id,
+                size='1Gi',
+                modes=dsl.VOLUME_MODE_RWO
+            )
+
+            python_script = PYTHON_DOWNLOAD_DATASET.substitute({
+                "dataset": self._dataset
+            })
+
+            download_dataset = dsl.ContainerOp(
+                name='download-dataset',
+                image='platiagro/datasets:0.0.2',
+                command=['sh', '-c'],
+                arguments=[
+                    f'''echo "{python_script}" >> /tmp/data/download-dataset.py;
+                        python /tmp/data/download-dataset.py;
+                        rm /tmp/data/download-dataset.py;
+                    '''
+                ],
+                pvolumes={'/tmp/data': wrkdirop.volume}
+            )
+
             prev = None
             component = self._first
 
