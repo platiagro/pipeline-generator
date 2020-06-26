@@ -181,16 +181,3 @@ POD_DEPLOYMENT = Template("""
         "restartPolicy": "Never"
     }
 }""")
-
-PYTHON_DOWNLOAD_DATASET = Template('''
-import pandas as pd;
-from platiagro import load_dataset;
-
-df = load_dataset(\'$dataset\');
-
-if isinstance(df, pd.DataFrame):
-    df.to_csv(\'/tmp/data/$dataset\')
-else:
-    f = open(\'/tmp/data/$dataset\', \'wb\');
-    f.write(df.getvalue());
-''')

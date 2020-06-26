@@ -5,7 +5,7 @@ from kfp import compiler, dsl
 from werkzeug.exceptions import BadRequest
 
 from .utils import init_pipeline_client, validate_component, validate_parameters
-from .resources.templates import SELDON_DEPLOYMENT, PYTHON_DOWNLOAD_DATASET
+from .resources.templates import SELDON_DEPLOYMENT
 from .component import Component
 
 
@@ -111,19 +111,13 @@ class Pipeline():
                 modes=dsl.VOLUME_MODE_RWO
             )
 
-            python_script = PYTHON_DOWNLOAD_DATASET.substitute({
-                "dataset": self._dataset
-            })
-
-            download_dataset = dsl.ContainerOp(
+            dsl.ContainerOp(
                 name='download-dataset',
                 image='platiagro/datasets:0.0.2',
-                command=['sh', '-c'],
+                command=['python', '-c'],
                 arguments=[
-                    f'''echo "{python_script}" >> /tmp/data/download-dataset.py;
-                        python /tmp/data/download-dataset.py;
-                        rm /tmp/data/download-dataset.py;
-                    '''
+                    "from platiagro import download_dataset;"
+                    f"download_dataset(\"{self._dataset}\", \"/tmp/data/{self._dataset}\");"
                 ],
                 pvolumes={'/tmp/data': wrkdirop.volume}
             )
