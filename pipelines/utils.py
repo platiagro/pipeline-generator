@@ -131,3 +131,4 @@ def get_cluster_ip():
         name='istio-ingressgateway', namespace='istio-system')
 
     return service.status.load_balancer.ingress[0].ip
+    

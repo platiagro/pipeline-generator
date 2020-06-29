@@ -8,6 +8,7 @@ from .utils import init_pipeline_client, validate_component, validate_parameters
 from .resources.templates import SELDON_DEPLOYMENT
 from .component import Component
 
+TRAINING_DATASETS_DIR = '/tmp/data'
 
 class Pipeline():
     """Represents a KubeFlow Pipeline.
@@ -104,6 +105,24 @@ class Pipeline():
         """Compile the pipeline in a training format."""
         @dsl.pipeline(name='Common pipeline')
         def training_pipeline():
+            wrkdirop = dsl.VolumeOp(
+                name='datasets',
+                resource_name='datasets' + self._experiment_id,
+                size='1Gi',
+                modes=dsl.VOLUME_MODE_RWO
+            )
+
+            download_dataset = dsl.ContainerOp(
+                name='download-dataset',
+                image='platiagro/datasets:0.0.2',
+                command=['python', '-c'],
+                arguments=[
+                    "from platiagro import download_dataset;"
+                    f"download_dataset(\"{self._dataset}\", \"{TRAINING_DATASETS_DIR}/{self._dataset}\");"
+                ],
+                pvolumes={TRAINING_DATASETS_DIR: wrkdirop.volume}
+            )
+
             prev = None
             component = self._first
 
@@ -118,6 +137,9 @@ class Pipeline():
 
                 if prev:
                     component.container_op.after(prev.container_op)
+                    component.container_op.add_pvolumes({TRAINING_DATASETS_DIR: prev.container_op.pvolume})
+                else:
+                    component.container_op.add_pvolumes({TRAINING_DATASETS_DIR: download_dataset.pvolume})
 
                 prev = component
                 component = component.next
