@@ -111,7 +111,7 @@ class Pipeline():
                 modes=dsl.VOLUME_MODE_RWO
             )
 
-            dsl.ContainerOp(
+            download_dataset = dsl.ContainerOp(
                 name='download-dataset',
                 image='platiagro/datasets:0.0.2',
                 command=['python', '-c'],
@@ -136,6 +136,9 @@ class Pipeline():
 
                 if prev:
                     component.container_op.after(prev.container_op)
+                    component.container_op.add_pvolumes({'/tmp/data': prev.container_op.pvolume})
+                else:
+                    component.container_op.add_pvolumes({'/tmp/data': download_dataset.pvolume})
 
                 prev = component
                 component = component.next
