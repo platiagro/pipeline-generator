@@ -8,6 +8,7 @@ from .utils import init_pipeline_client, validate_component, validate_parameters
 from .resources.templates import SELDON_DEPLOYMENT
 from .component import Component
 
+TRAINING_DATASETS_DIR = '/tmp/data'
 
 class Pipeline():
     """Represents a KubeFlow Pipeline.
@@ -117,9 +118,9 @@ class Pipeline():
                 command=['python', '-c'],
                 arguments=[
                     "from platiagro import download_dataset;"
-                    f"download_dataset(\"{self._dataset}\", \"/tmp/data/{self._dataset}\");"
+                    f"download_dataset(\"{self._dataset}\", \"{TRAINING_DATASETS_DIR}/{self._dataset}\");"
                 ],
-                pvolumes={'/tmp/data': wrkdirop.volume}
+                pvolumes={TRAINING_DATASETS_DIR: wrkdirop.volume}
             )
 
             prev = None
@@ -136,9 +137,9 @@ class Pipeline():
 
                 if prev:
                     component.container_op.after(prev.container_op)
-                    component.container_op.add_pvolumes({'/tmp/data': prev.container_op.pvolume})
+                    component.container_op.add_pvolumes({TRAINING_DATASETS_DIR: prev.container_op.pvolume})
                 else:
-                    component.container_op.add_pvolumes({'/tmp/data': download_dataset.pvolume})
+                    component.container_op.add_pvolumes({TRAINING_DATASETS_DIR: download_dataset.pvolume})
 
                 prev = component
                 component = component.next
