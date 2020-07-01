@@ -114,7 +114,7 @@ class Pipeline():
 
             download_dataset = dsl.ContainerOp(
                 name='download-dataset',
-                image='platiagro/datasets:0.0.2',
+                image='platiagro/datasets:0.1.0',
                 command=['python', '-c'],
                 arguments=[
                     "from platiagro import download_dataset;"

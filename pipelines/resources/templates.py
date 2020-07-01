@@ -55,7 +55,7 @@ COMPONENT_SPEC = Template("""
     "spec": {
         "containers": [
             {
-                "image": "platiagro/platiagro-deployment-image:0.0.2",
+                "image": "platiagro/platiagro-deployment-image:0.1.0",
                 "name": "$operatorId",
                 "env": [
                     {
@@ -133,7 +133,7 @@ POD_DEPLOYMENT = Template("""
     "spec": {
         "containers": [
             {
-                "image": "platiagro/platiagro-notebook-image:0.0.2",
+                "image": "platiagro/platiagro-notebook-image:0.1.0",
                 "name": "export-notebook",
                 "command": ["sh", "-c"],
                 "args": [

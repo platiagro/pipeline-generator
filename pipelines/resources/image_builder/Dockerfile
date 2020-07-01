@@ -1,4 +1,4 @@
-FROM platiagro/platiagro-notebook-image:0.0.2
+FROM platiagro/platiagro-notebook-image:0.1.0
 
 WORKDIR /app
 
