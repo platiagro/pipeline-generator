@@ -6,12 +6,12 @@ from .pipeline import Pipeline
 from .utils import init_pipeline_client, format_pipeline_run_details
 
 
-def create_training(pipeline_parameters):
+def create_training(training_id, pipeline_parameters):
     """Compile and run a training pipeline.
 
     Args:
+        training_id (str): training id.
         pipeline_parameters (dict): request body json, format:
-            experiment_id (str): PlatIAgro experiment's uuid.
             components (list): list of pipeline components.
             dataset (str): dataset id.
 
@@ -19,7 +19,6 @@ def create_training(pipeline_parameters):
         Pipeline run id.
     """
     try:
-        experiment_id = pipeline_parameters['experimentId']
         components = pipeline_parameters['components']
         dataset = pipeline_parameters['dataset']
     except KeyError as e:
@@ -30,7 +29,7 @@ def create_training(pipeline_parameters):
     if len(components) == 0:
         raise BadRequest('Necessary at least one component')
 
-    pipeline = Pipeline(experiment_id, None, components, dataset)
+    pipeline = Pipeline(training_id, None, components, dataset)
     pipeline.compile_training_pipeline()
     return pipeline.run_pipeline()
 
