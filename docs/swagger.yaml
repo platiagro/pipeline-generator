@@ -106,6 +106,48 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
+  /deployments/terminate/{deploymentId}:
+    put:
+      summary: "Terminate deployment pipeline"
+      tags:
+        - "Deployments"
+      parameters:
+        - in: path
+          name: deploymentId
+          required: true
+          schema:
+            type: string
+            format: deploymentId
+      responses:
+        "200":
+          $ref: "#/components/responses/TerminateRun"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /deployments/retry/{deploymentId}:
+    put:
+      summary: "Re-initiate a failed or terminated run"
+      tags:
+        - "Deployments"
+      parameters:
+        - in: path
+          name: deploymentId
+          required: true
+          schema:
+            type: string
+            format: deploymentId
+      responses:
+        "200":
+          $ref: "#/components/responses/TerminateRun"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
   /trainings/{trainingId}:
     put:
       summary: "Run a training pipeline"
@@ -147,6 +189,49 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
+  /trainings/terminate/{trainingId}:
+    put:
+      summary: "Terminate trainings pipeline"
+      tags:
+        - "Trainings"
+      parameters:
+        - in: path
+          name: trainingId
+          required: true
+          schema:
+            type: string
+            format: trainingId
+      responses:
+        "200":
+          $ref: "#/components/responses/TerminateRun"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /trainings/retry/{trainingId}:
+    put:
+      summary: "Re-initiate a failed or terminated run"
+      tags:
+        - "Trainings"
+      parameters:
+        - in: path
+          name: trainingId
+          required: true
+          schema:
+            type: string
+            format: trainingId
+      responses:
+        "200":
+          $ref: "#/components/responses/TerminateRun"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+
 components:
   schemas:
     Run:
@@ -158,6 +243,11 @@ components:
         runId:
           type: string
           format: uuid
+    TerminateRun:
+      type: object
+      properties:
+        message:
+          type: string
     Component:
       type: object
       required:
@@ -287,6 +377,12 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Run"
+    TerminateRun:
+      description: ""
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/TerminateRun"
     Deployments:
       description: ""
       content:

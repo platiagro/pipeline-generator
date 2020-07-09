@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import json
-from werkzeug.exceptions import BadRequest
+from werkzeug.exceptions import BadRequest, NotFound
+from kfp_server_api.api.run_service_api import RunServiceApi
 
 from .pipeline import Pipeline
 from .utils import init_pipeline_client, format_pipeline_run_details
@@ -66,3 +67,30 @@ def get_training(training_id):
         return {}
 
     return format_pipeline_run_details(run_details)
+
+
+def terminate_run_training(training_id):
+    client = init_pipeline_client()
+    experiment = client.get_experiment(experiment_name=training_id)
+    experiment_runs = client.list_runs(
+        page_size='1', sort_by='created_at desc', experiment_id=experiment.id)
+
+    for run in experiment_runs.runs:
+        client.runs.terminate_run(run_id=run.id)
+    return {}
+
+
+def retry_run_training(training_id):
+    client = init_pipeline_client()
+    experiment = client.get_experiment(experiment_name=training_id)
+    experiment_runs = client.list_runs(
+        page_size='1', sort_by='created_at desc', experiment_id=experiment.id)
+    retry = False
+
+    for run in experiment_runs.runs:
+        if 'Failed' == run.status:
+            init_pipeline_client().runs.retry_run(run_id=run.id)
+            retry = True
+    if not retry:
+        raise NotFound('There is no failed experimentation')
+    return {}
