@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from collections import defaultdict
 import json
 
 from kfp import compiler, dsl
@@ -9,6 +10,7 @@ from .resources.templates import SELDON_DEPLOYMENT
 from .component import Component
 
 TRAINING_DATASETS_DIR = '/tmp/data'
+
 
 class Pipeline():
     """Represents a KubeFlow Pipeline.
@@ -25,58 +27,56 @@ class Pipeline():
             components (list): list of pipeline components.
             dataset (str): dataset id.
         """
-        # Instantiate pipeline's components
+        self._roots = []
+        self._components = {}
+        self._edges = defaultdict(list)
+
         self._experiment_id = experiment_id
         self._name = name
         self._dataset = dataset
 
-        self._first = self._init_components(components)
-
         self._client = init_pipeline_client()
         self._experiment = self._client.create_experiment(name=experiment_id)
 
-    def _init_components(self, raw_components):
-        """Instantiate the given components.
+        for component in components:
+            self._add_component(component)
+
+    def _add_component(self, component):
+        """Instantiate a new component and add it to the pipeline.
 
         Args:
-            raw_components (list): list of component objects.
-
-        Component objects format:
-            operator_id (str): PlatIA operator UUID.
-            notebook_path (str): component notebook MinIO path.
-            parameters (list): component parameters list. (optional)
-
-        Returns:
-            The first component from this pipeline.
+            component (obj): Component object.
+            Component object format:
+                 operator_id (str): PlatIA operator UUID.
+                 notebook_path (str): component notebook MinIO path.
+                 parameters (list): component parameters list. (optional)
         """
-        previous = None
 
-        for index, component in enumerate(raw_components):
-            # check if component are in the correct format
-            if not validate_component(component):
-                raise BadRequest('Invalid component in request.')
+        if not validate_component(component):
+            raise BadRequest('Invalid component in request.')
 
-            operator_id = component.get('operatorId')
-            notebook_path = component.get('notebookPath')
+        operator_id = component.get('operatorId')
+        notebook_path = component.get('notebookPath')
 
-            parameters = component.get('parameters', None)
-            # validate parameters
-            if parameters:
-                if not validate_parameters(parameters):
-                    raise ValueError('Invalid parameter.')
+        parameters = component.get('parameters', None)
+        # validate parameters
+        if parameters:
+            if not validate_parameters(parameters):
+                raise ValueError('Invalid parameter.')
 
-            if index == 0:
-                # store the first component from pipeline
-                first = Component(self._experiment_id, self._dataset,
-                                  operator_id, notebook_path, parameters, None)
-                previous = first
-            else:
-                current_component = Component(
-                    self._experiment_id, self._dataset, operator_id, notebook_path, parameters, previous)
-                previous.set_next_component(current_component)
-                previous = current_component
+        dependencies = component.get('dependencies', [])
 
-        return first
+        if dependencies:
+            for d in dependencies:
+                self._edges[operator_id].append(d)
+        else:
+            self._roots.append(operator_id)
+
+        self._components[operator_id] = Component(
+            self._experiment_id, self._dataset,
+            operator_id, notebook_path,
+            None
+        )
 
     def _create_component_specs_json(self):
         """Create KubeFlow specs to each component from this pipeline.
@@ -123,10 +123,8 @@ class Pipeline():
                 pvolumes={TRAINING_DATASETS_DIR: wrkdirop.volume}
             )
 
-            prev = None
-            component = self._first
-
-            while component:
+            # Create container_op for all components
+            for _, component in self._components.items():
                 component.create_container_op()
 
                 component.container_op.container \
@@ -135,14 +133,17 @@ class Pipeline():
                     .set_cpu_request("500m") \
                     .set_cpu_limit("2000m")
 
-                if prev:
-                    component.container_op.after(prev.container_op)
-                    component.container_op.add_pvolumes({TRAINING_DATASETS_DIR: prev.container_op.pvolume})
-                else:
+            # Define components volumes and dependecies
+            for operator_id, component in self._components.items():
+                if operator_id in self._roots:
                     component.container_op.add_pvolumes({TRAINING_DATASETS_DIR: download_dataset.pvolume})
+                else:
+                    dependencies = self._edges[operator_id]
+                    dependencies_ops = [self._components[d].container_op for d in dependencies]
+                    component.container_op.after(*dependencies_ops)
 
-                prev = component
-                component = component.next
+                    volume = self._components[dependencies[0]].container_op.pvolume
+                    component.container_op.add_pvolumes({TRAINING_DATASETS_DIR: volume})
 
         compiler.Compiler().compile(training_pipeline, self._experiment_id + '.yaml')
 

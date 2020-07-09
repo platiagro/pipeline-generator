@@ -55,7 +55,8 @@ def validate_parameters(parameters):
 component_schema = Schema({
     'operatorId': str,
     'notebookPath': str,
-    Optional('parameters'): list
+    Optional('parameters'): list,
+    Optional('dependencies'): list
 })
 
 
@@ -131,4 +132,3 @@ def get_cluster_ip():
         name='istio-ingressgateway', namespace='istio-system')
 
     return service.status.load_balancer.ingress[0].ip
-    

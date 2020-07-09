@@ -18,14 +18,13 @@ class Component():
         container_op (kfp.dsl.ContainerOp): component operator.
     """
 
-    def __init__(self, experiment_id, dataset, operator_id, notebook_path, parameters, prev):
+    def __init__(self, experiment_id, dataset, operator_id, notebook_path, parameters):
         """Create a new instance of Component.
 
         Args:
             operator_id (str): PlatIA operator UUID.
             notebook_path (str): path to component notebook in MinIO.
             parameters (list): list of component parameters.
-            prev (Component): previous component in pipeline.
         """
         self._experiment_id = experiment_id
         self._dataset = dataset
@@ -34,9 +33,6 @@ class Component():
 
         self._parameters = parameters
         self.container_op = None
-
-        self.next = None
-        self.prev = prev
 
     def _create_parameters_papermill(self):
         parameters_dict = {
@@ -139,6 +135,3 @@ class Component():
             k8s_resource=json.loads(component_spec)
         )
         self.export_notebook = export_notebook
-
-    def set_next_component(self, next_component):
-        self.next = next_component
