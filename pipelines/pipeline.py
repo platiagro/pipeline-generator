@@ -29,7 +29,8 @@ class Pipeline():
         """
         self._roots = []
         self._components = {}
-        self._edges = defaultdict(list)
+        self._edges = defaultdict(list)             # source: [destinations]
+        self._inverted_edges = defaultdict(list)    # destination: [sources]
 
         self._experiment_id = experiment_id
         self._name = name
@@ -68,7 +69,8 @@ class Pipeline():
 
         if dependencies:
             for d in dependencies:
-                self._edges[operator_id].append(d)
+                self._edges[d].append(operator_id)
+                self._inverted_edges[operator_id].append(d)
         else:
             self._roots.append(operator_id)
 
@@ -78,6 +80,53 @@ class Pipeline():
             None
         )
 
+    def _get_component(self, operator_id):
+        """Get a component from Pipeline using operator id.
+
+        Returns: 
+            A Pipeline Component.
+        """
+        try:
+            return self._components[operator_id]
+        except KeyError:
+            raise BadRequest('Invalid dependencie.')
+
+    def _is_sequential(self):
+    """Check if the pipeline is sequential (dont have any branchs).
+    
+    Returns:
+        A boolean.    
+    """
+    if len(self._roots) > 1:
+        return False
+
+    dependencies_already_used = []
+
+    for node, dependencies in self._inverted_edges.items():
+        if len(dependencies) > 1:
+            return False
+        
+        if dependencies:
+            if dependencies[0] in dependencies_already_used:
+                return False
+            dependencies_already_used.append(dependencies[0])
+    return True
+
+
+    def _get_final_operators(self):
+        """Get the final operators of Pipeline.
+
+        Returns:
+            A list with the final ops.
+        """
+        final_operators = []
+
+        for component in self._components.keys():
+            if component not in self._edges.keys():
+                final_operators.append(component)
+
+        return final_operators
+
     def _create_component_specs_json(self):
         """Create KubeFlow specs to each component from this pipeline.
 
@@ -85,21 +134,34 @@ class Pipeline():
             A string in JSON format with the specs of each component.
         """
         specs = []
-        component = self._first
 
-        while component:
+        for _, component in self._components.items():
             specs.append(component.create_component_spec())
-            component = component.next
 
         return ",".join(specs)
-
+            
     def _create_graph_json(self):
         """Create a KubeFlow Graph in JSON format from this pipeline.
 
         Returns:
             A string in JSON format describing this pipeline.
         """
-        return self._first.create_component_graph()
+        if self._is_sequential():
+            current_operator = self._get_final_operators()[0]
+
+            graph = ""
+
+            while True:
+                component = self._get_component(current_operator)
+                graph = component.create_component_graph(graph)
+                try:
+                    current_operator = self._inverted_edges[current_operator][0]
+                except IndexError:
+                    break
+
+            return graph
+        else:
+            raise BadRequest('Non-sequential pipeline.')
 
     def compile_training_pipeline(self):
         """Compile the pipeline in a training format."""
@@ -138,11 +200,11 @@ class Pipeline():
                 if operator_id in self._roots:
                     component.container_op.add_pvolumes({TRAINING_DATASETS_DIR: download_dataset.pvolume})
                 else:
-                    dependencies = self._edges[operator_id]
-                    dependencies_ops = [self._components[d].container_op for d in dependencies]
+                    dependencies = self._inverted_edges[operator_id]
+                    dependencies_ops = [self._get_component(d).container_op for d in dependencies]
                     component.container_op.after(*dependencies_ops)
 
-                    volume = self._components[dependencies[0]].container_op.pvolume
+                    volume = self._get_component(dependencies[0]).container_op.pvolume
                     component.container_op.add_pvolumes({TRAINING_DATASETS_DIR: volume})
 
         compiler.Compiler().compile(training_pipeline, self._experiment_id + '.yaml')
@@ -169,11 +231,9 @@ class Pipeline():
                 success_condition="status.state == Available"
             ).set_timeout(300)
 
-            component = self._first
-            while component:
+            for _, component in self._components.items():
                 component.build_component()
                 serve_op.after(component.export_notebook)
-                component = component.next
 
         try:
             # compiler raises execption, but produces a valid yaml

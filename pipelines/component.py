@@ -69,16 +69,15 @@ class Component():
 
         return component_spec
 
-    def create_component_graph(self):
-        """Recursively creates a string from the component's graph
-        with its children.
-
+    def create_component_graph(self, children):
+        """Creates a string from the component's graph with its children.
+        
         Returns:
             Pipeline components graph in JSON format.
         """
         component_graph = GRAPH.substitute({
             'name': self._operator_id,
-            'children': self.next.create_component_graph() if self.next else ""
+            'children': children
         })
 
         return component_graph
