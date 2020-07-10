@@ -42,6 +42,42 @@ class Pipeline():
         for component in components:
             self._add_component(component)
 
+        #Verify if the given pipeline has cycles
+        if self._is_cyclic():
+            raise BadRequest('The given pipeline has cycles.')
+
+    def _is_cyclic_util(self, component, visited, recursion_stack): 
+        visited[component] = True
+        recursion_stack[component] = True
+  
+        # Recur for all neighbours 
+        # if any neighbour is visited and in  
+        # recursion_stack then graph is cyclic 
+        for neighbour in self._edges[component]: 
+            if visited[neighbour] == False: 
+                if self._is_cyclic_util(neighbour, visited, recursion_stack) == True: 
+                    return True
+            elif recursion_stack[neighbour] == True: 
+                return True
+  
+        recursion_stack[component] = False
+        return False
+  
+    def _is_cyclic(self):
+        """Check if pipeline has cycles.
+
+        Returns:
+            A boolean.
+        """
+        visited = dict.fromkeys(self._components.keys(), False)
+        recursion_stack = dict.fromkeys(self._components.keys(), False)
+        
+        for component in self._components.keys():
+            if visited[component] == False:
+                if self._is_cyclic_util(component, visited, recursion_stack) == True: 
+                    return True
+        return False
+
     def _add_component(self, component):
         """Instantiate a new component and add it to the pipeline.
 
@@ -92,25 +128,25 @@ class Pipeline():
             raise BadRequest('Invalid dependencie.')
 
     def _is_sequential(self):
-    """Check if the pipeline is sequential (dont have any branchs).
-    
-    Returns:
-        A boolean.    
-    """
-    if len(self._roots) > 1:
-        return False
-
-    dependencies_already_used = []
-
-    for node, dependencies in self._inverted_edges.items():
-        if len(dependencies) > 1:
-            return False
+        """Check if the pipeline is sequential (dont have any branchs).
         
-        if dependencies:
-            if dependencies[0] in dependencies_already_used:
+        Returns:
+            A boolean.    
+        """
+        if len(self._roots) > 1:
+            return False
+
+        dependencies_already_used = []
+
+        for node, dependencies in self._inverted_edges.items():
+            if len(dependencies) > 1:
                 return False
-            dependencies_already_used.append(dependencies[0])
-    return True
+            
+            if dependencies:
+                if dependencies[0] in dependencies_already_used:
+                    return False
+                dependencies_already_used.append(dependencies[0])
+        return True
 
 
     def _get_final_operators(self):
