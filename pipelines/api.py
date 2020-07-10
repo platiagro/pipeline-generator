@@ -66,7 +66,6 @@ def handle_get_deployment_log(deployment_id):
     log = get_deployment_log(deployment_id)
     return jsonify(log)
 
-
 @app.route("/deployments/terminate/<deployment_id>", methods=["PUT"])
 def handle_put_terminate_run_deloy(deployment_id):
     return jsonify(terminate_run_deployment(deployment_id=deployment_id))

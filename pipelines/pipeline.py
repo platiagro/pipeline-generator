@@ -2,6 +2,7 @@
 import json
 
 from kfp import compiler, dsl
+from kfp_server_api.api.run_service_api import RunServiceApi
 from werkzeug.exceptions import BadRequest
 
 from .utils import init_pipeline_client, validate_component, validate_parameters
