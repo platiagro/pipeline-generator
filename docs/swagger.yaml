@@ -118,7 +118,7 @@ paths:
           schema:
             type: string
       requestBody:
-        $ref: "#/components/requestBodies/TrainingPost"
+        $ref: "#/components/requestBodies/TrainingPut"
       responses:
         "200":
           $ref: "#/components/responses/Run"
@@ -169,6 +169,12 @@ components:
           format: uuid
         notebookPath:
           type: string
+        dependencies:
+          description: "List of operator ids."
+          type: array
+          items:
+            type: string
+            format: uuid
         parameters:
           type: array
           items:
@@ -258,7 +264,7 @@ components:
                     - $ref: "#/components/schemas/Component"
               dataset:
                 type: string
-    TrainingPost:
+    TrainingPut:
       content:
         application/json:
           schema:
