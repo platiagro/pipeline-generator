@@ -54,8 +54,8 @@ class Pipeline():
         # if any neighbour is visited and in  
         # recursion_stack then graph is cyclic 
         for neighbour in self._edges[component]: 
-            if visited[neighbour] == False: 
-                if self._is_cyclic_util(neighbour, visited, recursion_stack) == True: 
+            if (visited[neighbour] == False and 
+                self._is_cyclic_util(neighbour, visited, recursion_stack) == True): 
                     return True
             elif recursion_stack[neighbour] == True: 
                 return True
