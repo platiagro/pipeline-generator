@@ -55,6 +55,7 @@ def validate_parameters(parameters):
 component_schema = Schema({
     'operatorId': str,
     'notebookPath': str,
+    'commands': list,
     Optional('parameters'): list,
     Optional('dependencies'): list
 })
