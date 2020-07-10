@@ -120,7 +120,7 @@ paths:
             format: deploymentId
       responses:
         "200":
-          $ref: "#/components/responses/TerminateRun"
+          $ref: "#/components/schemas/DeploymentStatus"
         "400":
           $ref: "#/components/responses/BadRequest"
         "500":
@@ -224,7 +224,7 @@ paths:
             format: trainingId
       responses:
         "200":
-          $ref: "#/components/responses/TerminateRun"
+          $ref: "#/components/responses/TrainingStatus"
         "400":
           $ref: "#/components/responses/BadRequest"
         "500":
@@ -246,8 +246,13 @@ components:
     TerminateRun:
       type: object
       properties:
-        message:
-          type: string
+        status:
+          type: object
+          additionalProperties:
+            type: string
+          example:
+            c9a4e6a05-a788-4efa-b94b-693e28608618: "Failed"
+            caadb1d13-0666-4d84-a365-356b258e4433: "Failed"
     Component:
       type: object
       required:
