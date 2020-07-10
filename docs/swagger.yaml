@@ -129,7 +129,7 @@ paths:
           $ref: "#/components/responses/ServiceUnavailable"
   /deployments/retry/{deploymentId}:
     put:
-      summary: "Re-initiate a failed or terminated run"
+      summary: "Re-initiate a failed or terminated deployment"
       tags:
         - "Deployments"
       parameters:
@@ -212,7 +212,7 @@ paths:
           $ref: "#/components/responses/ServiceUnavailable"
   /trainings/retry/{trainingId}:
     put:
-      summary: "Re-initiate a failed or terminated run"
+      summary: "Re-initiate a failed or terminated training"
       tags:
         - "Trainings"
       parameters:
