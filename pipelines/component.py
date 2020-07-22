@@ -97,6 +97,7 @@ class Component():
             arguments=[
                 f'''papermill {self._notebook_path} output.ipynb -b {self._create_parameters_papermill()};
                     status=$?;
+                    bash save-dataset.sh;
                     bash upload-to-jupyter.sh {self._experiment_id} {self._operator_id} Experiment.ipynb;
                     exit $status
                  '''
@@ -112,7 +113,10 @@ class Component():
                 value=self._operator_id)) \
             .add_env_variable(k8s_client.V1EnvVar(
                 name='RUN_ID',
-                value=dsl.RUN_ID_PLACEHOLDER))
+                value=dsl.RUN_ID_PLACEHOLDER)) \
+            .add_env_variable(k8s_client.V1EnvVar(
+                name='DATASET',
+                value=self._dataset))
 
         self.container_op = container_op
 
