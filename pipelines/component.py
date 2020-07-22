@@ -92,8 +92,7 @@ class Component():
 
         container_op = dsl.ContainerOp(
             name=self._operator_id,
-            #image='platiagro/platiagro-notebook-image:0.1.0',
-            image='alende/kubflow:latest',
+            image='platiagro/platiagro-notebook-image:0.1.0',
             command=['sh', '-c'],
             arguments=[
                 f'''papermill {self._notebook_path} output.ipynb -b {self._create_parameters_papermill()};
