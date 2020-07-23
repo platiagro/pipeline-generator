@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: PlatIAgro Pipelines API
-  version: "0.1.0"
+  version: "1.0.0"
   description: >
     These are the docs for PlatIAgro Pipelines API.
     The endpoints below are usually accessed by the PlatIAgro Web-UI.
@@ -351,8 +351,6 @@ components:
                 items:
                   oneOf:
                     - $ref: "#/components/schemas/Component"
-              dataset:
-                type: string
     TrainingPost:
       content:
         application/json:
@@ -367,8 +365,6 @@ components:
                 items:
                   oneOf:
                     - $ref: "#/components/schemas/Component"
-              dataset:
-                type: string
   responses:
     DeploymentLog:
       description: ""

@@ -162,10 +162,6 @@ POD_DEPLOYMENT = Template("""
                     {
                         "name": "OPERATOR_ID",
                         "value": "$operatorId"
-                    },
-                    {
-                        "name": "DATASET",
-                        "value": "$dataset"
                     }
                 ]
             }

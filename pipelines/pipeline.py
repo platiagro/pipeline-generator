@@ -10,25 +10,25 @@ from .component import Component
 
 TRAINING_DATASETS_DIR = '/tmp/data'
 
+
 class Pipeline():
     """Represents a KubeFlow Pipeline.
 
     Train or deploy in KubeFlow the given pipeline.
     """
 
-    def __init__(self, experiment_id, name, components, dataset):
+    def __init__(self, experiment_id, name, components):
         """Create a new instance of Pipeline.
 
         Args:
             experiment_id (str): PlatIAgro experiment's uuid.
             name (str): deployment name.
             components (list): list of pipeline components.
-            dataset (str): dataset id.
         """
         # Instantiate pipeline's components
         self._experiment_id = experiment_id
         self._name = name
-        self._dataset = dataset
+        self._datasets = []
 
         self._first = self._init_components(components)
 
@@ -58,21 +58,30 @@ class Pipeline():
 
             operator_id = component.get('operatorId')
             notebook_path = component.get('notebookPath')
-
             parameters = component.get('parameters', None)
+
             # validate parameters
+            dataset = None
             if parameters:
                 if not validate_parameters(parameters):
                     raise ValueError('Invalid parameter.')
+                else:
+                    for parameter in parameters:
+                        parameter_name = parameter.get('name')
+                        if parameter_name == 'dataset':
+                            dataset = parameter.get('value')
+                            if dataset not in self._datasets:
+                                self._datasets.append(dataset)
+                            break
 
             if index == 0:
                 # store the first component from pipeline
-                first = Component(self._experiment_id, self._dataset,
+                first = Component(self._experiment_id, dataset,
                                   operator_id, notebook_path, parameters, None)
                 previous = first
             else:
                 current_component = Component(
-                    self._experiment_id, self._dataset, operator_id, notebook_path, parameters, previous)
+                    self._experiment_id, dataset, operator_id, notebook_path, parameters, previous)
                 previous.set_next_component(current_component)
                 previous = current_component
 
@@ -112,16 +121,18 @@ class Pipeline():
                 modes=dsl.VOLUME_MODE_RWO
             )
 
-            download_dataset = dsl.ContainerOp(
-                name='download-dataset',
-                image='platiagro/datasets:0.1.0',
-                command=['python', '-c'],
-                arguments=[
-                    "from platiagro import download_dataset;"
-                    f"download_dataset(\"{self._dataset}\", \"{TRAINING_DATASETS_DIR}/{self._dataset}\");"
-                ],
-                pvolumes={TRAINING_DATASETS_DIR: wrkdirop.volume}
-            )
+            if len(self._datasets) > 0:
+                download_args = "from platiagro import download_dataset;"
+                for dataset in self._datasets:
+                    download_args += f"download_dataset(\"{dataset}\", \"{TRAINING_DATASETS_DIR}/{dataset}\");"
+
+                dsl.ContainerOp(
+                    name='download-dataset',
+                    image='platiagro/datasets:0.1.0',
+                    command=['python', '-c'],
+                    arguments=[download_args],
+                    pvolumes={TRAINING_DATASETS_DIR: wrkdirop.volume}
+                )
 
             prev = None
             component = self._first
@@ -139,7 +150,7 @@ class Pipeline():
                     component.container_op.after(prev.container_op)
                     component.container_op.add_pvolumes({TRAINING_DATASETS_DIR: prev.container_op.pvolume})
                 else:
-                    component.container_op.add_pvolumes({TRAINING_DATASETS_DIR: download_dataset.pvolume})
+                    component.container_op.add_pvolumes({TRAINING_DATASETS_DIR: wrkdirop.volume})
 
                 prev = component
                 component = component.next
