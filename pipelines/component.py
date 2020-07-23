@@ -39,22 +39,14 @@ class Component():
         self.prev = prev
 
     def _create_parameters_papermill(self):
-        parameters_dict = {
-            'dataset': self._dataset,
-        }
-
+        parameters_dict = {}
         if self._parameters:
-
             for parameter in self._parameters:
                 parameters_dict[parameter['name']] = parameter['value']
-
         return base64.b64encode(yaml.dump(parameters_dict).encode()).decode()
 
     def _create_parameters_seldon(self):
-        seldon_parameters = [
-            {"type": "STRING", "name": "dataset", "value": self._dataset}
-        ]
-
+        seldon_parameters = []
         if self._parameters:
             return dumps(seldon_parameters.extend(self._parameters)).replace('"', '\\"')
         return dumps(seldon_parameters).replace('"', '\\"')
@@ -70,7 +62,6 @@ class Component():
             'operatorId': self._operator_id,
             'parameters': self._create_parameters_seldon()
         })
-
         return component_spec
 
     def create_component_graph(self):
@@ -135,7 +126,6 @@ class Component():
             'status': "$?",
             'experimentId': self._experiment_id,
             'operatorId': self._operator_id,
-            'dataset': self._dataset,
             'statusEnv': "$status",
         })
         export_notebook = dsl.ResourceOp(

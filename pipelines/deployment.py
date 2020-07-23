@@ -20,20 +20,18 @@ def create_deployment(deployment_id, pipeline_parameters):
         pipeline_parameters (dict): request body json, format:
             name (str): deployment name.
             components (list): list of pipeline components.
-            dataset (str): dataset id.
     """
     try:
         name = deployment_id
         if 'name' in pipeline_parameters:
             name = pipeline_parameters['name']
         components = pipeline_parameters['components']
-        dataset = pipeline_parameters['dataset']
     except KeyError as e:
         raise BadRequest(
             'Invalid request body, missing the parameter: {}'.format(e)
         )
 
-    pipeline = Pipeline(deployment_id, name, components, dataset)
+    pipeline = Pipeline(deployment_id, name, components)
     pipeline.compile_deployment_pipeline()
     return pipeline.run_pipeline()
 
