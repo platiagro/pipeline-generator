@@ -73,7 +73,8 @@ class Component():
         """
         component_graph = GRAPH.substitute({
             'name': self._operator_id,
-            'children': self.next.create_component_graph() if self.next else ""
+            'children': self.next.create_component_graph() if self.next else "",
+            'url': ''
         })
 
         return component_graph

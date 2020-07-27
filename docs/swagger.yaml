@@ -106,27 +106,6 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
-  /deployments/terminate/{deploymentId}:
-    put:
-      summary: "Terminate deployment pipeline"
-      tags:
-        - "Deployments"
-      parameters:
-        - in: path
-          name: deploymentId
-          required: true
-          schema:
-            type: string
-            format: deploymentId
-      responses:
-        "200":
-          $ref: "#/components/schemas/DeploymentStatus"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
   /deployments/retry/{deploymentId}:
     put:
       summary: "Re-initiate a failed or terminated deployment"
@@ -189,8 +168,7 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
-  /trainings/terminate/{trainingId}:
-    put:
+    delete:
       summary: "Terminate trainings pipeline"
       tags:
         - "Trainings"
@@ -246,13 +224,9 @@ components:
     TerminateRun:
       type: object
       properties:
-        status:
-          type: object
-          additionalProperties:
-            type: string
-          example:
-            c9a4e6a05-a788-4efa-b94b-693e28608618: "Failed"
-            caadb1d13-0666-4d84-a365-356b258e4433: "Failed"
+        message:
+          type: string
+          example: "Training deleted."
     Component:
       type: object
       required:

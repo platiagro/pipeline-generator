@@ -9,7 +9,7 @@ from werkzeug.exceptions import BadRequest, InternalServerError, NotFound
 
 from .training import create_training, get_training, terminate_run_training, retry_run_training
 from .deployment import get_deployments, get_deployment_by_id, create_deployment, get_deployment_log, \
-    delete_deployment, terminate_run_deployment, retry_run_deployment
+    delete_deployment, retry_run_deployment
 
 app = Flask(__name__)
 
@@ -67,17 +67,12 @@ def handle_get_deployment_log(deployment_id):
     return jsonify(log)
 
 
-@app.route("/deployments/terminate/<deployment_id>", methods=["PUT"])
-def handle_put_terminate_run_deloy(deployment_id):
-    return jsonify(terminate_run_deployment(deployment_id=deployment_id))
-
-
 @app.route("/deployments/retry/<deployment_id>", methods=["PUT"])
 def handle_post_retry_run_deloy(deployment_id):
     return jsonify(retry_run_deployment(deployment_id=deployment_id))
 
 
-@app.route("/trainings/terminate/<training_id>", methods=["PUT"])
+@app.route("/trainings/<training_id>", methods=["DELETE"])
 def handle_put_terminate_run_training(training_id):
     return jsonify(terminate_run_training(training_id=training_id))
 
