@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: PlatIAgro Pipelines API
-  version: "0.1.0"
+  version: "1.0.0"
   description: >
     These are the docs for PlatIAgro Pipelines API.
     The endpoints below are usually accessed by the PlatIAgro Web-UI.
@@ -106,6 +106,48 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
+  /deployments/terminate/{deploymentId}:
+    put:
+      summary: "Terminate deployment pipeline"
+      tags:
+        - "Deployments"
+      parameters:
+        - in: path
+          name: deploymentId
+          required: true
+          schema:
+            type: string
+            format: deploymentId
+      responses:
+        "200":
+          $ref: "#/components/schemas/DeploymentStatus"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /deployments/retry/{deploymentId}:
+    put:
+      summary: "Re-initiate a failed or terminated deployment"
+      tags:
+        - "Deployments"
+      parameters:
+        - in: path
+          name: deploymentId
+          required: true
+          schema:
+            type: string
+            format: deploymentId
+      responses:
+        "200":
+          $ref: "#/components/responses/TerminateRun"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
   /trainings/{trainingId}:
     put:
       summary: "Run a training pipeline"
@@ -147,6 +189,49 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
+  /trainings/terminate/{trainingId}:
+    put:
+      summary: "Terminate trainings pipeline"
+      tags:
+        - "Trainings"
+      parameters:
+        - in: path
+          name: trainingId
+          required: true
+          schema:
+            type: string
+            format: trainingId
+      responses:
+        "200":
+          $ref: "#/components/responses/TerminateRun"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /trainings/retry/{trainingId}:
+    put:
+      summary: "Re-initiate a failed or terminated training"
+      tags:
+        - "Trainings"
+      parameters:
+        - in: path
+          name: trainingId
+          required: true
+          schema:
+            type: string
+            format: trainingId
+      responses:
+        "200":
+          $ref: "#/components/responses/TrainingStatus"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+
 components:
   schemas:
     Run:
@@ -158,6 +243,16 @@ components:
         runId:
           type: string
           format: uuid
+    TerminateRun:
+      type: object
+      properties:
+        status:
+          type: object
+          additionalProperties:
+            type: string
+          example:
+            c9a4e6a05-a788-4efa-b94b-693e28608618: "Failed"
+            caadb1d13-0666-4d84-a365-356b258e4433: "Failed"
     Component:
       type: object
       required:
@@ -262,8 +357,6 @@ components:
                 items:
                   oneOf:
                     - $ref: "#/components/schemas/Component"
-              dataset:
-                type: string
     TrainingPut:
       content:
         application/json:
@@ -278,8 +371,6 @@ components:
                 items:
                   oneOf:
                     - $ref: "#/components/schemas/Component"
-              dataset:
-                type: string
   responses:
     DeploymentLog:
       description: ""
@@ -293,6 +384,12 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Run"
+    TerminateRun:
+      description: ""
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/TerminateRun"
     Deployments:
       description: ""
       content:

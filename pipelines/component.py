@@ -35,22 +35,14 @@ class Component():
         self.container_op = None
 
     def _create_parameters_papermill(self):
-        parameters_dict = {
-            'dataset': self._dataset,
-        }
-
+        parameters_dict = {}
         if self._parameters:
-
             for parameter in self._parameters:
                 parameters_dict[parameter['name']] = parameter['value']
-
         return base64.b64encode(yaml.dump(parameters_dict).encode()).decode()
 
     def _create_parameters_seldon(self):
-        seldon_parameters = [
-            {"type": "STRING", "name": "dataset", "value": self._dataset}
-        ]
-
+        seldon_parameters = []
         if self._parameters:
             return dumps(seldon_parameters.extend(self._parameters)).replace('"', '\\"')
         return dumps(seldon_parameters).replace('"', '\\"')
@@ -66,7 +58,6 @@ class Component():
             'operatorId': self._operator_id,
             'parameters': self._create_parameters_seldon()
         })
-
         return component_spec
 
     def create_component_graph(self, children):
@@ -92,6 +83,7 @@ class Component():
             arguments=[
                 f'''papermill {self._notebook_path} output.ipynb -b {self._create_parameters_papermill()};
                     status=$?;
+                    bash save-dataset.sh;
                     bash upload-to-jupyter.sh {self._experiment_id} {self._operator_id} Experiment.ipynb;
                     exit $status
                  '''
@@ -107,7 +99,10 @@ class Component():
                 value=self._operator_id)) \
             .add_env_variable(k8s_client.V1EnvVar(
                 name='RUN_ID',
-                value=dsl.RUN_ID_PLACEHOLDER))
+                value=dsl.RUN_ID_PLACEHOLDER)) \
+            .add_env_variable(k8s_client.V1EnvVar(
+                name='DATASET',
+                value=self._dataset))
 
         self.container_op = container_op
 
@@ -126,7 +121,6 @@ class Component():
             'status': "$?",
             'experimentId': self._experiment_id,
             'operatorId': self._operator_id,
-            'dataset': self._dataset,
             'statusEnv': "$status",
         })
         export_notebook = dsl.ResourceOp(

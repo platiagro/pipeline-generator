@@ -66,6 +66,7 @@ def handle_get_deployment_log(deployment_id):
     log = get_deployment_log(deployment_id)
     return jsonify(log)
 
+
 @app.route("/deployments/terminate/<deployment_id>", methods=["PUT"])
 def handle_put_terminate_run_deloy(deployment_id):
     return jsonify(terminate_run_deployment(deployment_id=deployment_id))
@@ -97,7 +98,7 @@ def handle_errors(err):
 def parse_args(args):
     """Takes argv and parses API options."""
     parser = argparse.ArgumentParser(
-        description="Datasets API"
+        description="Pipelines API"
     )
     parser.add_argument(
         "--port", type=int, default=8080, help="Port for HTTP server (default: 8080)"

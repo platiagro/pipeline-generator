@@ -18,14 +18,13 @@ class Pipeline():
     Train or deploy in KubeFlow the given pipeline.
     """
 
-    def __init__(self, experiment_id, name, components, dataset):
+    def __init__(self, experiment_id, name, components):
         """Create a new instance of Pipeline.
 
         Args:
             experiment_id (str): PlatIAgro experiment's uuid.
             name (str): deployment name.
             components (list): list of pipeline components.
-            dataset (str): dataset id.
         """
         self._roots = []
         self._components = {}
@@ -34,7 +33,7 @@ class Pipeline():
 
         self._experiment_id = experiment_id
         self._name = name
-        self._dataset = dataset
+        self._datasets = []
 
         self._client = init_pipeline_client()
         self._experiment = self._client.create_experiment(name=experiment_id)
@@ -42,26 +41,26 @@ class Pipeline():
         for component in components:
             self._add_component(component)
 
-        #Verify if the given pipeline has cycles
+        # Verify if the given pipeline has cycles
         if self._is_cyclic():
             raise BadRequest('The given pipeline has cycles.')
 
-    def _is_cyclic_util(self, component, visited, recursion_stack): 
+    def _is_cyclic_util(self, component, visited, recursion_stack):
         visited[component] = True
         recursion_stack[component] = True
-  
-        # Recur for all neighbours 
-        # if any neighbour is visited and in  
-        # recursion_stack then graph is cyclic 
-        for neighbour in self._edges[component]: 
-            if ((visited[neighbour] == False and 
-                self._is_cyclic_util(neighbour, visited, recursion_stack) == True) or 
-                recursion_stack[neighbour] == True): 
-                    return True
-  
+
+        # Recur for all neighbours
+        # if any neighbour is visited and in
+        # recursion_stack then graph is cyclic
+        for neighbour in self._edges[component]:
+            if ((visited[neighbour] == False and
+                self._is_cyclic_util(neighbour, visited, recursion_stack) == True) or
+                recursion_stack[neighbour] == True):
+                return True
+
         recursion_stack[component] = False
         return False
-  
+
     def _is_cyclic(self):
         """Check if pipeline has cycles.
 
@@ -70,11 +69,11 @@ class Pipeline():
         """
         visited = dict.fromkeys(self._components.keys(), False)
         recursion_stack = dict.fromkeys(self._components.keys(), False)
-        
+
         for component in self._components.keys():
             if (visited[component] == False and
-                self._is_cyclic_util(component, visited, recursion_stack) == True): 
-                    return True
+                self._is_cyclic_util(component, visited, recursion_stack) == True):
+                return True
         return False
 
     def _add_component(self, component):
@@ -95,10 +94,20 @@ class Pipeline():
         notebook_path = component.get('notebookPath')
 
         parameters = component.get('parameters', None)
+
         # validate parameters
+        dataset = None
         if parameters:
             if not validate_parameters(parameters):
                 raise ValueError('Invalid parameter.')
+            else:
+                for parameter in parameters:
+                    parameter_name = parameter.get('name')
+                    if parameter_name == 'dataset':
+                        dataset = parameter.get('value')
+                        if dataset not in self._datasets:
+                            self._datasets.append(dataset)
+                        break
 
         dependencies = component.get('dependencies', [])
 
@@ -110,15 +119,14 @@ class Pipeline():
             self._roots.append(operator_id)
 
         self._components[operator_id] = Component(
-            self._experiment_id, self._dataset,
-            operator_id, notebook_path,
-            None
+            self._experiment_id, dataset, operator_id,
+            notebook_path, parameters
         )
 
     def _get_component(self, operator_id):
         """Get a component from Pipeline using operator id.
 
-        Returns: 
+        Returns:
             A Pipeline Component.
         """
         try:
@@ -128,9 +136,9 @@ class Pipeline():
 
     def _is_sequential(self):
         """Check if the pipeline is sequential (dont have any branchs).
-        
+
         Returns:
-            A boolean.    
+            A boolean.
         """
         if len(self._roots) > 1:
             return False
@@ -140,13 +148,12 @@ class Pipeline():
         for node, dependencies in self._inverted_edges.items():
             if len(dependencies) > 1:
                 return False
-            
+
             if dependencies:
                 if dependencies[0] in dependencies_already_used:
                     return False
                 dependencies_already_used.append(dependencies[0])
         return True
-
 
     def _get_final_operators(self):
         """Get the final operators of Pipeline.
@@ -162,7 +169,7 @@ class Pipeline():
 
         return final_operators
 
-    def _create_component_specs_json(self):
+   def _create_component_specs_json(self):
         """Create KubeFlow specs to each component from this pipeline.
 
         Returns:
@@ -174,7 +181,7 @@ class Pipeline():
             specs.append(component.create_component_spec())
 
         return ",".join(specs)
-            
+
     def _create_graph_json(self):
         """Create a KubeFlow Graph in JSON format from this pipeline.
 
@@ -209,16 +216,18 @@ class Pipeline():
                 modes=dsl.VOLUME_MODE_RWO
             )
 
-            download_dataset = dsl.ContainerOp(
-                name='download-dataset',
-                image='platiagro/datasets:0.1.0',
-                command=['python', '-c'],
-                arguments=[
-                    "from platiagro import download_dataset;"
-                    f"download_dataset(\"{self._dataset}\", \"{TRAINING_DATASETS_DIR}/{self._dataset}\");"
-                ],
-                pvolumes={TRAINING_DATASETS_DIR: wrkdirop.volume}
-            )
+            if len(self._datasets) > 0:
+                download_args = "from platiagro import download_dataset;"
+                for dataset in self._datasets:
+                    download_args += f"download_dataset(\"{dataset}\", \"{TRAINING_DATASETS_DIR}/{dataset}\");"
+
+                dsl.ContainerOp(
+                    name='download-dataset',
+                    image='platiagro/datasets:0.1.0',
+                    command=['python', '-c'],
+                    arguments=[download_args],
+                    pvolumes={TRAINING_DATASETS_DIR: wrkdirop.volume}
+                )
 
             # Create container_op for all components
             for _, component in self._components.items():
