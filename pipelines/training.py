@@ -75,8 +75,10 @@ def terminate_run_training(training_id):
 
     for run in experiment_runs.runs:
         client.runs.terminate_run(run_id=run.id)
-    run_details = client.get_run(run.id)
-    return format_pipeline_run_details(run_details)
+    response = {
+        "message": "Training deleted."
+    }
+    return response
 
 
 def retry_run_training(training_id):

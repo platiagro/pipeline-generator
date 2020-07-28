@@ -258,11 +258,6 @@ def get_deployment_log(deploy_name):
             raise NotFound('The specified deployment does not exist')
         raise BadRequest('{}'.format(error_message))
 
-def terminate_run_deployment(deployment_id):
-    experiment = list(filter(lambda d: d['experimentId'] == deployment_id, get_deployments()))[0]
-    experiment = init_pipeline_client().runs.terminate_run(run_id=experiment['runId'])
-    return experiment
-
 
 def retry_run_deployment(deployment_id):
     experiment = list(filter(lambda d: d['experimentId'] == deployment_id, get_deployments()))[0]
