@@ -73,7 +73,7 @@ def handle_post_retry_run_deloy(deployment_id):
 
 
 @app.route("/trainings/<training_id>", methods=["DELETE"])
-def handle_put_terminate_run_training(training_id):
+def handle_delete_training(training_id):
     return jsonify(terminate_run_training(training_id=training_id))
 
 
