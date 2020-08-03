@@ -52,17 +52,18 @@ def validate_parameters(parameters):
         return False
 
 
-component_schema = Schema({
+operator_schema = Schema({
     'operatorId': str,
     'notebookPath': str,
     'commands': list,
-    Optional('parameters'): list
+    Optional('parameters'): list,
+    Optional('dependencies'): list
 })
 
 
-def validate_component(component):
+def validate_operator(operator):
     try:
-        component_schema.validate(component)
+        operator_schema.validate(operator)
         return True
     except SchemaError:
         return False
@@ -90,13 +91,13 @@ def format_pipeline_run_details(run_details):
 
     nodes = workflow_manifest['status']['nodes']
 
-    components_status = {}
+    operators_status = {}
 
-    for index, component in enumerate(nodes.values()):
+    for index, operator in enumerate(nodes.values()):
         if index != 0:
-            components_status[str(component['displayName'])] = str(component['phase'])
+            operators_status[str(operator['displayName'])] = str(operator['phase'])
 
-    return {"status": components_status}
+    return {"status": operators_status}
 
 
 def format_deployment_pipeline(run):
@@ -132,4 +133,3 @@ def get_cluster_ip():
         name='istio-ingressgateway', namespace='istio-system')
 
     return service.status.load_balancer.ingress[0].ip
-    

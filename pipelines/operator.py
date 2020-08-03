@@ -11,21 +11,20 @@ from .utils import validate_notebook_path
 from .resources.templates import COMPONENT_SPEC, GRAPH, POD_DEPLOYMENT, POD_DEPLOYMENT_VOLUME
 
 
-class Component():
-    """Represents a Pipeline Component.
+class Operator():
+    """Represents a Pipeline Operator.
 
     Attributes:
-        container_op (kfp.dsl.ContainerOp): component operator.
+        container_op (kfp.dsl.ContainerOp): operator ContainerOp.
     """
 
-    def __init__(self, experiment_id, dataset, operator_id, notebook_path, parameters, prev):
-        """Create a new instance of Component.
+    def __init__(self, experiment_id, dataset, operator_id, notebook_path, parameters):
+        """Create a new instance of Operator.
 
         Args:
             operator_id (str): PlatIA operator UUID.
-            notebook_path (str): path to component notebook in MinIO.
-            parameters (list): list of component parameters.
-            prev (Component): previous component in pipeline.
+            notebook_path (str): path to operator notebook in MinIO.
+            parameters (list): list of operator parameters.
         """
         self._experiment_id = experiment_id
         self._dataset = dataset
@@ -34,9 +33,6 @@ class Component():
 
         self._parameters = parameters
         self.container_op = None
-
-        self.next = None
-        self.prev = prev
 
     def _create_parameters_papermill(self):
         parameters_dict = {}
@@ -51,36 +47,34 @@ class Component():
             return dumps(seldon_parameters.extend(self._parameters)).replace('"', '\\"')
         return dumps(seldon_parameters).replace('"', '\\"')
 
-    def create_component_spec(self):
-        """Create a string from component spec.
+    def create_operator_spec(self):
+        """Create a string from operator spec.
 
         Returns:
-            Component spec in JSON format.
+            Operator spec in JSON format.
         """
-        component_spec = COMPONENT_SPEC.substitute({
+        operator_spec = COMPONENT_SPEC.substitute({
             'experimentId': self._experiment_id,
             'operatorId': self._operator_id,
             'parameters': self._create_parameters_seldon()
         })
-        return component_spec
+        return operator_spec
 
-    def create_component_graph(self):
-        """Recursively creates a string from the component's graph
-        with its children.
+    def create_operator_graph(self, children):
+        """Creates a string from the operator's graph with its children.
 
         Returns:
-            Pipeline components graph in JSON format.
+            Pipeline operators graph in JSON format.
         """
-        component_graph = GRAPH.substitute({
+        operator_graph = GRAPH.substitute({
             'name': self._operator_id,
-            'children': self.next.create_component_graph() if self.next else "",
-            'url': ''
+            'children': children
         })
 
-        return component_graph
+        return operator_graph
 
     def create_container_op(self):
-        """Create component operator from YAML file."""
+        """Create operator operator from YAML file."""
 
         container_op = dsl.ContainerOp(
             name=self._operator_id,
@@ -112,7 +106,7 @@ class Component():
 
         self.container_op = container_op
 
-    def build_component(self):
+    def build_operator(self):
         volume_spec = POD_DEPLOYMENT_VOLUME.substitute({
             "namespace": "deployments",
             'operatorId': self._operator_id,
@@ -121,7 +115,7 @@ class Component():
             name=self._operator_id,
             k8s_resource=json.loads(volume_spec)
         )
-        component_spec = POD_DEPLOYMENT.substitute({
+        operator_spec = POD_DEPLOYMENT.substitute({
             "namespace": "deployments",
             'notebookPath': self._notebook_path,
             'status': "$?",
@@ -131,9 +125,6 @@ class Component():
         })
         export_notebook = dsl.ResourceOp(
             name="export-notebook",
-            k8s_resource=json.loads(component_spec)
+            k8s_resource=json.loads(operator_spec)
         )
         self.export_notebook = export_notebook
-
-    def set_next_component(self, next_component):
-        self.next = next_component

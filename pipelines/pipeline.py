@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
+from collections import defaultdict
 import json
 
 from kfp import compiler, dsl
 from werkzeug.exceptions import BadRequest
 
-from .utils import init_pipeline_client, validate_component, validate_parameters
+from .utils import init_pipeline_client, validate_operator, validate_parameters
 from .resources.templates import SELDON_DEPLOYMENT
-from .component import Component
+from .operator import Operator
 
 TRAINING_DATASETS_DIR = '/tmp/data'
 
@@ -17,88 +18,175 @@ class Pipeline():
     Train or deploy in KubeFlow the given pipeline.
     """
 
-    def __init__(self, experiment_id, name, components):
+    def __init__(self, experiment_id, name, operators):
         """Create a new instance of Pipeline.
 
         Args:
             experiment_id (str): PlatIAgro experiment's uuid.
             name (str): deployment name.
-            components (list): list of pipeline components.
+            operators (list): list of pipeline operators.
         """
-        # Instantiate pipeline's components
+        self._roots = []
+        self._operators = {}
+        self._edges = defaultdict(list)             # source: [destinations]
+        self._inverted_edges = defaultdict(list)    # destination: [sources]
+
         self._experiment_id = experiment_id
         self._name = name
         self._datasets = []
 
-        self._first = self._init_components(components)
-
         self._client = init_pipeline_client()
         self._experiment = self._client.create_experiment(name=experiment_id)
 
-    def _init_components(self, raw_components):
-        """Instantiate the given components.
+        for operator in operators:
+            self._add_operator(operator)
+
+        # Verify if the given pipeline has cycles
+        if self._is_cyclic():
+            raise BadRequest('The given pipeline has cycles.')
+
+    def _is_cyclic_util(self, operator, visited, recursion_stack):
+        visited[operator] = True
+        recursion_stack[operator] = True
+
+        # Recur for all neighbours
+        # if any neighbour is visited and in
+        # recursion_stack then graph is cyclic
+        for neighbour in self._edges[operator]:
+            if ((visited[neighbour] is False and
+                 self._is_cyclic_util(neighbour, visited, recursion_stack) is True) or
+                    recursion_stack[neighbour] is True):
+                return True
+
+        recursion_stack[operator] = False
+        return False
+
+    def _is_cyclic(self):
+        """Check if pipeline has cycles.
+
+        Returns:
+            A boolean.
+        """
+        visited = dict.fromkeys(self._operators.keys(), False)
+        recursion_stack = dict.fromkeys(self._operators.keys(), False)
+
+        for operator in self._operators.keys():
+            if (visited[operator] is False and
+                    self._is_cyclic_util(operator, visited, recursion_stack) is True):
+                return True
+        return False
+
+    def _add_dataset(self, parameters):
+        """Add dataset.
 
         Args:
-            raw_components (list): list of component objects.
-
-        Component objects format:
-            operator_id (str): PlatIA operator UUID.
-            notebook_path (str): component notebook MinIO path.
-            parameters (list): component parameters list. (optional)
-
-        Returns:
-            The first component from this pipeline.
+            parameters (obj): Operator parameters.
         """
-        previous = None
+        for parameter in parameters:
+            parameter_name = parameter.get('name')
+            if parameter_name == 'dataset':
+                dataset = parameter.get('value')
+                if dataset not in self._datasets:
+                    self._datasets.append(dataset)
+                break
 
-        for index, component in enumerate(raw_components):
-            # check if component are in the correct format
-            if not validate_component(component):
-                raise BadRequest('Invalid component in request.')
+    def _add_operator(self, operator):
+        """Instantiate a new operator and add it to the pipeline.
 
-            operator_id = component.get('operatorId')
-            notebook_path = component.get('notebookPath')
-            parameters = component.get('parameters', None)
+        Args:
+            operator (obj): Operator object.
+            Operator object format:
+                 operator_id (str): PlatIA operator UUID.
+                 notebook_path (str): operator notebook MinIO path.
+                 parameters (list): operator parameters list. (optional)
+        """
 
-            # validate parameters
-            dataset = None
-            if parameters:
-                if not validate_parameters(parameters):
-                    raise ValueError('Invalid parameter.')
-                else:
-                    for parameter in parameters:
-                        parameter_name = parameter.get('name')
-                        if parameter_name == 'dataset':
-                            dataset = parameter.get('value')
-                            if dataset not in self._datasets:
-                                self._datasets.append(dataset)
-                            break
+        if not validate_operator(operator):
+            raise BadRequest('Invalid operator in request.')
 
-            if index == 0:
-                # store the first component from pipeline
-                first = Component(self._experiment_id, dataset,
-                                  operator_id, notebook_path, parameters, None)
-                previous = first
+        operator_id = operator.get('operatorId')
+        notebook_path = operator.get('notebookPath')
+
+        parameters = operator.get('parameters', None)
+
+        # validate parameters
+        dataset = None
+        if parameters:
+            if not validate_parameters(parameters):
+                raise ValueError('Invalid parameter.')
             else:
-                current_component = Component(
-                    self._experiment_id, dataset, operator_id, notebook_path, parameters, previous)
-                previous.set_next_component(current_component)
-                previous = current_component
+                self._add_dataset(parameters)
 
-        return first
+        dependencies = operator.get('dependencies', [])
 
-    def _create_component_specs_json(self):
-        """Create KubeFlow specs to each component from this pipeline.
+        if dependencies:
+            for d in dependencies:
+                self._edges[d].append(operator_id)
+                self._inverted_edges[operator_id].append(d)
+        else:
+            self._roots.append(operator_id)
+
+        self._operators[operator_id] = Operator(
+            self._experiment_id, dataset, operator_id,
+            notebook_path, parameters
+        )
+
+    def _get_operator(self, operator_id):
+        """Get an Operator from Pipeline using operator id.
 
         Returns:
-            A string in JSON format with the specs of each component.
+            A Pipeline Operator.
+        """
+        try:
+            return self._operator[operator_id]
+        except KeyError:
+            raise BadRequest('Invalid dependencie.')
+
+    def _is_sequential(self):
+        """Check if the pipeline is sequential (dont have any branchs).
+
+        Returns:
+            A boolean.
+        """
+        if len(self._roots) > 1:
+            return False
+
+        dependencies_already_used = []
+
+        for node, dependencies in self._inverted_edges.items():
+            if len(dependencies) > 1:
+                return False
+
+            if dependencies:
+                if dependencies[0] in dependencies_already_used:
+                    return False
+                dependencies_already_used.append(dependencies[0])
+        return True
+
+    def _get_final_operators(self):
+        """Get the final operators of Pipeline.
+
+        Returns:
+            A list with the final ops.
+        """
+        final_operators = []
+
+        for operator in self._operators.keys():
+            if operator not in self._edges.keys():
+                final_operators.append(operator)
+
+        return final_operators
+
+    def _create_operator_specs_json(self):
+        """Create KubeFlow specs to each operator from this pipeline.
+
+        Returns:
+            A string in JSON format with the specs of each operator.
         """
         specs = []
-        component = self._first
 
-        while component:
-            specs.append(component.create_component_spec())
-            component = component.next
+        for _, operator in self._operators.items():
+            specs.append(operator.create_operator_spec())
 
         return ",".join(specs)
 
@@ -108,7 +196,22 @@ class Pipeline():
         Returns:
             A string in JSON format describing this pipeline.
         """
-        return self._first.create_component_graph()
+        if self._is_sequential():
+            current_operator = self._get_final_operators()[0]
+
+            graph = ""
+
+            while True:
+                operator = self._get_operator(current_operator)
+                graph = operator.create_operator_graph(graph)
+                try:
+                    current_operator = self._inverted_edges[current_operator][0]
+                except IndexError:
+                    break
+
+            return graph
+        else:
+            raise BadRequest('Non-sequential pipeline.')
 
     def compile_training_pipeline(self):
         """Compile the pipeline in a training format."""
@@ -134,32 +237,33 @@ class Pipeline():
                     pvolumes={TRAINING_DATASETS_DIR: wrkdirop.volume}
                 )
 
-            prev = None
-            component = self._first
+            # Create container_op for all operators
+            for _, operator in self._operators.items():
+                operator.create_container_op()
 
-            while component:
-                component.create_container_op()
-
-                component.container_op.container \
+                operator.container_op.container \
                     .set_memory_request("2G") \
                     .set_memory_limit("4G") \
                     .set_cpu_request("500m") \
                     .set_cpu_limit("2000m")
 
-                if prev:
-                    component.container_op.after(prev.container_op)
-                    component.container_op.add_pvolumes({TRAINING_DATASETS_DIR: prev.container_op.pvolume})
+            # Define operators volumes and dependecies
+            for operator_id, operator in self._operators.items():
+                if operator_id in self._roots:
+                    operator.container_op.add_pvolumes({TRAINING_DATASETS_DIR: wrkdirop.volume})
                 else:
-                    component.container_op.add_pvolumes({TRAINING_DATASETS_DIR: wrkdirop.volume})
+                    dependencies = self._inverted_edges[operator_id]
+                    dependencies_ops = [self._get_operator(d).container_op for d in dependencies]
+                    operator.container_op.after(*dependencies_ops)
 
-                prev = component
-                component = component.next
+                    volume = self._get_operator(dependencies[0]).container_op.pvolume
+                    operator.container_op.add_pvolumes({TRAINING_DATASETS_DIR: volume})
 
         compiler.Compiler().compile(training_pipeline, self._experiment_id + '.yaml')
 
     def compile_deployment_pipeline(self):
         """Compile pipeline in a deployment format."""
-        component_specs = self._create_component_specs_json()
+        operator_specs = self._create_operator_specs_json()
         graph = self._create_graph_json()
 
         @dsl.pipeline(name='Common Seldon Deployment.')
@@ -168,7 +272,7 @@ class Pipeline():
                 "namespace": "deployments",
                 "experimentId": self._experiment_id,
                 "deploymentName": self._name,
-                "componentSpecs": component_specs,
+                "componentSpecs": operator_specs,
                 "graph": graph
             })
 
@@ -179,11 +283,9 @@ class Pipeline():
                 success_condition="status.state == Available"
             ).set_timeout(300)
 
-            component = self._first
-            while component:
-                component.build_component()
-                serve_op.after(component.export_notebook)
-                component = component.next
+            for _, operator in self._operators.items():
+                operator.build_operator()
+                serve_op.after(operator.export_notebook)
 
         try:
             # compiler raises execption, but produces a valid yaml

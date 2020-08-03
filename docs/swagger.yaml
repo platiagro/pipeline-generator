@@ -139,7 +139,7 @@ paths:
           schema:
             type: string
       requestBody:
-        $ref: "#/components/requestBodies/TrainingPost"
+        $ref: "#/components/requestBodies/TrainingPut"
       responses:
         "200":
           $ref: "#/components/responses/Run"
@@ -227,7 +227,7 @@ components:
         message:
           type: string
           example: "Training deleted."
-    Component:
+    Operator:
       type: object
       required:
         - operatorId
@@ -238,6 +238,13 @@ components:
           format: uuid
         notebookPath:
           type: string
+          example: "minio://anonymous/components/eee8b9a5-4bee-450f-9f3b-ac58453d9c3d/Training.ipynb"
+        dependencies:
+          description: "List of operator ids."
+          type: array
+          items:
+            type: string
+            format: uuid
         parameters:
           type: array
           items:
@@ -320,12 +327,12 @@ components:
             properties:
               name:
                 type: string
-              components:
+              operators:
                 type: array
                 items:
                   oneOf:
-                    - $ref: "#/components/schemas/Component"
-    TrainingPost:
+                    - $ref: "#/components/schemas/Operator"
+    TrainingPut:
       content:
         application/json:
           schema:
@@ -334,11 +341,11 @@ components:
               experimentId:
                 type: string
                 format: uuid
-              components:
+              operators:
                 type: array
                 items:
                   oneOf:
-                    - $ref: "#/components/schemas/Component"
+                    - $ref: "#/components/schemas/Operator"
   responses:
     DeploymentLog:
       description: ""
