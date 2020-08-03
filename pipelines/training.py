@@ -14,21 +14,21 @@ def create_training(training_id, pipeline_parameters):
     Args:
         training_id (str): training id.
         pipeline_parameters (dict): request body json, format:
-            components (list): list of pipeline components.
+            operators (list): list of pipeline operators.
     Returns:
         Pipeline run id.
     """
     try:
-        components = pipeline_parameters['components']
+        operators = pipeline_parameters['operators']
     except KeyError as e:
         raise BadRequest(
             'Invalid request body, missing the parameter: {}'.format(e)
         )
 
-    if len(components) == 0:
-        raise BadRequest('Necessary at least one component')
+    if len(operators) == 0:
+        raise BadRequest('Necessary at least one operator')
 
-    pipeline = Pipeline(training_id, None, components)
+    pipeline = Pipeline(training_id, None, operators)
     pipeline.compile_training_pipeline()
     return pipeline.run_pipeline()
 

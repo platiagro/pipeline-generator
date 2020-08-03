@@ -19,19 +19,19 @@ def create_deployment(deployment_id, pipeline_parameters):
         deployment_id (str): deployment id.
         pipeline_parameters (dict): request body json, format:
             name (str): deployment name.
-            components (list): list of pipeline components.
+            operators (list): list of pipeline operators.
     """
     try:
         name = deployment_id
         if 'name' in pipeline_parameters:
             name = pipeline_parameters['name']
-        components = pipeline_parameters['components']
+        operators = pipeline_parameters['operators']
     except KeyError as e:
         raise BadRequest(
             'Invalid request body, missing the parameter: {}'.format(e)
         )
 
-    pipeline = Pipeline(deployment_id, name, components)
+    pipeline = Pipeline(deployment_id, name, operators)
     pipeline.compile_deployment_pipeline()
     return pipeline.run_pipeline()
 
@@ -54,7 +54,8 @@ def get_deployment_details(runs, ip):
                 experiment_id = deployment_details['experimentId']
 
                 created_at = deployment_details['createdAt']
-                deployment_details['createdAt'] = str(created_at.isoformat(timespec='milliseconds')).replace('+00:00', 'Z')
+                deployment_details['createdAt'] = str(created_at.isoformat(
+                    timespec='milliseconds')).replace('+00:00', 'Z')
 
                 deployment_details['url'] = f'http://{ip}/seldon/deployments/{experiment_id}/api/v1.0/predictions'
 

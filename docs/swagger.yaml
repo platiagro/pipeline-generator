@@ -227,7 +227,7 @@ components:
         message:
           type: string
           example: "Training deleted."
-    Component:
+    Operator:
       type: object
       required:
         - operatorId
@@ -238,6 +238,7 @@ components:
           format: uuid
         notebookPath:
           type: string
+          example: "minio://anonymous/components/eee8b9a5-4bee-450f-9f3b-ac58453d9c3d/Training.ipynb"
         dependencies:
           description: "List of operator ids."
           type: array
@@ -326,7 +327,7 @@ components:
             properties:
               name:
                 type: string
-              components:
+              operators:
                 type: array
                 items:
                   oneOf:
@@ -340,7 +341,7 @@ components:
               experimentId:
                 type: string
                 format: uuid
-              components:
+              operators:
                 type: array
                 items:
                   oneOf:
