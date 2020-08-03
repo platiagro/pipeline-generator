@@ -331,7 +331,7 @@ components:
                 type: array
                 items:
                   oneOf:
-                    - $ref: "#/components/schemas/Component"
+                    - $ref: "#/components/schemas/Operator"
     TrainingPut:
       content:
         application/json:
@@ -345,7 +345,7 @@ components:
                 type: array
                 items:
                   oneOf:
-                    - $ref: "#/components/schemas/Component"
+                    - $ref: "#/components/schemas/Operator"
   responses:
     DeploymentLog:
       description: ""
