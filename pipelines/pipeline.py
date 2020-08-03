@@ -138,7 +138,7 @@ class Pipeline():
             A Pipeline Operator.
         """
         try:
-            return self._operator[operator_id]
+            return self._operators[operator_id]
         except KeyError:
             raise BadRequest('Invalid dependencie.')
 
