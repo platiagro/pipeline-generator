@@ -76,6 +76,20 @@ class Pipeline():
                 return True
         return False
 
+    def _add_dataset(self, parameters):
+        """Add dataset.
+
+        Args:
+            parameters (obj): Component parameters.
+        """
+        for parameter in parameters:
+            parameter_name = parameter.get('name')
+            if parameter_name == 'dataset':
+                dataset = parameter.get('value')
+                if dataset not in self._datasets:
+                    self._datasets.append(dataset)
+                break
+
     def _add_component(self, component):
         """Instantiate a new component and add it to the pipeline.
 
@@ -101,13 +115,7 @@ class Pipeline():
             if not validate_parameters(parameters):
                 raise ValueError('Invalid parameter.')
             else:
-                for parameter in parameters:
-                    parameter_name = parameter.get('name')
-                    if parameter_name == 'dataset':
-                        dataset = parameter.get('value')
-                        if dataset not in self._datasets:
-                            self._datasets.append(dataset)
-                        break
+                self._add_dataset(parameters)
 
         dependencies = component.get('dependencies', [])
 
@@ -242,7 +250,7 @@ class Pipeline():
             # Define components volumes and dependecies
             for operator_id, component in self._components.items():
                 if operator_id in self._roots:
-                    component.container_op.add_pvolumes({TRAINING_DATASETS_DIR: download_dataset.pvolume})
+                    component.container_op.add_pvolumes({TRAINING_DATASETS_DIR: wrkdirop.pvolume})
                 else:
                     dependencies = self._inverted_edges[operator_id]
                     dependencies_ops = [self._get_component(d).container_op for d in dependencies]
