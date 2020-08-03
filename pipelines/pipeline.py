@@ -54,8 +54,8 @@ class Pipeline():
         # recursion_stack then graph is cyclic
         for neighbour in self._edges[component]:
             if ((visited[neighbour] == False and
-                self._is_cyclic_util(neighbour, visited, recursion_stack) == True) or
-                recursion_stack[neighbour] == True):
+                 self._is_cyclic_util(neighbour, visited, recursion_stack) == True) or
+                    recursion_stack[neighbour] == True):
                 return True
 
         recursion_stack[component] = False
@@ -72,7 +72,7 @@ class Pipeline():
 
         for component in self._components.keys():
             if (visited[component] == False and
-                self._is_cyclic_util(component, visited, recursion_stack) == True):
+                    self._is_cyclic_util(component, visited, recursion_stack) == True):
                 return True
         return False
 
@@ -169,7 +169,7 @@ class Pipeline():
 
         return final_operators
 
-   def _create_component_specs_json(self):
+    def _create_component_specs_json(self):
         """Create KubeFlow specs to each component from this pipeline.
 
         Returns:
