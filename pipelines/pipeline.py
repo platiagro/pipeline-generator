@@ -172,7 +172,8 @@ class Pipeline():
         final_operators = []
 
         for operator in self._operators.keys():
-            if operator not in self._edges.keys():
+            has_next = self._edges.get(operator, None)
+            if not has_next:
                 final_operators.append(operator)
 
         return final_operators
