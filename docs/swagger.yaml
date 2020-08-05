@@ -251,7 +251,7 @@ components:
             anyOf:
               - $ref: "#/components/schemas/Parameter"
         commands:
-          description: "List of operator ids."
+          description: "List of commands."
           type: array
           items:
             type: string
