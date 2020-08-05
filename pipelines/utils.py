@@ -56,6 +56,7 @@ operator_schema = Schema({
     'operatorId': str,
     'notebookPath': str,
     'commands': list,
+    'image': str,
     Optional('parameters'): list,
     Optional('dependencies'): list
 })
