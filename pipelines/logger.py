@@ -54,8 +54,4 @@ def created_file(data, response):
     f.closed
 
 
-if __name__ == "__main__":
-   create_seldon_logger('8966756456556556-998', 'caio')
-   start_time = time.time()
-   print("--- %s seconds ---" % (time.time() - start_time))
 
