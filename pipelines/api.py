@@ -11,6 +11,8 @@ from .training import create_training, get_training, terminate_run_training, ret
 from .deployment import get_deployments, get_deployment_by_id, create_deployment, get_deployment_log, \
     delete_deployment, retry_run_deployment
 
+#from .logger import create_seldon_logger
+
 app = Flask(__name__)
 
 
@@ -80,6 +82,14 @@ def handle_delete_training(training_id):
 @app.route("/trainings/retry/<training_id>", methods=["PUT"])
 def handle_put_retry_run_training(training_id):
     return jsonify(retry_run_training(training_id=training_id))
+
+
+@app.route('/seldon/logger/<training_id>', methods=['POST'])
+def handle_get_log_seldon(training_id):
+    kwargs = request.get_json(force=True)
+    print(f'Parametros de existencia {kwargs}')
+    create_seldon_logger(training_id, kwargs)
+    #jsonify(kwargs)
 
 
 @app.errorhandler(BadRequest)
