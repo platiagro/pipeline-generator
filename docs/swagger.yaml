@@ -17,6 +17,9 @@ tags:
   - name: "Trainings"
     description: >
       Manage training pipelines.
+  - name: "Logger"
+    description: >
+      Registration.
 paths:
   /deployments:
     get:
@@ -209,7 +212,27 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
-
+  /seldon/logger/{trainingId}:
+    post:
+      summary: "Save logger"
+      tags:
+        - "Logger"
+      parameters:
+        - in: path
+          name: trainingId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+           description: OK
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
 components:
   schemas:
     Run:
