@@ -250,6 +250,15 @@ components:
           items:
             anyOf:
               - $ref: "#/components/schemas/Parameter"
+        commands:
+          description: "List of commands."
+          type: array
+          items:
+            type: string
+            example: "cmd"
+        image:
+          type: string
+          example: "platiagro/platiagro-notebook-image:0.1.0"
     Parameter:
       type: object
       properties:
