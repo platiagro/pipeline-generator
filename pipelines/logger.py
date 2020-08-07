@@ -7,19 +7,20 @@ from minio.error import (ResponseError, BucketAlreadyOwnedByYou,
                          BucketAlreadyExists)
 
 client = Minio(
-    endpoint=getenv("MINIO_ENDPOINT", "localhost:9000"),
-    access_key=getenv("MINIO_ACCESS_KEY", "minio"),
-    secret_key=getenv("MINIO_SECRET_KEY", "minio123"),
-    region=getenv("MINIO_REGION_NAME", "us-east-1"),
+    endpoint=getenv('MINIO_ENDPOINT', 'minio-service.kubeflow:9000'),
+    access_key=getenv('MINIO_ACCESS_KEY', 'minio'),
+    secret_key=getenv("MINIO_SECRET_KEY", 'minio123'),
+    region=getenv('MINIO_REGION_NAME', 'us-east-1'),
     secure=False,
                )
 
 
 def create_seldon_logger(experiment_id, data):
+    print(f'dataset log {data}')
     try:
         objects = client.list_objects_v2('anonymous', recursive=True, prefix=f'components/{experiment_id}/')
 
-        if not objects:
+        if objects:
             response = client.get_object('anonymous', f'components/{experiment_id}/seldon.log')
             filedir = os.path.dirname(os.path.realpath('__file__'))
             filename = os.path.join(filedir, 'seldon.log')
@@ -52,6 +53,4 @@ def created_file(data, response):
         my_response = response.read().decode("utf-8")
         f.write(my_response)
     f.closed
-
-
 

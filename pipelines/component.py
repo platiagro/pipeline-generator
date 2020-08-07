@@ -3,7 +3,7 @@ import base64
 import yaml
 import json
 from json import dumps
-from pipelines.api import app
+
 from kfp import dsl
 from kubernetes import client as k8s_client
 
@@ -74,7 +74,7 @@ class Component():
         component_graph = GRAPH.substitute({
             'name': self._operator_id,
             'children': self.next.create_component_graph() if self.next else "",
-            'url': app.post(f'http://pipelines.kubeflow/seldon/logger/{self._experiment_id}')
+            'url': f'http://pipelines.kubeflow/seldon/logger/{self._experiment_id}'
         })
 
         return component_graph
