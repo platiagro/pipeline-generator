@@ -86,7 +86,7 @@ def handle_put_retry_run_training(training_id):
 
 
 @app.route('/seldon/logger/<training_id>', methods=['POST'])
-def handle_get_log_seldon(training_id):
+def handle_create_seldon_logger(training_id):
     kwargs = request.get_json(force=True)
     create_seldon_logger(training_id, kwargs)
 
