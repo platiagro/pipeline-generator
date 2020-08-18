@@ -136,23 +136,33 @@ def get_cluster_ip():
     return service.status.load_balancer.ingress[0].ip
 
 
-def remove_non_deployable_operators(non_deployable_operators: list, operators: list):
+def remove_non_deployable_operators(operators: list):
     """Removes operators that are not part of the deployment pipeline.
     If the non-deployable operator is dependent on another operator, it will be
     removed from that operator's dependency list.
 
     Args:
-        non_deployable_operators (list): operators that do not compose the pipeline.
         operators (list): original pipeline operators.
 
     Returns:
         A list of all deployable operators.
     """
-    deployable_operators = list()
+    deployable_operators = [operator for operator in operators if operator["notebookPath"]]
+    non_deployable_operators = list()
 
     for operator in operators:
-        if operator["operatorId"] not in non_deployable_operators:
-            deployable_operators.append(operator)
+        if operator["notebookPath"] is None:
+            # checks if the non-deployable operator has dependency
+            if operator["dependencies"]:
+                dependency = operator["dependencies"]
+
+                # looks for who has the non-deployable operator as dependency
+                # and assign the dependency of the non-deployable operator to this operator
+                for op in deployable_operators:
+                    if operator["operatorId"] in op["dependencies"]:
+                        op["dependencies"] = dependency
+
+            non_deployable_operators.append(operator["operatorId"])       
 
     for operator in deployable_operators:
         dependencies = set(operator["dependencies"])

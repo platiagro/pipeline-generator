@@ -28,12 +28,7 @@ def create_deployment(deployment_id, pipeline_parameters):
             name = pipeline_parameters['name']
         operators = pipeline_parameters['operators']
 
-        non_deployable_operators = list()
-        for operator in operators:
-            if operator["notebookPath"] is None:
-                non_deployable_operators.append(operator["operatorId"])
-
-        operators = remove_non_deployable_operators(non_deployable_operators, operators)
+        operators = remove_non_deployable_operators(operators)
 
     except KeyError as e:
         raise BadRequest(
