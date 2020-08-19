@@ -10,7 +10,7 @@ FILE_LOGGER = 'seldon.log'
 BUCKET = 'anonymous'
 
 client = Minio(
-    endpoint=getenv('MINIO_ENDPOINT', 'localhost:9000'),
+    endpoint=getenv('MINIO_ENDPOINT', 'minio-service.kubeflow:9000'),
     access_key=getenv('MINIO_ACCESS_KEY', 'minio'),
     secret_key=getenv("MINIO_SECRET_KEY", 'minio123'),
     region=getenv('MINIO_REGION_NAME', 'us-east-1'),
