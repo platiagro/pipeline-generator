@@ -5,14 +5,14 @@ from pipelines.api import app
 
 from pipelines.utils import uuid_alpha
 
-training_id = str(uuid_alpha())
+TRAINING_ID = str(uuid_alpha())
 
 
 class TestTraning(TestCase):
 
     def test_traning(self):
         with app.test_client() as c:
-            rv = c.put(f'/trainings/{training_id}',
+            rv = c.put(f'/trainings/{TRAINING_ID}',
                        json={
                               "experimentId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
                               "operators": [
