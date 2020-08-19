@@ -2,6 +2,8 @@
 import json
 import re
 import yaml
+import uuid
+import random
 
 from os import getenv
 
@@ -169,3 +171,12 @@ def remove_non_deployable_operators(operators: list):
         operator["dependencies"] = list(dependencies - set(non_deployable_operators))
 
     return deployable_operators
+
+
+def uuid_alpha() -> str:
+    """Generates an uuid that always starts with an alpha char."""
+    uuid_ = str(uuid.uuid4())
+    if not uuid_[0].isalpha():
+        c = random.choice(["a", "b", "c", "d", "e", "f"])
+        uuid_ = f"{c}{uuid_[1:]}"
+    return uuid_
