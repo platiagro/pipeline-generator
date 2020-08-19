@@ -8,7 +8,8 @@ from kubernetes.client.rest import ApiException
 from kubernetes import client
 from werkzeug.exceptions import BadRequest, NotFound
 
-from .utils import load_kube_config, init_pipeline_client, format_deployment_pipeline, get_cluster_ip
+from .utils import load_kube_config, init_pipeline_client, format_deployment_pipeline, get_cluster_ip,\
+    remove_non_deployable_operators
 from .pipeline import Pipeline
 
 
@@ -26,6 +27,9 @@ def create_deployment(deployment_id, pipeline_parameters):
         if 'name' in pipeline_parameters:
             name = pipeline_parameters['name']
         operators = pipeline_parameters['operators']
+
+        operators = remove_non_deployable_operators(operators)
+
     except KeyError as e:
         raise BadRequest(
             'Invalid request body, missing the parameter: {}'.format(e)

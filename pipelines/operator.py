@@ -29,7 +29,11 @@ class Operator():
         self._experiment_id = experiment_id
         self._dataset = dataset
         self._operator_id = operator_id
-        self._notebook_path = validate_notebook_path(notebook_path)
+
+        if notebook_path:
+            self._notebook_path = validate_notebook_path(notebook_path)
+        else:
+            self._notebook_path = None
 
         self._parameters = parameters
         self.container_op = None

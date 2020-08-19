@@ -54,7 +54,7 @@ def validate_parameters(parameters):
 
 operator_schema = Schema({
     'operatorId': str,
-    'notebookPath': str,
+    'notebookPath': Or(str, None),
     'commands': list,
     'image': str,
     Optional('parameters'): list,
@@ -134,3 +134,38 @@ def get_cluster_ip():
         name='istio-ingressgateway', namespace='istio-system')
 
     return service.status.load_balancer.ingress[0].ip
+
+
+def remove_non_deployable_operators(operators: list):
+    """Removes operators that are not part of the deployment pipeline.
+    If the non-deployable operator is dependent on another operator, it will be
+    removed from that operator's dependency list.
+
+    Args:
+        operators (list): original pipeline operators.
+
+    Returns:
+        A list of all deployable operators.
+    """
+    deployable_operators = [operator for operator in operators if operator["notebookPath"]]
+    non_deployable_operators = list()
+
+    for operator in operators:
+        if operator["notebookPath"] is None:
+            # checks if the non-deployable operator has dependency
+            if operator["dependencies"]:
+                dependency = operator["dependencies"]
+
+                # looks for who has the non-deployable operator as dependency
+                # and assign the dependency of the non-deployable operator to this operator
+                for op in deployable_operators:
+                    if operator["operatorId"] in op["dependencies"]:
+                        op["dependencies"] = dependency
+
+            non_deployable_operators.append(operator["operatorId"])       
+
+    for operator in deployable_operators:
+        dependencies = set(operator["dependencies"])
+        operator["dependencies"] = list(dependencies - set(non_deployable_operators))
+
+    return deployable_operators
