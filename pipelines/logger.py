@@ -6,6 +6,8 @@ from minio import Minio
 from minio.error import (ResponseError, BucketAlreadyOwnedByYou,
                          BucketAlreadyExists)
 
+from werkzeug.exceptions import BadRequest
+
 FILE_LOGGER = 'seldon.log'
 BUCKET = 'anonymous'
 
@@ -40,12 +42,12 @@ def create_seldon_logger(experiment_id, data):
                 file_stat = os.stat(FILE_LOGGER)
                 client.put_object(BUCKET, f'components/{experiment_id}/{FILE_LOGGER}', data, file_stat.st_size)
                 os.remove(FILE_LOGGER)
-    except BucketAlreadyOwnedByYou as err:
+    except BucketAlreadyOwnedByYou:
         pass
-    except BucketAlreadyExists as er:
+    except BucketAlreadyExists:
         pass
-    except ResponseError as err:
-        raise
+    except ResponseError:
+        raise BadRequest('Change the requisition data')
 
 
 def created_file(data, response):
