@@ -12,7 +12,6 @@ from .training import create_training, get_training, terminate_run_training, ret
 from .deployment import get_deployments, get_deployment_by_id, create_deployment, get_deployment_log, \
     delete_deployment, retry_run_deployment
 
-#from .logger import create_seldon_logger
 
 app = Flask(__name__)
 
@@ -86,7 +85,7 @@ def handle_put_retry_run_training(training_id):
 
 
 @app.route('/seldon/logger/<training_id>', methods=['POST'])
-def create_seldon_logger(training_id):
+def handle_create_seldon_logger(training_id):
     kwargs = request.get_json(force=True)
     create_seldon_logger(training_id, kwargs)
 
