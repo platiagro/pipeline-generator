@@ -10,6 +10,8 @@ from kubernetes import config, client
 from schema import Schema, SchemaError, Or, Optional
 from werkzeug.exceptions import BadRequest, InternalServerError
 
+TRAINING_DATASETS_DIR = '/tmp/data'
+
 
 def init_pipeline_client():
     """Create a new kfp client.

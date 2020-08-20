@@ -5,11 +5,9 @@ import json
 from kfp import compiler, dsl
 from werkzeug.exceptions import BadRequest
 
-from .utils import init_pipeline_client, validate_operator, validate_parameters
+from .utils import TRAINING_DATASETS_DIR, init_pipeline_client, validate_operator, validate_parameters
 from .resources.templates import SELDON_DEPLOYMENT
 from .operator import Operator
-
-TRAINING_DATASETS_DIR = '/tmp/data'
 
 
 class Pipeline():

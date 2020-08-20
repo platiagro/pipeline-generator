@@ -7,7 +7,7 @@ from json import dumps
 from kfp import dsl
 from kubernetes import client as k8s_client
 
-from .utils import validate_notebook_path
+from .utils import TRAINING_DATASETS_DIR, validate_notebook_path
 from .resources.templates import COMPONENT_SPEC, GRAPH, POD_DEPLOYMENT, POD_DEPLOYMENT_VOLUME
 
 
@@ -42,7 +42,12 @@ class Operator():
         parameters_dict = {}
         if self._parameters:
             for parameter in self._parameters:
-                parameters_dict[parameter['name']] = parameter['value']
+                name = parameter['name']
+                value = parameter['value']
+                if name == 'dataset':
+                    parameters_dict[name] = f"{TRAINING_DATASETS_DIR}/{value}"
+                else:
+                    parameters_dict[name] = value
         return base64.b64encode(yaml.dump(parameters_dict).encode()).decode()
 
     def _create_parameters_seldon(self):
