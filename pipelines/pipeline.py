@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-from collections import defaultdict
 import json
+from os import getenv
+from collections import defaultdict
 
 from kfp import compiler, dsl
 from werkzeug.exceptions import BadRequest
@@ -10,6 +11,10 @@ from .resources.templates import SELDON_DEPLOYMENT
 from .operator import Operator
 
 TRAINING_DATASETS_DIR = '/tmp/data'
+MEMORY_REQUEST = getenv('MEMORY_REQUEST', '2G')
+MEMORY_LIMIT = getenv('MEMORY_LIMIT', '4G')
+CPU_REQUEST = getenv('CPU_REQUEST', '500m')
+CPU_LIMIT = getenv('CPU_LIMIT', '2000m')
 
 
 class Pipeline():
@@ -243,10 +248,10 @@ class Pipeline():
                 operator.create_container_op()
 
                 operator.container_op.container \
-                    .set_memory_request("2G") \
-                    .set_memory_limit("4G") \
-                    .set_cpu_request("500m") \
-                    .set_cpu_limit("2000m")
+                    .set_memory_request(MEMORY_REQUEST) \
+                    .set_memory_limit(MEMORY_LIMIT) \
+                    .set_cpu_request(CPU_REQUEST) \
+                    .set_cpu_limit(CPU_LIMIT)
 
             # Define operators volumes and dependecies
             for operator_id, operator in self._operators.items():
