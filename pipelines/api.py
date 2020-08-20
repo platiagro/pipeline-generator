@@ -7,9 +7,11 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 from werkzeug.exceptions import BadRequest, InternalServerError, NotFound
 
+from .logger import create_seldon_logger
 from .training import create_training, get_training, terminate_run_training, retry_run_training
 from .deployment import get_deployments, get_deployment_by_id, create_deployment, get_deployment_log, \
     delete_deployment, retry_run_deployment
+
 
 app = Flask(__name__)
 
@@ -80,6 +82,12 @@ def handle_delete_training(training_id):
 @app.route("/trainings/retry/<training_id>", methods=["PUT"])
 def handle_put_retry_run_training(training_id):
     return jsonify(retry_run_training(training_id=training_id))
+
+
+@app.route('/seldon/logger/<training_id>', methods=['POST'])
+def handle_create_seldon_logger(training_id):
+    kwargs = request.get_json(force=True)
+    create_seldon_logger(training_id, kwargs)
 
 
 @app.errorhandler(BadRequest)
