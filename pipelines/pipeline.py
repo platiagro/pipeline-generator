@@ -6,11 +6,10 @@ from collections import defaultdict
 from kfp import compiler, dsl
 from werkzeug.exceptions import BadRequest
 
-from .utils import init_pipeline_client, validate_operator, validate_parameters
+from .utils import TRAINING_DATASETS_DIR, init_pipeline_client, validate_operator, validate_parameters
 from .resources.templates import SELDON_DEPLOYMENT
 from .operator import Operator
 
-TRAINING_DATASETS_DIR = '/tmp/data'
 MEMORY_REQUEST = getenv('MEMORY_REQUEST', '2G')
 MEMORY_LIMIT = getenv('MEMORY_LIMIT', '4G')
 CPU_REQUEST = getenv('CPU_REQUEST', '500m')
