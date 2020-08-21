@@ -98,8 +98,11 @@ def format_pipeline_run_details(run_details):
 
     for index, operator in enumerate(nodes.values()):
         if index != 0:
-            operators_status[str(operator['displayName'])] = str(operator['phase'])
-
+            # check if pipeline was interrupted
+            if 'message' in operator and str(operator['message']) == 'terminated':
+                operators_status[str(operator['displayName'])] = 'Terminated'
+            else:
+                operators_status[str(operator['displayName'])] = str(operator['phase'])
     return {"status": operators_status}
 
 
