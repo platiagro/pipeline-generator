@@ -93,6 +93,7 @@ class Operator():
                 f'''papermill {self._notebook_path} output.ipynb -b {self._create_parameters_papermill()};
                     status=$?;
                     bash save-dataset.sh;
+                    bash save-figure.sh;
                     bash upload-to-jupyter.sh {self._experiment_id} {self._operator_id} Experiment.ipynb;
                     exit $status
                  '''
