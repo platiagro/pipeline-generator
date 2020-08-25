@@ -45,6 +45,15 @@ SELDON_DEPLOYMENT = Template("""{
                     ]
                 }
             }
+        ],
+        "volumes": [
+            {
+                "name": "workspace",
+                "persistentVolumeClaim: {
+                    "claimName": "datasets-$experimentId"
+                }
+            }
+
         ]
     }
 }
