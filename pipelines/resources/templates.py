@@ -50,7 +50,7 @@ SELDON_DEPLOYMENT = Template("""{
             {
                 "name": "workspace",
                 "persistentVolumeClaim: {
-                    "claimName": "datasets-$experimentId"
+                    "claimName": "vol-$experimentId"
                 }
             }
 

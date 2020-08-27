@@ -228,8 +228,8 @@ class Pipeline():
                 api_version="v1",
                 kind="PersistentVolumeClaim",
                 metadata={
-                    'name': f'datasets-{self._experiment_id}',
-                    'namespace': 'deployments'
+                    'name': f'vol-{self._experiment_id}',
+                    'namespace': 'anonymous'
                 },
                 spec={
                     'accessModes': ['ReadWriteOnce'],
