@@ -1,7 +1,9 @@
 import os
 from os import getenv
 import pandas as pd
-import json
+import json, csv
+from io import StringIO
+
 
 from minio import Minio
 from minio.error import (BucketAlreadyOwnedByYou,
@@ -12,13 +14,19 @@ from werkzeug.exceptions import BadRequest
 FILE_LOGGER = 'seldon.csv'
 BUCKET = 'anonymous'
 
-client = Minio(
+"""client = Minio(
     endpoint=getenv('MINIO_ENDPOINT', 'minio-service.kubeflow:9000'),
     access_key=getenv('MINIO_ACCESS_KEY', 'minio'),
     secret_key=getenv("MINIO_SECRET_KEY", 'minio123'),
     region=getenv('MINIO_REGION_NAME', 'us-east-1'),
     secure=False,
-               )
+               )"""
+
+client = Minio(
+    'localhost:9000',
+    access_key='minio',
+    secret_key='minio123',
+    secure=False)
 
 
 def create_seldon_logger(experiment_id, data):
@@ -69,38 +77,83 @@ def created_file(data, response):
         response(file): file returned from Minio
     """
     try:
-        list_response = []
         data = str(data.decode('utf-8'))
         df = json.loads(data)
-        list_data = df['data']['ndarray']
-        if response:
-            response_read = response.read().decode('utf-8')
-            list_response = response_read.split('\n')
-            list_response = [i for i in list_response if i]
-        df1 = data_frame(list_data, list_response)
-        df1.to_csv(FILE_LOGGER,  header=False, index=False)
+        df = data_frame(df, response)
+        df.to_csv(FILE_LOGGER,  header=True, index=False)
     except Exception as ex:
         raise ex
 
 
-def data_frame(list_data, list_response):
+def data_frame(list_data, response):
     """Function that assembles a dataframe
     Args:
         list_data(json): request data
-        list_response(str): information coming from the minio server
+        response(str): information coming from the minio server
 
     Returns:
         dataFrame
     """
-    if list_response:
-        req_rep = {
-            'request': pd.Series(list_response),
-            'response': pd.Series(list_data)
-        }
-        df = pd.DataFrame(req_rep)
+    if response:
+        data = response.read().decode('utf-8')
+        df = pd.read_csv(StringIO(data))
+        data_value = information_dataframe(list_data, df)
+        df = pd.DataFrame(data_value, columns=['request', 'response'])
     else:
-        df = pd.DataFrame(list_data)
+        resquest = {
+            'request': list_data['data']['ndarray'],
+            'response': response
+        }
+        df = pd.DataFrame(resquest, columns=['request', 'response'])
     return df
+
+
+def information_dataframe(list_data, df):
+    """Data to fill the dataframe
+    Args:
+        list_data(json): request data
+        df(str): csv information read
+
+    Returns:
+        response
+    """
+    request = [f'{i}' for i in df['request'].values.tolist() if str(i) != 'nan']
+    response1 = [f'{i}' for i in df['response'].values.tolist() if str(i) != 'nan']
+    if 'meta' in list_data:
+        resp = joinlist(response1, list_data['data']['ndarray'], len(request))
+        response = {
+            'request': request,
+            'response':  resp
+        }
+    else:
+        req = joinlist(request, list_data['data']['ndarray'], len(request))
+        size = len(req) - len(response1)
+        for i in range(size):
+            response1.append('nan')
+        response = {
+           'request': req,
+           'response': response1
+        }
+    return response
+
+
+def joinlist(list1, list2, size_reuest):
+    """Merge two lists.
+    Args:
+        list1(json): list of information
+        list2(json): list of information
+        size_reuest(int): total request records
+
+    Return:
+        list
+    """
+    if list2:
+        for i in list2:
+            list1.append(f'{i}')
+    size_reuest -= len(list1)
+    for i in range(size_reuest):
+        list1.append('nan')
+    return list1
 
 
 def remove_file():
@@ -108,3 +161,5 @@ def remove_file():
     filedir = os.path.dirname(os.path.realpath('__file__'))
     filename = os.path.join(filedir, FILE_LOGGER)
     os.remove(filename)
+
+
