@@ -10,6 +10,8 @@ from .utils import TRAINING_DATASETS_DIR, init_pipeline_client, validate_operato
 from .resources.templates import SELDON_DEPLOYMENT
 from .operator import Operator
 
+from kubernetes.client.models import V1PersistentVolumeClaim
+
 MEMORY_REQUEST = getenv('MEMORY_REQUEST', '2G')
 MEMORY_LIMIT = getenv('MEMORY_LIMIT', '4G')
 CPU_REQUEST = getenv('CPU_REQUEST', '500m')
@@ -222,11 +224,26 @@ class Pipeline():
         """Compile the pipeline in a training format."""
         @dsl.pipeline(name='Common pipeline')
         def training_pipeline():
+            pvc = V1PersistentVolumeClaim(
+                api_version="v1",
+                kind="PersistentVolumeClaim",
+                metadata={
+                    'name': f'vol-{self._experiment_id}',
+                    'namespace': 'deployments'
+                },
+                spec={
+                    'accessModes': ['ReadWriteOnce'],
+                    'resources': {
+                        'requests': {
+                            'storage': '1Gi'
+                        }
+                    }
+                }
+            )
+
             wrkdirop = dsl.VolumeOp(
-                name='datasets',
-                resource_name='datasets' + self._experiment_id,
-                size='1Gi',
-                modes=dsl.VOLUME_MODE_RWO
+                name="datasets",
+                k8s_resource=pvc
             )
 
             if len(self._datasets) > 0:
