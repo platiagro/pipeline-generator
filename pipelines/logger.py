@@ -1,9 +1,8 @@
 import os
 from os import getenv
 import pandas as pd
-import json, csv
+import json
 from io import StringIO
-
 
 from minio import Minio
 from minio.error import (BucketAlreadyOwnedByYou,
@@ -14,19 +13,13 @@ from werkzeug.exceptions import BadRequest
 FILE_LOGGER = 'seldon.csv'
 BUCKET = 'anonymous'
 
-"""client = Minio(
+client = Minio(
     endpoint=getenv('MINIO_ENDPOINT', 'minio-service.kubeflow:9000'),
     access_key=getenv('MINIO_ACCESS_KEY', 'minio'),
     secret_key=getenv("MINIO_SECRET_KEY", 'minio123'),
     region=getenv('MINIO_REGION_NAME', 'us-east-1'),
     secure=False,
-               )"""
-
-client = Minio(
-    'localhost:9000',
-    access_key='minio',
-    secret_key='minio123',
-    secure=False)
+               )
 
 
 def create_seldon_logger(experiment_id, data):
