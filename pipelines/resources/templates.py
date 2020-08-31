@@ -45,15 +45,6 @@ SELDON_DEPLOYMENT = Template("""{
                     ]
                 }
             }
-        ],
-        "volumes": [
-            {
-                "name": "workspace",
-                "persistentVolumeClaim": {
-                    "claimName": "vol-$experimentId"
-                }
-            }
-
         ]
     }
 }
@@ -84,6 +75,10 @@ COMPONENT_SPEC = Template("""
                     {
                         "name": "workspace",
                         "mountPath": "/app"
+                    },
+                    {
+                        "name": "data",
+                        "mountPath": "/tmp/data"
                     }
                 ]
             }
@@ -93,6 +88,12 @@ COMPONENT_SPEC = Template("""
                 "name": "workspace",
                 "persistentVolumeClaim": {
                     "claimName": "{{workflow.name}}-$operatorId"
+                }
+            },
+            {
+                "name": "data",
+                "persistentVolumeClaim": {
+                    "claimName": "vol-$experimentId"
                 }
             }
         ]
