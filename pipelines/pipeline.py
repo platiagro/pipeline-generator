@@ -243,7 +243,8 @@ class Pipeline():
 
             wrkdirop = dsl.VolumeOp(
                 name="datasets",
-                k8s_resource=pvc
+                k8s_resource=pvc,
+                action="apply"
             )
 
             if len(self._datasets) > 0:
