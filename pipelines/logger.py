@@ -14,7 +14,7 @@ FILE_LOGGER = 'seldon.csv'
 BUCKET = 'anonymous'
 
 client = Minio(
-    endpoint=getenv('MINIO_ENDPOINT', 'minio-service.kubeflow:9000'),
+    endpoint=getenv('MINIO_ENDPOINT', 'localhost:9000'),
     access_key=getenv('MINIO_ACCESS_KEY', 'minio'),
     secret_key=getenv("MINIO_SECRET_KEY", 'minio123'),
     region=getenv('MINIO_REGION_NAME', 'us-east-1'),
@@ -57,8 +57,9 @@ def create_seldon_logger(experiment_id, data):
         pass
     except BucketAlreadyExists:
         pass
-    except Exception:
-        raise BadRequest('Change the requisition data')
+    except Exception as ex:
+        print(ex)
+        #raise BadRequest('Change the requisition data')
     finally:
         remove_file()
 
@@ -153,6 +154,7 @@ def remove_file():
     """Removing the file just created."""
     filedir = os.path.dirname(os.path.realpath('__file__'))
     filename = os.path.join(filedir, FILE_LOGGER)
-    os.remove(filename)
+    if filename:
+        os.remove(filename)
 
 
