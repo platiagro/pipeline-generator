@@ -6,11 +6,9 @@ TRAINING_ID = '3fa85f64-5717-4562-b3fc-2c963f66afa6'
 
 
 class TestTraining(TestCase):
-
     def test_get_trainings(self):
         with app.test_client() as c:
             rv = c.get(f'/trainings/{TRAINING_ID}')
-            result = rv.get_data(as_text=True)
             self.assertEqual(rv.status_code, 200)
 
     def test_put_trainings_retry(self):
@@ -37,8 +35,7 @@ class TestTraining(TestCase):
                                 }
                               ]
                             })
-            result = rv.get_data(as_text=True)
-            self.assertEqual(rv.status_code, 500)
+            self.assertEqual(rv.status_code, 200)
 
     def test_put_trainings(self):
         with app.test_client() as c:
@@ -65,14 +62,9 @@ class TestTraining(TestCase):
                                 }
                               ]
                             })
-            result = rv.get_data(as_text=True)
-            self.assertEqual(rv.status_code, 500)
+            self.assertEqual(rv.status_code, 200)
 
     def test_delete_trainings(self):
         with app.test_client() as c:
             rv = c.delete(f'/trainings/{TRAINING_ID}')
-            result = rv.get_data(as_text=True)
-            self.assertEqual(rv.status_code, 500)
-
-
-
+            self.assertEqual(rv.status_code, 200)
