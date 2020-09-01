@@ -73,8 +73,8 @@ def created_file(data, response):
         df = json.loads(data)
         df = data_frame(df, response)
         df.to_csv(FILE_LOGGER,  header=True, index=False)
-    except Exception as ex:
-        raise ex
+    except Exception:
+        raise BadRequest('Could not create csv file')
 
 
 def data_frame(list_data, response):
@@ -120,8 +120,10 @@ def information_dataframe(list_data, df):
     else:
         req = joinlist(request, list_data['data']['ndarray'], len(request))
         size = len(req) - len(response1)
+        index = []
         for i in range(size):
             response1.append('nan')
+            index.append(i)
         response = {
            'request': req,
            'response': response1
