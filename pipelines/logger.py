@@ -4,22 +4,16 @@ import pandas as pd
 import json
 from io import StringIO
 
-from minio import Minio
+
 from minio.error import (BucketAlreadyOwnedByYou,
                          BucketAlreadyExists)
 
 from werkzeug.exceptions import BadRequest
 
+from .utils import connect_minio
+
 FILE_LOGGER = 'seldon.csv'
 BUCKET = 'anonymous'
-
-client = Minio(
-    endpoint=getenv('MINIO_ENDPOINT', 'localhost:9000'),
-    access_key=getenv('MINIO_ACCESS_KEY', 'minio'),
-    secret_key=getenv("MINIO_SECRET_KEY", 'minio123'),
-    region=getenv('MINIO_REGION_NAME', 'us-east-1'),
-    secure=False,
-               )
 
 
 def create_seldon_logger(experiment_id, data):
@@ -33,6 +27,11 @@ def create_seldon_logger(experiment_id, data):
     """
     try:
         list_objects = []
+        client = connect_minio()
+
+        found = client.bucket_exists(BUCKET)
+        if not found:
+            client.make_bucket(BUCKET, location="us-east-1")
         objects = client.list_objects_v2(BUCKET, recursive=True, prefix=f'tasks/{experiment_id}/')
         for object in objects:
             list_objects.append(object)
@@ -57,9 +56,8 @@ def create_seldon_logger(experiment_id, data):
         pass
     except BucketAlreadyExists:
         pass
-    except Exception as ex:
-        print(ex)
-        #raise BadRequest('Change the requisition data')
+    except Exception:
+        raise BadRequest('Change the requisition data')
     finally:
         remove_file()
 
@@ -154,7 +152,6 @@ def remove_file():
     """Removing the file just created."""
     filedir = os.path.dirname(os.path.realpath('__file__'))
     filename = os.path.join(filedir, FILE_LOGGER)
-    if filename:
-        os.remove(filename)
+    os.remove(filename)
 
 
