@@ -8,7 +8,7 @@ from kfp import dsl
 from kubernetes import client as k8s_client
 
 from .utils import TRAINING_DATASETS_DIR, validate_notebook_path
-from .resources.templates import COMPONENT_SPEC, GRAPH, POD_DEPLOYMENT, POD_DEPLOYMENT_VOLUME
+from .resources.templates import COMPONENT_SPEC, GRAPH, LOGGER, POD_DEPLOYMENT, POD_DEPLOYMENT_VOLUME
 
 
 class Operator():
@@ -69,7 +69,7 @@ class Operator():
         })
         return operator_spec
 
-    def create_operator_graph(self, children):
+    def create_operator_graph(self, children, include_logger=False):
         """Creates a string from the operator's graph with its children.
 
         Returns:
@@ -77,10 +77,18 @@ class Operator():
         """
         operator_graph = GRAPH.substitute({
             'name': self._operator_id,
-            'children': children
+            'children': children,
+            'logger': self._create_seldon_logger() if include_logger == True else ''
         })
 
         return operator_graph
+
+    def _create_seldon_logger(self):
+        logger = LOGGER.substitute({
+            'experimentId': self._experiment_id
+        })
+
+        return logger
 
     def create_container_op(self):
         """Create operator operator from YAML file."""
