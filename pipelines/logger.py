@@ -17,13 +17,12 @@ client = Minio(
     secret_key=getenv("MINIO_SECRET_KEY", 'minio123'),
     region=getenv('MINIO_REGION_NAME', 'us-east-1'),
     secure=False,
-               )
+)
 
 
 def create_seldon_logger(experiment_id, data):
     try:
         objects = client.list_objects_v2(BUCKET, recursive=True, prefix=f'components/{experiment_id}/')
-        print(objects.name)
 
         if objects:
             response = client.get_object(BUCKET, f'components/{experiment_id}/{FILE_LOGGER}')

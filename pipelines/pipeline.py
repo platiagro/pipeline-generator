@@ -207,10 +207,12 @@ class Pipeline():
             current_operator = self._get_final_operators()[0]
 
             graph = ""
+            include_logger = True
 
             while True:
                 operator = self._get_operator(current_operator)
-                graph = operator.create_operator_graph(graph)
+                graph = operator.create_operator_graph(graph, include_logger)
+                include_logger = False
                 try:
                     current_operator = self._inverted_edges[current_operator][0]
                 except IndexError:
