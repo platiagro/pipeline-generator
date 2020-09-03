@@ -40,6 +40,10 @@ jobs:
         coverage erase
         coverage run --branch --source=pipelines -m pytest
         coverage xml -i
+    - name: Install Argo
+    - run: |
+        kubectl create namespace argo
+        kubectl apply -n argo -f https://raw.githubusercontent.com/argoproj/argo/stable/manifests/install.yaml
     - name: SonarCloud Scan
       uses: sonarsource/sonarcloud-github-action@master
       env:
