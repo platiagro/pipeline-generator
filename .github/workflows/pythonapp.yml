@@ -57,11 +57,6 @@ jobs:
     - name: Install Argo
       run: |
         kubectl create namespace argo
-        kubectl apply -k "github.com/kubeflow/pipelines/manifests/kustomize/env/platform-agnostic?ref=$PIPELINE_VERSION"
-        kubectl -n kubeflow wait applications/pipeline --for condition=Ready --timeout=1800s
-        nohup kubectl -n kubeflow port-forward svc/ml-pipeline-ui 8080:80 &
-        sleep 10
-        curl -k -L localhost:8080/pipeline/apis/v1beta1/experiments?
         kubectl apply -n argo -f https://raw.githubusercontent.com/argoproj/argo/stable/manifests/install.yaml
     - name: SonarCloud Scan
       uses: sonarsource/sonarcloud-github-action@master
