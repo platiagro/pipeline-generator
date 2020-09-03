@@ -100,13 +100,13 @@ def format_pipeline_run_details(run_details):
 
     for index, operator in enumerate(nodes.values()):
         if index != 0:
-            displayName = str(operator['displayName'])
-            if TRAINING_DATASETS_CONTAINER_NAME != displayName and TRAINING_DATASETS_VOLUME_NAME != displayName:
+            display_name = str(operator['displayName'])
+            if TRAINING_DATASETS_CONTAINER_NAME != display_name and TRAINING_DATASETS_VOLUME_NAME != display_name:
                 # check if pipeline was interrupted
                 if 'message' in operator and str(operator['message']) == 'terminated':
-                    operators_status[displayName] = 'Terminated'
+                    operators_status[display_name] = 'Terminated'
                 else:
-                    operators_status[displayName] = str(operator['phase'])
+                    operators_status[display_name] = str(operator['phase'])
     return {"status": operators_status}
 
 
