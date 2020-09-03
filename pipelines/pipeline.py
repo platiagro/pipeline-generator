@@ -6,7 +6,8 @@ from collections import defaultdict
 from kfp import compiler, dsl
 from werkzeug.exceptions import BadRequest
 
-from .utils import TRAINING_DATASETS_DIR, init_pipeline_client, validate_operator, validate_parameters
+from .utils import TRAINING_DATASETS_DIR, TRAINING_DATASETS_CONTAINER_NAME, TRAINING_DATASETS_VOLUME_NAME, \
+    init_pipeline_client, validate_operator, validate_parameters
 from .resources.templates import SELDON_DEPLOYMENT
 from .operator import Operator
 
@@ -244,7 +245,7 @@ class Pipeline():
             )
 
             wrkdirop = dsl.VolumeOp(
-                name="datasets",
+                name=TRAINING_DATASETS_VOLUME_NAME,
                 k8s_resource=pvc,
                 action="apply"
             )
@@ -255,7 +256,7 @@ class Pipeline():
                     download_args += f"download_dataset(\"{dataset}\", \"{TRAINING_DATASETS_DIR}/{dataset}\");"
 
                 dsl.ContainerOp(
-                    name='download-dataset',
+                    name=TRAINING_DATASETS_CONTAINER_NAME,
                     image='platiagro/datasets:0.1.0',
                     command=['python', '-c'],
                     arguments=[download_args],
