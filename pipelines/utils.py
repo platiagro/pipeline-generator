@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import ast
+import base64
 import json
 import re
 import yaml
@@ -21,7 +23,7 @@ def init_pipeline_client():
     Returns:
         An instance of kfp client.
     """
-    return Client(getenv("KF_PIPELINES_ENDPOINT", '0.0.0.0:31380/pipeline'), namespace="deployments")
+    return Client(getenv("KF_PIPELINES_ENDPOINT", '10.50.11.60:31380/pipeline'), namespace="deployments")
 
 
 def load_kube_config():
@@ -98,16 +100,60 @@ def format_pipeline_run_details(run_details):
 
     operators_status = {}
 
-    for index, operator in enumerate(nodes.values()):
+    for index, node in enumerate(nodes.values()):
         if index != 0:
-            display_name = str(operator['displayName'])
+            display_name = str(node['displayName'])
             if TRAINING_DATASETS_CONTAINER_NAME != display_name and TRAINING_DATASETS_VOLUME_NAME != display_name:
+                operator = {}
                 # check if pipeline was interrupted
-                if 'message' in operator and str(operator['message']) == 'terminated':
-                    operators_status[display_name] = 'Terminated'
+                if 'message' in node and str(node['message']) == 'terminated':
+                    operator['status'] = 'Terminated'
                 else:
-                    operators_status[display_name] = str(operator['phase'])
-    return {"status": operators_status}
+                    operator['status'] = str(node['phase'])
+                operator['parameters'] = get_operator_parameters(workflow_manifest, display_name)
+                operators_status[display_name] = operator
+    return {"operators": operators_status}
+
+
+def get_operator_parameters(workflow_manifest, operator):
+    templates = workflow_manifest['spec']['templates']
+    for template in templates:
+        name = template['name']
+        if name == operator and 'container' in template:
+            args = template['container']['args']
+            for arg in args:
+                if 'papermill' in arg:
+                    # split the arg and get base64 parameters in fifth position
+                    splited_arg = arg.split()
+                    base64_parameters = splited_arg[4].replace(';', '')
+                    # decode base64 parameters
+                    parameters = base64.b64decode(base64_parameters).decode()
+                    # replace \n- to make list parameter to be in same line
+                    parameters = parameters.replace('\n-', '-').split('\n')
+                    params = {}
+                    for parameter in parameters:
+                        if parameter != "":
+                            parameter_slited = parameter.split(':')
+                            key = parameter_slited[0]
+                            value = parameter_slited[1].strip()
+                            if value.startswith('-'):
+                                params[key] = []
+                                list_values = value.split('-')
+                                for list_value in list_values:
+                                    if list_value != "":
+                                        params[key].append(list_value.strip())
+                            elif value == 'true':
+                                params[key] = True
+                            elif value == 'false':
+                                params[key] = False
+                            else:
+                                try:
+                                    # try to convert string to correct type
+                                    value = ast.literal_eval(value)
+                                except Exception:
+                                    pass
+                                params[key] = value
+                    return params
 
 
 def format_deployment_pipeline(run):

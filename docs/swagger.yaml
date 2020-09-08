@@ -320,13 +320,23 @@ components:
     TrainingStatus:
       type: object
       properties:
-        status:
+        operators:
           type: object
-          additionalProperties:
-            type: string
+          properties:
+            parameters:
+              type: object
+            status:
+              type: string
           example:
-            c9a4e6a05-a788-4efa-b94b-693e28608618: "Succeeded"
-            caadb1d13-0666-4d84-a365-356b258e4433: "Succeeded"
+            aacde2a9-31ba-4a77-8508-76f5884440a7:
+              parameters:
+                dataset: "/tmp/data/iris.csv"
+                target: "SepalLengthCm"
+              status: "Succeeded"
+            dd680cfc-1442-48ee-b285-5755c4d9c574:
+              parameters:
+                dataset: "/tmp/data/iris.csv"
+              status: "Failed"
   requestBodies:
     DeploymentPut:
       content:
