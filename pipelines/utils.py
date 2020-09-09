@@ -93,8 +93,8 @@ def format_pipeline_run_details(run_details):
         # nodes are creating, returns the tasks with no dependencies as Pending
         template = list(filter(lambda t: t['name'] == 'common-pipeline', workflow_manifest['spec']['templates']))[0]
         tasks = filter(lambda t: 'dependencies' not in t, template['dag']['tasks'])
-        status = dict((t['name'], 'Pending') for t in tasks)
-        return {'status': status}
+        status = dict((t['name'], {'status': 'Pending'}) for t in tasks)
+        return {'operators': status}
 
     nodes = workflow_manifest['status']['nodes']
 
