@@ -23,7 +23,7 @@ def init_pipeline_client():
     Returns:
         An instance of kfp client.
     """
-    return Client(getenv("KF_PIPELINES_ENDPOINT", '10.50.11.60:31380/pipeline'), namespace="deployments")
+    return Client(getenv("KF_PIPELINES_ENDPOINT", '0.0.0.0:31380/pipeline'), namespace="deployments")
 
 
 def load_kube_config():
