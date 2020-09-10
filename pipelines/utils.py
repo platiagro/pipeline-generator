@@ -130,30 +130,34 @@ def get_operator_parameters(workflow_manifest, operator):
                     parameters = base64.b64decode(base64_parameters).decode()
                     # replace \n- to make list parameter to be in same line
                     parameters = parameters.replace('\n-', '-').split('\n')
-                    params = {}
-                    for parameter in parameters:
-                        if parameter != "":
-                            parameter_slited = parameter.split(':')
-                            key = parameter_slited[0]
-                            value = parameter_slited[1].strip()
-                            if value.startswith('-'):
-                                params[key] = []
-                                list_values = value.split('-')
-                                for list_value in list_values:
-                                    if list_value != "":
-                                        params[key].append(list_value.strip())
-                            elif value == 'true':
-                                params[key] = True
-                            elif value == 'false':
-                                params[key] = False
-                            else:
-                                try:
-                                    # try to convert string to correct type
-                                    value = ast.literal_eval(value)
-                                except Exception:
-                                    pass
-                                params[key] = value
-                    return params
+                    return format_operator_parameters(parameters)
+
+
+def format_operator_parameters(parameters):
+    params = {}
+    for parameter in parameters:
+        if parameter != "":
+            parameter_slited = parameter.split(':')
+            key = parameter_slited[0]
+            value = parameter_slited[1].strip()
+            if value.startswith('-'):
+                params[key] = []
+                list_values = value.split('-')
+                for list_value in list_values:
+                    if list_value != "":
+                        params[key].append(list_value.strip())
+            elif value == 'true':
+                params[key] = True
+            elif value == 'false':
+                params[key] = False
+            else:
+                try:
+                    # try to convert string to correct type
+                    value = ast.literal_eval(value)
+                except Exception:
+                    pass
+                params[key] = value
+    return params
 
 
 def format_deployment_pipeline(run):
