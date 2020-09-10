@@ -6,9 +6,12 @@ from collections import defaultdict
 from kfp import compiler, dsl
 from werkzeug.exceptions import BadRequest
 
-from .utils import TRAINING_DATASETS_DIR, init_pipeline_client, validate_operator, validate_parameters
+from .utils import TRAINING_DATASETS_DIR, TRAINING_DATASETS_CONTAINER_NAME, TRAINING_DATASETS_VOLUME_NAME, \
+    init_pipeline_client, validate_operator, validate_parameters
 from .resources.templates import SELDON_DEPLOYMENT
 from .operator import Operator
+
+from kubernetes.client.models import V1PersistentVolumeClaim
 
 MEMORY_REQUEST = getenv('MEMORY_REQUEST', '2G')
 MEMORY_LIMIT = getenv('MEMORY_LIMIT', '4G')
@@ -205,10 +208,12 @@ class Pipeline():
             current_operator = self._get_final_operators()[0]
 
             graph = ""
+            include_logger = True
 
             while True:
                 operator = self._get_operator(current_operator)
-                graph = operator.create_operator_graph(graph)
+                graph = operator.create_operator_graph(graph, include_logger)
+                include_logger = False
                 try:
                     current_operator = self._inverted_edges[current_operator][0]
                 except IndexError:
@@ -222,11 +227,27 @@ class Pipeline():
         """Compile the pipeline in a training format."""
         @dsl.pipeline(name='Common pipeline')
         def training_pipeline():
+            pvc = V1PersistentVolumeClaim(
+                api_version="v1",
+                kind="PersistentVolumeClaim",
+                metadata={
+                    'name': f'vol-{self._experiment_id}',
+                    'namespace': 'deployments'
+                },
+                spec={
+                    'accessModes': ['ReadWriteOnce'],
+                    'resources': {
+                        'requests': {
+                            'storage': '1Gi'
+                        }
+                    }
+                }
+            )
+
             wrkdirop = dsl.VolumeOp(
-                name='datasets',
-                resource_name='datasets' + self._experiment_id,
-                size='1Gi',
-                modes=dsl.VOLUME_MODE_RWO
+                name=TRAINING_DATASETS_VOLUME_NAME,
+                k8s_resource=pvc,
+                action="apply"
             )
 
             if len(self._datasets) > 0:
@@ -235,7 +256,7 @@ class Pipeline():
                     download_args += f"download_dataset(\"{dataset}\", \"{TRAINING_DATASETS_DIR}/{dataset}\");"
 
                 dsl.ContainerOp(
-                    name='download-dataset',
+                    name=TRAINING_DATASETS_CONTAINER_NAME,
                     image='platiagro/datasets:0.1.0',
                     command=['python', '-c'],
                     arguments=[download_args],

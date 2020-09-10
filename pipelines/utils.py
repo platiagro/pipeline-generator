@@ -13,6 +13,8 @@ from werkzeug.exceptions import BadRequest, InternalServerError
 from minio import Minio
 
 TRAINING_DATASETS_DIR = '/tmp/data'
+TRAINING_DATASETS_CONTAINER_NAME = 'download-dataset'
+TRAINING_DATASETS_VOLUME_NAME = 'vol-tmp-data'
 
 
 def init_pipeline_client():
@@ -21,7 +23,7 @@ def init_pipeline_client():
     Returns:
         An instance of kfp client.
     """
-    return Client(getenv("KF_PIPELINES_ENDPOINT", '0.0.0.0:31380/pipeline'))
+    return Client(getenv("KF_PIPELINES_ENDPOINT", '0.0.0.0:31380/pipeline'), namespace="deployments")
 
 
 def load_kube_config():
@@ -37,7 +39,7 @@ def load_kube_config():
 
     try:
         config.load_incluster_config()
-    except:
+    except Exception:
         raise InternalServerError('Failed to connect to cluster')
 
 
@@ -100,11 +102,13 @@ def format_pipeline_run_details(run_details):
 
     for index, operator in enumerate(nodes.values()):
         if index != 0:
-            # check if pipeline was interrupted
-            if 'message' in operator and str(operator['message']) == 'terminated':
-                operators_status[str(operator['displayName'])] = 'Terminated'
-            else:
-                operators_status[str(operator['displayName'])] = str(operator['phase'])
+            display_name = str(operator['displayName'])
+            if TRAINING_DATASETS_CONTAINER_NAME != display_name and TRAINING_DATASETS_VOLUME_NAME != display_name:
+                # check if pipeline was interrupted
+                if 'message' in operator and str(operator['message']) == 'terminated':
+                    operators_status[display_name] = 'Terminated'
+                else:
+                    operators_status[display_name] = str(operator['phase'])
     return {"status": operators_status}
 
 
@@ -169,7 +173,7 @@ def remove_non_deployable_operators(operators: list):
                     if operator["operatorId"] in op["dependencies"]:
                         op["dependencies"] = dependency
 
-            non_deployable_operators.append(operator["operatorId"])       
+            non_deployable_operators.append(operator["operatorId"])
 
     for operator in deployable_operators:
         dependencies = set(operator["dependencies"])

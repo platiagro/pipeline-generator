@@ -75,6 +75,10 @@ COMPONENT_SPEC = Template("""
                     {
                         "name": "workspace",
                         "mountPath": "/app"
+                    },
+                    {
+                        "name": "data",
+                        "mountPath": "/tmp/data"
                     }
                 ]
             }
@@ -84,6 +88,12 @@ COMPONENT_SPEC = Template("""
                 "name": "workspace",
                 "persistentVolumeClaim": {
                     "claimName": "{{workflow.name}}-$operatorId"
+                }
+            },
+            {
+                "name": "data",
+                "persistentVolumeClaim": {
+                    "claimName": "vol-$experimentId"
                 }
             }
         ]
@@ -98,8 +108,14 @@ GRAPH = Template("""{
     },
     "children": [
         $children
-    ]
+    ]$logger
 }""")
+
+LOGGER = Template(""",
+    "logger": {
+        "url": "http://pipelines.kubeflow/seldon/logger/$experimentId",
+        "mode": "all"
+    }""")
 
 POD_DEPLOYMENT_VOLUME = Template("""
 {
