@@ -148,18 +148,23 @@ def format_operator_parameters(parameters):
                 for list_value in list_values:
                     if list_value != "":
                         params[key].append(list_value.strip())
-            elif value == 'true':
-                params[key] = True
-            elif value == 'false':
-                params[key] = False
             else:
-                try:
-                    # try to convert string to correct type
-                    value = ast.literal_eval(value)
-                except Exception:
-                    pass
-                params[key] = value
+                params[key] = convert_parameter_value_to_correct_type(value)
     return params
+
+
+def convert_parameter_value_to_correct_type(value):
+    if value == 'true':
+        value = True
+    elif value == 'false':
+        value = False
+    else:
+        try:
+            # try to convert string to correct type
+            value = ast.literal_eval(value)
+        except Exception:
+            pass
+    return value
 
 
 def format_deployment_pipeline(run):
