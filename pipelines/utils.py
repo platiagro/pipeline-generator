@@ -143,14 +143,19 @@ def format_operator_parameters(parameters):
             key = parameter_slited[0]
             value = parameter_slited[1].strip()
             if value.startswith('-'):
-                params[key] = []
-                list_values = value.split('-')
-                for list_value in list_values:
-                    if list_value != "":
-                        params[key].append(list_value.strip())
+                params[key] = get_parameter_list_values(value)
             else:
                 params[key] = convert_parameter_value_to_correct_type(value)
     return params
+
+
+def get_parameter_list_values(value):
+    parameter_list_values = []
+    list_values = value.split('-')
+    for list_value in list_values:
+        if list_value != "":
+            parameter_list_values.append(list_value.strip())
+    return parameter_list_values
 
 
 def convert_parameter_value_to_correct_type(value):
