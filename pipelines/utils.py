@@ -10,6 +10,8 @@ from kubernetes import config, client
 from schema import Schema, SchemaError, Or, Optional
 from werkzeug.exceptions import BadRequest, InternalServerError
 
+from minio import Minio
+
 TRAINING_DATASETS_DIR = '/tmp/data'
 TRAINING_DATASETS_CONTAINER_NAME = 'download-dataset'
 TRAINING_DATASETS_VOLUME_NAME = 'vol-tmp-data'
@@ -178,3 +180,12 @@ def remove_non_deployable_operators(operators: list):
         operator["dependencies"] = list(dependencies - set(non_deployable_operators))
 
     return deployable_operators
+
+
+def connect_minio():
+    return Minio(
+        endpoint=getenv('MINIO_ENDPOINT', 'localhost:9000'),
+        access_key=getenv('MINIO_ACCESS_KEY', 'minio'),
+        secret_key=getenv("MINIO_SECRET_KEY", 'minio123'),
+        region=getenv('MINIO_REGION_NAME', 'us-east-1'),
+        secure=False,)
