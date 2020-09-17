@@ -121,13 +121,13 @@ def get_operator_parameters(workflow_manifest, operator):
     templates = workflow_manifest['spec']['templates']
     for template in templates:
         name = template['name']
-        if name == operator and 'container' in template:
+        if name == operator and 'container' in template and 'args' in template['container']:
             args = template['container']['args']
             for arg in args:
                 if 'papermill' in arg:
-                    # split the arg and get base64 parameters in fifth position
+                    # split the arg and get base64 parameters in twelfth position
                     splited_arg = arg.split()
-                    base64_parameters = splited_arg[4].replace(';', '')
+                    base64_parameters = splited_arg[11].replace(';', '')
                     # decode base64 parameters
                     parameters = base64.b64decode(base64_parameters).decode()
                     # replace \n- to make list parameter to be in same line
