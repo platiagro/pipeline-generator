@@ -92,18 +92,20 @@ class Operator():
 
     def create_container_op(self):
         """Create operator operator from YAML file."""
-
         container_op = dsl.ContainerOp(
             name=self._operator_id,
             image='platiagro/platiagro-notebook-image:0.1.0',
             command=['sh', '-c'],
             arguments=[
-                f'''papermill {self._notebook_path} output.ipynb -b {self._create_parameters_papermill()};
-                    status=$?;
-                    bash save-dataset.sh;
-                    bash save-figure.sh;
-                    bash upload-to-jupyter.sh {self._experiment_id} {self._operator_id} Experiment.ipynb;
-                    exit $status
+                f'''if [ "{self._notebook_path}" != "None" ]
+                    then
+                        papermill {self._notebook_path} output.ipynb -b {self._create_parameters_papermill()};
+                        status=$?;
+                        bash save-dataset.sh;
+                        bash save-figure.sh;
+                        bash upload-to-jupyter.sh {self._experiment_id} {self._operator_id} Experiment.ipynb;
+                        exit $status
+                    fi
                  '''
             ],
         )
