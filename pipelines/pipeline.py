@@ -6,7 +6,7 @@ from collections import defaultdict
 from kfp import compiler, dsl
 from werkzeug.exceptions import BadRequest
 
-from .utils import TRAINING_DATASETS_DIR, TRAINING_DATASETS_CONTAINER_NAME, TRAINING_DATASETS_VOLUME_NAME, \
+from .utils import TRAINING_DATASETS_DIR, TRAINING_DATASETS_VOLUME_NAME, \
     init_pipeline_client, validate_operator, validate_parameters
 from .resources.templates import SELDON_DEPLOYMENT
 from .operator import Operator
@@ -40,7 +40,6 @@ class Pipeline():
 
         self._experiment_id = experiment_id
         self._name = name
-        self._datasets = []
 
         self._client = init_pipeline_client()
         self._experiment = self._client.create_experiment(name=experiment_id)
@@ -83,20 +82,6 @@ class Pipeline():
                 return True
         return False
 
-    def _add_dataset(self, parameters):
-        """Add dataset.
-
-        Args:
-            parameters (obj): Operator parameters.
-        """
-        for parameter in parameters:
-            parameter_name = parameter.get('name')
-            if parameter_name == 'dataset':
-                dataset = parameter.get('value')
-                if dataset not in self._datasets:
-                    self._datasets.append(dataset)
-                break
-
     def _add_operator(self, operator):
         """Instantiate a new operator and add it to the pipeline.
 
@@ -112,20 +97,18 @@ class Pipeline():
             raise BadRequest('Invalid operator in request.')
 
         operator_id = operator.get('operatorId')
+        image = operator.get('image')
+        arguments = operator.get('commands')
         notebook_path = operator.get('notebookPath')
 
         parameters = operator.get('parameters', None)
 
         # validate parameters
-        dataset = None
         if parameters:
             if not validate_parameters(parameters):
                 raise ValueError('Invalid parameter.')
-            else:
-                self._add_dataset(parameters)
 
         dependencies = operator.get('dependencies', [])
-
         if dependencies:
             for d in dependencies:
                 self._edges[d].append(operator_id)
@@ -134,8 +117,7 @@ class Pipeline():
             self._roots.append(operator_id)
 
         self._operators[operator_id] = Operator(
-            self._experiment_id, dataset, operator_id,
-            notebook_path, parameters
+            self._experiment_id, operator_id, image, arguments, notebook_path, parameters
         )
 
     def _get_operator(self, operator_id):
@@ -249,19 +231,6 @@ class Pipeline():
                 k8s_resource=pvc,
                 action="apply"
             )
-
-            if len(self._datasets) > 0:
-                download_args = "from platiagro import download_dataset;"
-                for dataset in self._datasets:
-                    download_args += f"download_dataset(\"{dataset}\", \"{TRAINING_DATASETS_DIR}/{dataset}\");"
-
-                dsl.ContainerOp(
-                    name=TRAINING_DATASETS_CONTAINER_NAME,
-                    image='platiagro/datasets:0.1.0',
-                    command=['python', '-c'],
-                    arguments=[download_args],
-                    pvolumes={TRAINING_DATASETS_DIR: wrkdirop.volume}
-                )
 
             # Create container_op for all operators
             for _, operator in self._operators.items():
