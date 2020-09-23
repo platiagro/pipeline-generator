@@ -15,7 +15,6 @@ from werkzeug.exceptions import BadRequest, InternalServerError
 from minio import Minio
 
 TRAINING_DATASETS_DIR = '/tmp/data'
-TRAINING_DATASETS_CONTAINER_NAME = 'download-dataset'
 TRAINING_DATASETS_VOLUME_NAME = 'vol-tmp-data'
 
 
@@ -63,8 +62,9 @@ def validate_parameters(parameters):
 operator_schema = Schema({
     'operatorId': str,
     'notebookPath': Or(str, None),
-    'commands': list,
     'image': str,
+    'commands': list,
+    'arguments': list,
     Optional('parameters'): list,
     Optional('dependencies'): list
 })
@@ -105,7 +105,7 @@ def format_pipeline_run_details(run_details):
     for index, node in enumerate(nodes.values()):
         if index != 0:
             display_name = str(node['displayName'])
-            if TRAINING_DATASETS_CONTAINER_NAME != display_name and TRAINING_DATASETS_VOLUME_NAME != display_name:
+            if TRAINING_DATASETS_VOLUME_NAME != display_name:
                 operator = {}
                 # check if pipeline was interrupted
                 if 'message' in node and str(node['message']) == 'terminated':
@@ -125,9 +125,9 @@ def get_operator_parameters(workflow_manifest, operator):
             args = template['container']['args']
             for arg in args:
                 if 'papermill' in arg:
-                    # split the arg and get base64 parameters in twelfth position
+                    # split the arg and get base64 parameters in fifth position
                     splited_arg = arg.split()
-                    base64_parameters = splited_arg[11].replace(';', '')
+                    base64_parameters = splited_arg[4].replace(';', '')
                     # decode base64 parameters
                     parameters = base64.b64decode(base64_parameters).decode()
                     # replace \n- to make list parameter to be in same line
