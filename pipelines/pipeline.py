@@ -98,7 +98,8 @@ class Pipeline():
 
         operator_id = operator.get('operatorId')
         image = operator.get('image')
-        arguments = operator.get('commands')
+        commands = operator.get('commands')
+        arguments = operator.get('arguments')
         notebook_path = operator.get('notebookPath')
 
         parameters = operator.get('parameters', None)
@@ -116,7 +117,8 @@ class Pipeline():
             self._roots.append(operator_id)
 
         self._operators[operator_id] = Operator(
-            self._experiment_id, operator_id, image, arguments, notebook_path, parameters
+            self._experiment_id, operator_id, image,
+            commands, arguments, notebook_path, parameters
         )
 
     def _get_operator(self, operator_id):

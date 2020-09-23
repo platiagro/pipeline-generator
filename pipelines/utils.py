@@ -62,8 +62,9 @@ def validate_parameters(parameters):
 operator_schema = Schema({
     'operatorId': str,
     'notebookPath': Or(str, None),
-    'commands': list,
     'image': str,
+    'commands': list,
+    'arguments': list,
     Optional('parameters'): list,
     Optional('dependencies'): list
 })

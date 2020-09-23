@@ -3,6 +3,7 @@ import base64
 import yaml
 import json
 from json import dumps
+from string import Template
 
 from kfp import dsl
 from kubernetes import client as k8s_client
@@ -19,13 +20,14 @@ class Operator():
     """
 
     def __init__(self, experiment_id, operator_id,
-                 image, arguments, notebook_path, parameters):
+                 image, commands, arguments, notebook_path, parameters):
         """Create a new instance of Operator.
 
         Args:
             experiment_id (str): PlatIA experiment UUID.
             operator_id (str): PlatIA operator UUID.
             image (str): docker image.
+            commands (str): ContainerOp commands.
             arguments (str): ContainerOp arguments.
             notebook_path (str): path to operator notebook in MinIO.
             parameters (list): list of operator parameters.
@@ -34,6 +36,7 @@ class Operator():
         self._experiment_id = experiment_id
         self._operator_id = operator_id
         self._image = image
+        self._commands = commands
         self._arguments = arguments
         self._parameters = parameters
 
@@ -105,25 +108,22 @@ class Operator():
     def create_container_op(self):
         """Create operator operator from YAML file."""
         arguments = []
-        if 'datasets' not in self._image:
-            commands = ['sh', '-c']
-            for argument in self._arguments:
-                argument = argument.replace('$notebookPath', self._notebook_path)
-                argument = argument.replace('$parameters', self._create_parameters_papermill())
-                argument = argument.replace('$experimentId', self._experiment_id)
-                argument = argument.replace('$operatorId', self._operator_id)
-                arguments.append(argument)
-        else:
-            commands = ['python', '-c']
-            for argument in self._arguments:
-                argument = argument.replace('$dataset', self._get_dataset_from_parameters())
-                argument = argument.replace('$trainingDatasetDir', TRAINING_DATASETS_DIR)
-                arguments.append(argument)
+        for argument in self._arguments:
+            ARG = Template(argument)
+            argument = ARG.safe_substitute({
+                'notebookPath': self._notebook_path,
+                'parameters': self._create_parameters_papermill(),
+                'experimentId': self._experiment_id,
+                'operatorId': self._operator_id,
+                'dataset': self._get_dataset_from_parameters(),
+                'trainingDatasetDir': TRAINING_DATASETS_DIR,
+            })
+            arguments.append(argument)
 
         container_op = dsl.ContainerOp(
             name=self._operator_id,
             image=self._image,
-            command=commands,
+            command=self._commands,
             arguments=arguments,
         )
 
