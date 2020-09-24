@@ -138,7 +138,7 @@ def get_operator_parameters(workflow_manifest, operator):
 def format_operator_parameters(parameters):
     params = {}
     for parameter in parameters:
-        if parameter != "":
+        if parameter != "" and parameter != "{}":
             parameter_slited = parameter.split(':')
             key = parameter_slited[0]
             value = parameter_slited[1].strip()
