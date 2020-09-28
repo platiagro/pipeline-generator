@@ -57,6 +57,10 @@ COMPONENT_SPEC = Template("""
             {
                 "image": "platiagro/platiagro-deployment-image:0.1.0",
                 "name": "$operatorId",
+                "securityContext": {
+                    "allowPrivilegeEscalation": false,
+                    "runAsUser": 0
+                },
                 "env": [
                     {
                         "name": "EXPERIMENT_ID",
