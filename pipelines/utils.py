@@ -9,6 +9,7 @@ from os import getenv
 
 from kfp import Client
 from kubernetes import config, client
+from kubernetes.client.rest import ApiException
 from schema import Schema, SchemaError, Or, Optional
 from werkzeug.exceptions import BadRequest, InternalServerError
 
@@ -201,10 +202,24 @@ def get_cluster_ip():
     load_kube_config()
 
     v1 = client.CoreV1Api()
+
     service = v1.read_namespaced_service(
         name='istio-ingressgateway', namespace='istio-system')
 
     return service.status.load_balancer.ingress[0].ip
+
+
+def check_pvc_is_bound(name, namespace):
+    load_kube_config()
+    v1 = client.CoreV1Api()
+    try:
+        volume = v1.read_namespaced_persistent_volume_claim(name=name, namespace=namespace)
+        if volume.status.phase == 'Bound':
+            return True
+        else:
+            return False
+    except ApiException:
+        return False
 
 
 def remove_non_deployable_operators(operators: list):
