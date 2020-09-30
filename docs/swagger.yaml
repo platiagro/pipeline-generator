@@ -345,7 +345,7 @@ components:
     OperatorLogs:
       type: object
       properties:
-          excepetion:
+          exception:
             type: string
             example: "KeyError"
           traceback:
