@@ -7,6 +7,7 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 from werkzeug.exceptions import BadRequest, InternalServerError, NotFound
 
+from .jupyter import get_operator_logs
 from .logger import create_seldon_logger
 from .training import create_training, get_training, terminate_run_training, retry_run_training
 from .deployment import get_deployments, get_deployment_by_id, create_deployment, get_deployment_log, \
@@ -77,6 +78,13 @@ def handle_post_retry_run_deloy(deployment_id):
 @app.route("/trainings/<training_id>", methods=["DELETE"])
 def handle_delete_training(training_id):
     return jsonify(terminate_run_training(training_id=training_id))
+
+
+@app.route("/trainings/<training_id>/operators/<operator_id>/logs", methods=["GET"])
+def handle_training_notebook_log(training_id, operator_id):
+    """Handles GET requests to /trainings/<training_id>/operators/<operator_id>/logs"""
+    logs = get_operator_logs(training_id, operator_id)
+    return jsonify(logs)
 
 
 @app.route("/trainings/retry/<training_id>", methods=["PUT"])

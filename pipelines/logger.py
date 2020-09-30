@@ -1,5 +1,4 @@
 import os
-from os import getenv
 import pandas as pd
 import json
 from io import StringIO
@@ -155,5 +154,3 @@ def remove_file():
     filedir = os.path.dirname(os.path.realpath('__file__'))
     filename = os.path.join(filedir, FILE_LOGGER)
     os.remove(filename)
-
-

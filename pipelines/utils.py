@@ -2,10 +2,13 @@
 import ast
 import base64
 import json
+import random
 import re
+import uuid
 import yaml
 
 from os import getenv
+from itertools import chain
 
 from kfp import Client
 from kubernetes import config, client
@@ -24,7 +27,7 @@ def init_pipeline_client():
     Returns:
         An instance of kfp client.
     """
-    return Client(getenv("KF_PIPELINES_ENDPOINT", '0.0.0.0:31380/pipeline'), namespace="deployments")
+    return Client(getenv("KF_PIPELINES_ENDPOINT", '10.50.11.116:31380/pipeline'), namespace="deployments")
 
 
 def load_kube_config():
@@ -48,6 +51,42 @@ parameter_schema = Schema({
     'name': str,
     'value': Or(str, int, float, bool, dict, list),
 })
+
+
+def remove_ansi_escapes(traceback):
+    compiler = re.compile(r'(\x9B|\x1B\[)[0-?]*[ -\/]*[@-~]')
+    readable_text = [compiler.sub('', line).split('\n') for line in traceback]
+
+    return list(chain.from_iterable(readable_text))
+
+
+def search_for_pod_name(details: dict, operator_id: str):
+    """Get operator pod name.
+
+    Args:
+        details (dict): workflow manifest from pipeline runtime
+        operator_id (str): operator id
+
+    Returns:
+        dict: id and status of pod
+    """
+    try:
+        if details:
+            if 'nodes' in details['status']:
+                for node in [*details['status']['nodes'].values()]:
+                    if node['displayName'] == operator_id:
+                        return {'name': node['id'], 'status': node['phase'], 'message': node['message']}
+    except KeyError:
+        pass
+
+
+def uuid_alpha() -> str:
+    """Generates an uuid that always starts with an alpha char."""
+    uuid_ = str(uuid.uuid4())
+    if not uuid_[0].isalpha():
+        c = random.choice(["a", "b", "c", "d", "e", "f"])
+        uuid_ = f"{c}{uuid_[1:]}"
+    return uuid_
 
 
 def validate_parameters(parameters):
