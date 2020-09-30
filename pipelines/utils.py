@@ -24,7 +24,7 @@ def init_pipeline_client():
     Returns:
         An instance of kfp client.
     """
-    return Client(getenv("KF_PIPELINES_ENDPOINT", '10.50.11.112:31380/pipeline'), namespace="deployments")
+    return Client(getenv("KF_PIPELINES_ENDPOINT", '0.0.0.0:31380/pipeline'), namespace="deployments")
 
 
 def load_kube_config():
@@ -127,7 +127,7 @@ def get_operator_parameters(workflow_manifest, operator):
                 if 'papermill' in arg:
                     # split the arg and get base64 parameters in fifth position
                     splited_arg = arg.split()
-                    base64_parameters = splited_arg[11].replace(';', '')
+                    base64_parameters = splited_arg[4].replace(';', '')
                     # decode base64 parameters
                     parameters = base64.b64decode(base64_parameters).decode()
                     # replace \n- to make list parameter to be in same line
@@ -154,9 +154,8 @@ def get_parameter_list_values(value):
     list_values = value.split('-')
     for list_value in list_values:
         if list_value != "":
-            #Remove "from list_value and replace with empty
-            list_value = list_value.replace('"', '')
-            """unicode_escape Encoding suitable as the contents of a Unicode literal in ASCII-encoded Python"""
+            for char in '"':
+                list_value = list_value.replace(char, '')
             list_value = list_value.replace("\\/", "/").encode().decode('unicode_escape')
             parameter_list_values.append(list_value.strip())
     return parameter_list_values
