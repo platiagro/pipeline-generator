@@ -64,8 +64,11 @@ def get_training(training_id, pretty=True):
         run_details = client.get_run(run_id)
     except Exception:
         return {}
-
-    return format_pipeline_run_details(run_details) if pretty else run_details
+ 
+    if pretty:
+        return format_pipeline_run_details(run_details)
+    else:
+        return run_details
 
 
 def terminate_run_training(training_id):
