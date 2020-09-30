@@ -8,8 +8,9 @@ from string import Template
 from kfp import dsl
 from kubernetes import client as k8s_client
 
-from .utils import TRAINING_DATASETS_DIR, validate_notebook_path
-from .resources.templates import COMPONENT_SPEC, GRAPH, LOGGER, POD_DEPLOYMENT, POD_DEPLOYMENT_VOLUME
+from .utils import TRAINING_DATASETS_DIR, check_pvc_is_bound, validate_notebook_path
+from .resources.templates import COMPONENT_SPEC, GRAPH, LOGGER, \
+    POD_DEPLOYMENT, POD_DEPLOYMENT_VOLUME
 
 
 class Operator():
@@ -65,7 +66,6 @@ class Operator():
 
     def create_operator_spec(self):
         """Create a string from operator spec.
-
         Returns:
             Operator spec in JSON format.
         """
@@ -74,6 +74,21 @@ class Operator():
             'operatorId': self._operator_id,
             'parameters': self._create_parameters_seldon()
         })
+        if check_pvc_is_bound(f'vol-{self._experiment_id}', 'deployments'):
+            operator_spec_json = json.loads(operator_spec)
+            spec = operator_spec_json['spec']
+            spec['containers'][0]['volumeMounts'].append({
+                "name": "data",
+                "mountPath": "/tmp/data"
+            })
+            spec['volumes'].append({
+                "name": "data",
+                "persistentVolumeClaim": {
+                    "claimName": f'vol-{self._experiment_id}'
+                }
+            })
+            operator_spec = json.dumps(operator_spec_json)
+
         return operator_spec
 
     def create_operator_graph(self, children, include_logger=False):
