@@ -71,11 +71,10 @@ def search_for_pod_name(details: dict, operator_id: str):
         dict: id and status of pod
     """
     try:
-        if details:
-            if 'nodes' in details['status']:
-                for node in [*details['status']['nodes'].values()]:
-                    if node['displayName'] == operator_id:
-                        return {'name': node['id'], 'status': node['phase'], 'message': node['message']}
+        if 'nodes' in details['status']:
+            for node in [*details['status']['nodes'].values()]:
+                if node['displayName'] == operator_id:
+                    return {'name': node['id'], 'status': node['phase'], 'message': node['message']}
     except KeyError:
         pass
 

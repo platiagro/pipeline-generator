@@ -9,9 +9,9 @@ from requests.packages.urllib3.util.retry import Retry
 from werkzeug.exceptions import NotFound
 
 from .training import get_training
-from .utils import remove_ansi_escapes, load_kube_config, search_for_pod_name
+from .utils import remove_ansi_escapes, search_for_pod_name
 
-JUPYTER_ENDPOINT = getenv("JUPYTER_ENDPOINT", "http://10.50.11.116/notebook/anonymous/server")
+JUPYTER_ENDPOINT = getenv("JUPYTER_ENDPOINT", "http://server.anonymous:80/notebook/anonymous/server")
 URL_CONTENTS = f"{JUPYTER_ENDPOINT}/api/contents"
 
 COOKIES = {"_xsrf": "token"}
@@ -47,7 +47,6 @@ def get_operator_logs(training_id: str, operator_id: str):
         dict: response.
     """
     operator_endpoint = f"experiments/{training_id}/operators/{operator_id}/Experiment.ipynb"
-    response = None
 
     try:
         r = SESSION.get(url=f"{URL_CONTENTS}/{operator_endpoint}").content
@@ -72,14 +71,12 @@ def get_operator_logs(training_id: str, operator_id: str):
         except KeyError:
             pass
 
-    if response is None:
-        run_details = get_training(training_id, pretty=False)
-        details = loads(run_details.pipeline_runtime.workflow_manifest)
-        operator_container = search_for_pod_name(details, operator_id)
+    run_details = get_training(training_id, pretty=False)
+    details = loads(run_details.pipeline_runtime.workflow_manifest)
+    operator_container = search_for_pod_name(details, operator_id)
 
-        if operator_container['status'] == 'Failed':
-            load_kube_config()
-            return {"exception": operator_container['message'],
-                    "traceback": f"Kernel has died: {operator_container['message']}"}
+    if operator_container['status'] == 'Failed':
+        return {"exception": operator_container['message'],
+                "traceback": f"Kernel has died: {operator_container['message']}"}
 
-    return {"message": "Notebook finished with status completed"} if response is None else response
+    return {"message": "Notebook finished with status completed"}
