@@ -53,14 +53,18 @@ def get_training(training_id):
             page_size='100', sort_by=created_at_desc, experiment_id=experiment.id)
 
         # find the latest training run
+        latest_training_run = None
         for run in experiment_runs.runs:
-            workflow_manifest = json.loads(
-                run.pipeline_spec.workflow_manifest)
+            workflow_manifest = json.loads(run.pipeline_spec.workflow_manifest)
             if workflow_manifest['metadata']['generateName'] == 'common-pipeline-':
+                latest_training_run = run
                 break
 
-        run_id = run.id
-        run_details = client.get_run(run_id)
+        if latest_training_run:
+            run_id = latest_training_run.id
+            run_details = client.get_run(run_id)
+        else:
+            return {}
     except Exception:
         return {}
 
