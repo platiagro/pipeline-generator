@@ -64,10 +64,9 @@ def get_operator_logs(training_id: str, operator_id: str):
                 for output in cell["outputs"]:
                     if output["output_type"] == "error":
                         error_log = output["traceback"]
+                        traceback = remove_ansi_escapes(error_log)
 
-                traceback = remove_ansi_escapes(error_log)
-
-                return {"exception": output["ename"], "traceback": traceback}
+                        return {"exception": output["ename"], "traceback": traceback}
         except KeyError:
             pass
 
