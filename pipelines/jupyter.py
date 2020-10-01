@@ -77,6 +77,6 @@ def get_operator_logs(training_id: str, operator_id: str):
 
     if operator_container['status'] == 'Failed':
         return {"exception": operator_container['message'],
-                "traceback": f"Kernel has died: {operator_container['message']}"}
+                "traceback": [f"Kernel has died: {operator_container['message']}"]}
 
     return {"message": "Notebook finished with status completed"}
