@@ -15,6 +15,7 @@ from .deployment import get_deployments, get_deployment_by_id, create_deployment
 
 
 app = Flask(__name__)
+app.config['JSON_AS_ASCII'] = False
 
 
 @app.route('/', methods=['GET'])

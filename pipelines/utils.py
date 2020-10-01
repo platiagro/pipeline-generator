@@ -192,8 +192,11 @@ def get_parameter_list_values(value):
     parameter_list_values = []
     list_values = value.split('-')
     for list_value in list_values:
-        if list_value != "":
-            parameter_list_values.append(list_value.strip())
+        # Remove "from list_value and replace with empty
+        list_value = list_value.replace('"', '')
+        """unicode_escape Encoding suitable as the contents of a Unicode literal in ASCII-encoded Python"""
+        list_value = list_value.replace("\\/", "/").encode().decode('unicode_escape')
+        parameter_list_values.append(list_value.strip())
     return parameter_list_values
 
 
