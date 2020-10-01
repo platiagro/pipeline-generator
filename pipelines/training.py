@@ -33,11 +33,12 @@ def create_training(training_id, pipeline_parameters):
     return pipeline.run_pipeline()
 
 
-def get_training(training_id):
+def get_training(training_id, pretty=True):
     """Get run details.
 
     Args:
         training_id (str): PlatIA experiment_id.
+        pretty (boolean): well formated response
 
     Returns:
        Run details.
@@ -67,8 +68,11 @@ def get_training(training_id):
             return {}
     except Exception:
         return {}
-
-    return format_pipeline_run_details(run_details)
+ 
+    if pretty:
+        return format_pipeline_run_details(run_details)
+    else:
+        return run_details
 
 
 def terminate_run_training(training_id):
