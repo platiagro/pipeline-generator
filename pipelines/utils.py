@@ -50,7 +50,7 @@ def load_kube_config():
 
 parameter_schema = Schema({
     'name': str,
-    'value': Or(str, int, float, bool, dict, list),
+    'value': Or(None, str, int, float, bool, dict, list),
 })
 
 
@@ -201,7 +201,9 @@ def get_parameter_list_values(value):
 
 
 def convert_parameter_value_to_correct_type(value):
-    if value == 'true':
+    if value == 'null':
+        value = None
+    elif value == 'true':
         value = True
     elif value == 'false':
         value = False
