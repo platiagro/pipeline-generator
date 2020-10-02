@@ -181,7 +181,7 @@ def format_operator_parameters(parameters):
             parameter_slited = parameter.split(':')
             key = parameter_slited[0]
             value = parameter_slited[1].strip()
-            if value.startswith('-'):
+            if value.startswith('- '):
                 params[key] = get_parameter_list_values(value)
             else:
                 params[key] = convert_parameter_value_to_correct_type(value)
@@ -194,9 +194,10 @@ def get_parameter_list_values(value):
     for list_value in list_values:
         # Remove "from list_value and replace with empty
         list_value = list_value.replace('"', '')
-        """unicode_escape Encoding suitable as the contents of a Unicode literal in ASCII-encoded Python"""
-        list_value = list_value.replace("\\/", "/").encode().decode('unicode_escape')
-        parameter_list_values.append(list_value.strip())
+        if list_value != "":
+            """unicode_escape Encoding suitable as the contents of a Unicode literal in ASCII-encoded Python"""
+            list_value = list_value.replace("\\/", "/").encode().decode('unicode_escape')
+            parameter_list_values.append(list_value.strip())
     return parameter_list_values
 
 
