@@ -197,6 +197,7 @@ def get_parameter_list_values(value):
         """unicode_escape Encoding suitable as the contents of a Unicode literal in ASCII-encoded Python"""
         list_value = list_value.replace("\\/", "/").encode().decode('unicode_escape')
         parameter_list_values.append(list_value.strip())
+    parameter_list_values = [i for i in parameter_list_values if i]
     return parameter_list_values
 
 
