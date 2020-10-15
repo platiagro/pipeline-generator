@@ -209,13 +209,88 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
-  /trainings/{trainingId}/operators/{operatorId}/logs:
+  /trainings/{trainingId}/runs/{runId}/operators/{operatorId}/datasets:
+    get:
+      summary: "List datasets paginated"
+      tags:
+        - "Trainings"
+      parameters:
+        - name: trainingId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: runId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: operatorId
+          in: path
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: page
+          schema:
+            type: integer
+          description: Page number
+        - in: query
+          name: page_size
+          schema:
+            type: integer
+          description: Page size
+      responses:
+        "200":
+          $ref: "#/components/responses/Datasets"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /trainings/{trainingId}/runs/{runId}/operators/{operatorId}/figures:
+    get:
+      summary: "List all figures"
+      tags:
+        - "Trainings"
+      parameters:
+        - name: trainingId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: runId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: operatorId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/Figures"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /trainings/{trainingId}/runs/{runId}/operators/{operatorId}/logs:
     get:
       summary: "Get logs from Jupyter Notebook"
       tags:
         - "Trainings"
       parameters:
         - name: trainingId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: runId
           in: path
           required: true
           schema:
@@ -234,71 +309,67 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
+  /trainings/{trainingId}/runs/{runId}/operators/{operatorId}/metrics:
+    get:
+      summary: "List all metrics"
+      tags:
+        - "Trainings"
+      parameters:
+        - name: trainingId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: runId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: operatorId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/Metrics"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
 
 components:
   schemas:
-    Run:
-      type: object
-      properties:
-        message:
-          type: string
-          example: "Pipeline running."
-        runId:
-          type: string
-          format: uuid
-    TerminateRun:
-      type: object
-      properties:
-        message:
-          type: string
-          example: "Training deleted."
-    Operator:
-      type: object
-      required:
-        - operatorId
-        - notebookPath
-      properties:
-        operatorId:
-          type: string
-          format: uuid
-        notebookPath:
-          type: string
-          example: "minio://anonymous/components/eee8b9a5-4bee-450f-9f3b-ac58453d9c3d/Training.ipynb"
-        dependencies:
-          description: "List of operator ids."
-          type: array
-          items:
-            type: string
-            format: uuid
-        parameters:
-          type: array
-          items:
-            anyOf:
-              - $ref: "#/components/schemas/Parameter"
-        commands:
-          description: "List of commands."
-          type: array
-          items:
-            type: string
-            example: "cmd"
-        image:
-          type: string
-          example: "platiagro/platiagro-notebook-image:0.1.0"
-    Parameter:
-      type: object
-      properties:
-        name:
-          type: string
-          example: "time"
-        value:
-          oneOf:
-            - type: string
-            - type: number
-            - type: integer
-            - type: boolean
-            - type: array
-            - type: object
-          example: 8
+    Datasets:
+      type: array
+      items:
+        oneOf:
+          - type: object
+            properties:
+              columns:
+                type: array
+                items:
+                  oneOf:
+                    - type: string
+                      example: "SepalLengthCm"
+                    - type: string
+                      example: "Species"
+              data:
+                type: array
+                items:
+                  oneOf:
+                    - type: array
+                      items:
+                        oneOf:
+                          - type: number
+                            example: 5.1
+                          - type: string
+                            example: "Iris-setosa"
+              total:
+                type: number
+                example: 2
     Deployments:
       type: array
       items:
@@ -333,6 +404,12 @@ components:
             items:
               oneOf:
                 - $ref: "#/components/schemas/Log"
+    Figures:
+      type: array
+      items:
+        oneOf:
+          - type: string
+            example: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAAC6CAIAAAB3B9X3AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAG6SURBVHhe7dIxAQAADMOg+TfdicgLGrhBIBCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhDB9ho69eEGiUHfAAAAAElFTkSuQmCC"
     Log:
       type: object
       properties:
@@ -342,6 +419,45 @@ components:
           type: string
         timestamp:
           type: string
+    Metrics:
+      type: array
+      items:
+        oneOf:
+          - type: object
+            example:
+              metric_name: metric_value
+    Operator:
+      type: object
+      required:
+        - operatorId
+        - notebookPath
+      properties:
+        operatorId:
+          type: string
+          format: uuid
+        notebookPath:
+          type: string
+          example: "minio://anonymous/components/eee8b9a5-4bee-450f-9f3b-ac58453d9c3d/Training.ipynb"
+        dependencies:
+          description: "List of operator ids."
+          type: array
+          items:
+            type: string
+            format: uuid
+        parameters:
+          type: array
+          items:
+            anyOf:
+              - $ref: "#/components/schemas/Parameter"
+        commands:
+          description: "List of commands."
+          type: array
+          items:
+            type: string
+            example: "cmd"
+        image:
+          type: string
+          example: "platiagro/platiagro-notebook-image:0.1.0"
     OperatorLogs:
       type: object
       properties:
@@ -367,6 +483,30 @@ components:
                 - "   4861 "
                 - ""
                 - "KeyError: ['species']"
+    Parameter:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "time"
+        value:
+          oneOf:
+            - type: string
+            - type: number
+            - type: integer
+            - type: boolean
+            - type: array
+            - type: object
+          example: 8
+    Run:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Pipeline running."
+        runId:
+          type: string
+          format: uuid
     TrainingStatus:
       type: object
       properties:
@@ -387,6 +527,12 @@ components:
               parameters:
                 dataset: "/tmp/data/iris.csv"
               status: "Failed"
+    TerminateRun:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Training deleted."
   requestBodies:
     DeploymentPut:
       content:
@@ -416,12 +562,52 @@ components:
                   oneOf:
                     - $ref: "#/components/schemas/Operator"
   responses:
+    Datasets:
+      description: ""
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Datasets"
+    DeleteDeployment:
+      description: ""
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: "Deployment deleted."
+    Deployments:
+      description: ""
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Deployments"
     DeploymentLog:
       description: ""
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/DeploymentLog"
+    Figures:
+      description: ""
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Figures"
+    Metrics:
+      description: ""
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Metrics"
+    OperatorLogs:
+      description: ""
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/OperatorLogs"
     Run:
       description: ""
       content:
@@ -434,22 +620,7 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/TerminateRun"
-    Deployments:
-      description: ""
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/Deployments"
-    DeleteDeployment:
-      description: ""
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              message:
-                type: string
-                example: "Deployment deleted."
+    
     TrainingStatus:
       description: ""
       content:
@@ -514,9 +685,3 @@ components:
                 example: "The service is unavailable. Try your call again."
             required:
               - message
-    OperatorLogs:
-      description: ""
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/OperatorLogs"

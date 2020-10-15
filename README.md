@@ -66,7 +66,7 @@ pip install .
 Then, start the API server:
 
 ```bash
-python -m pipelines.api
+python -m pipelines.api.main
 ```
 
 ## Testing

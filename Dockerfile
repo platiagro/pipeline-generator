@@ -15,5 +15,5 @@ WORKDIR /app/
 
 EXPOSE 8080
 
-ENTRYPOINT ["python", "-m", "pipelines.api"]
+ENTRYPOINT ["python", "-m", "pipelines.api.main"]
 CMD []
