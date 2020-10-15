@@ -11,3 +11,4 @@ nbformat==5.0.4
 kubernetes==10.0
 PyMySQL==0.9.3
 SQLAlchemy==1.3.13
+platiagro @ git+https://github.com/platiagro/sdk.git@master

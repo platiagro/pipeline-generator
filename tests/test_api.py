@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from unittest import TestCase
 
-from pipelines.api import app
+from pipelines.api.main import app
 
 
 class TestApi(TestCase):

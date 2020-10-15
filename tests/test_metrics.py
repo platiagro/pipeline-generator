@@ -2,11 +2,10 @@
 from unittest import TestCase
 
 import platiagro
-from projects.api.main import app
-from projects.controllers.utils import uuid_alpha
-from projects.object_storage import BUCKET_NAME, MINIO_CLIENT
+from pipelines.api.main import app
+from pipelines.object_storage import BUCKET_NAME, MINIO_CLIENT
+from pipelines.utils import uuid_alpha
 
-PROJECT_ID = str(uuid_alpha())
 EXPERIMENT_ID = str(uuid_alpha())
 OPERATOR_ID = str(uuid_alpha())
 RUN_ID = str(uuid_alpha())
@@ -27,14 +26,7 @@ class TestMetrics(TestCase):
 
     def test_list_metrics(self):
         with app.test_client() as c:
-            rv = c.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID}/metrics")
-            result = rv.get_json()
-            self.assertIsInstance(result, list)
-            self.assertEquals(result, [{"accuracy": 1.0}])
-
-    def test_list_metrics_by_run_id(self):
-        with app.test_client() as c:
-            rv = c.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID}/metrics/{RUN_ID}")
+            rv = c.get(f"/trainings/{EXPERIMENT_ID}/runs/{RUN_ID}/operators/{OPERATOR_ID}/metrics")
             result = rv.get_json()
             self.assertIsInstance(result, list)
             self.assertEquals(result, [{"accuracy": 1.0}])

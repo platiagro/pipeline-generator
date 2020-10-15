@@ -13,6 +13,16 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
+    
+    services:
+      mysql:
+        image: mysql:5.7
+        env:
+          MYSQL_ALLOW_EMPTY_PASSWORD: yes
+          MYSQL_DATABASE: platiagro
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
 
     steps:
     - name: Set Docker TAG
@@ -55,6 +65,9 @@ jobs:
         MINIO_ENDPOINT: localhost:9000
         MINIO_ACCESS_KEY: minio
         MINIO_SECRET_KEY: minio123
+        MYSQL_DB_HOST: localhost
+        MYSQL_DB_NAME: platiagro
+        MYSQL_DB_USER: root
         KF_PIPELINES_ENDPOINT: localhost:8080/pipelines
         JUPYTER_ENDPOINT: http://localhost:8888
     - name: SonarCloud Scan

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from unittest import TestCase
 
-from projects.database import init_db
+from pipelines.database import init_db
 
 
 class TestDatabase(TestCase):

@@ -6,14 +6,16 @@ from unittest import TestCase
 from minio.error import BucketAlreadyOwnedByYou
 from platiagro import CATEGORICAL, DATETIME, NUMERICAL
 
-from projects.api.main import app
-from projects.controllers.utils import uuid_alpha
-from projects.database import engine
-from projects.object_storage import BUCKET_NAME, MINIO_CLIENT
+from pipelines.api.main import app
+from pipelines.database import engine
+from pipelines.object_storage import BUCKET_NAME, MINIO_CLIENT
+from pipelines.utils import uuid_alpha
 
 PROJECT_ID = str(uuid_alpha())
 EXPERIMENT_ID = str(uuid_alpha())
 TASK_ID = str(uuid_alpha())
+OPERATOR_ID = str(uuid_alpha())
+RUN_ID = str(uuid_alpha())
 NAME = "foo"
 DESCRIPTION = "long foo"
 DATASET = "mock.csv"
@@ -30,9 +32,6 @@ TAGS_JSON = dumps(TAGS)
 PARAMETERS_JSON = dumps(PARAMETERS)
 EXPERIMENT_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/tasks/{TASK_ID}/Experiment.ipynb"
 DEPLOYMENT_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/tasks/{TASK_ID}/Deployment.ipynb"
-RUN_ID = str(uuid_alpha())
-OPERATOR_ID = str(uuid_alpha())
-OPERATOR_ID2 = str(uuid_alpha())
 CREATED_AT = "2000-01-01 00:00:00"
 UPDATED_AT = "2000-01-01 00:00:00"
 
@@ -62,12 +61,6 @@ class TestDatasets(TestCase):
         text = (
             f"INSERT INTO operators (uuid, experiment_id, task_id, parameters, created_at, updated_at) "
             f"VALUES ('{OPERATOR_ID}', '{EXPERIMENT_ID}', '{TASK_ID}', '{PARAMETERS_JSON}', '{CREATED_AT}', '{UPDATED_AT}')"
-        )
-        conn.execute(text)
-
-        text = (
-            f"INSERT INTO operators (uuid, experiment_id, task_id, parameters, created_at, updated_at) "
-            f"VALUES ('{OPERATOR_ID2}', '{EXPERIMENT_ID}', '{TASK_ID}', '{PARAMETERS_JSON}', '{CREATED_AT}', '{UPDATED_AT}')"
         )
         conn.execute(text)
         conn.close()
@@ -148,25 +141,19 @@ class TestDatasets(TestCase):
 
     def test_get_dataset(self):
         with app.test_client() as c:
-            rv = c.get(f"/projects/unk/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID}/datasets")
-            result = rv.get_json()
-            expected = {"message": "The specified project does not exist"}
-            self.assertDictEqual(expected, result)
-            self.assertEqual(rv.status_code, 404)
-
-            rv = c.get(f"/projects/{PROJECT_ID}/experiments/unk/operators/{OPERATOR_ID}/datasets")
+            rv = c.get(f"/trainings/unk/runs/{RUN_ID}/operators/{OPERATOR_ID}/datasets")
             result = rv.get_json()
             expected = {"message": "The specified experiment does not exist"}
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 404)
 
-            rv = c.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators/unk/datasets")
+            rv = c.get(f"/trainings/{EXPERIMENT_ID}/runs/{RUN_ID}/operators/unk/datasets")
             result = rv.get_json()
             expected = {"message": "The specified operator does not exist"}
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 404)
 
-            rv = c.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID2}/datasets")
+            rv = c.get(f"/trainings/{EXPERIMENT_ID}/runs/{RUN_ID}/operators/{OPERATOR_ID}/datasets")
             result = rv.get_json()
             expected = {
                 "columns": ["col0", "col1", "col2", "col3", "col4", "col5"],
@@ -178,29 +165,3 @@ class TestDatasets(TestCase):
                 "total": 3
             }
             self.assertDictEqual(expected, result)
-
-            rv = c.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID}/datasets")
-            result = rv.get_json()
-            expected = {
-                "columns": ["col0", "col1", "col2", "col3", "col4", "col5"],
-                "data": [
-                    ["01/01/2000", 5.1, 3.5, 1.4, 0.2, "Iris-setosa"],
-                    ["01/01/2000", 5.1, 3.5, 1.4, 0.2, "Iris-setosa"],
-                    ["01/01/2000", 5.1, 3.5, 1.4, 0.2, "Iris-setosa"]
-                ],
-                "total": 3
-            }
-            self.assertDictEqual(result, expected)
-
-            rv = c.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID}/datasets/{RUN_ID}")
-            result = rv.get_json()
-            expected = {
-                "columns": ["col0", "col1", "col2", "col3", "col4", "col5"],
-                "data": [
-                    ["01/01/2000", 5.1, 3.5, 1.4, 0.2, "Iris-setosa"],
-                    ["01/01/2000", 5.1, 3.5, 1.4, 0.2, "Iris-setosa"],
-                    ["01/01/2000", 5.1, 3.5, 1.4, 0.2, "Iris-setosa"]
-                ],
-                "total": 3
-            }
-            self.assertDictEqual(result, expected)

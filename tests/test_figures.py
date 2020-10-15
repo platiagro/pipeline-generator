@@ -5,11 +5,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import platiagro
-from projects.api.main import app
-from projects.controllers.utils import uuid_alpha
-from projects.object_storage import BUCKET_NAME, MINIO_CLIENT
+from pipelines.api.main import app
+from pipelines.object_storage import BUCKET_NAME, MINIO_CLIENT
+from pipelines.utils import uuid_alpha
 
-PROJECT_ID = str(uuid_alpha())
 EXPERIMENT_ID = str(uuid_alpha())
 OPERATOR_ID = str(uuid_alpha())
 RUN_ID = str(uuid_alpha())
@@ -36,12 +35,6 @@ class TestFigures(TestCase):
 
     def test_list_figures(self):
         with app.test_client() as c:
-            rv = c.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID}/figures")
-            result = rv.get_json()
-            self.assertIsInstance(result, list)
-
-    def test_list_figures_by_run_id(self):
-        with app.test_client() as c:
-            rv = c.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID}/figures/{RUN_ID}")
+            rv = c.get(f"/trainings/{EXPERIMENT_ID}/runs/{RUN_ID}/operators/{OPERATOR_ID}/figures")
             result = rv.get_json()
             self.assertIsInstance(result, list)

@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from pipelines.api import app
+from pipelines.api.main import app
 
 TRAINING_ID = 'cdf47789-934d-4efa-a412-0bfacf9a466a'
 
