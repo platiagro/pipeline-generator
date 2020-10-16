@@ -188,6 +188,26 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
+  /trainings/{trainingId}/runs:
+    get:
+      summary: "Get training runs details."
+      tags:
+        - "Trainings"
+      parameters:
+        - name: trainingId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/TrainingRunsDetails"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
   /trainings/retry/{trainingId}:
     put:
       summary: "Re-initiate a failed or terminated training"
@@ -507,6 +527,36 @@ components:
         runId:
           type: string
           format: uuid
+    TrainingRunDetails:
+      type: object
+      properties:
+        createdAt:
+          type: string
+          format: date-time
+        runId:
+          type: string
+          format: uuid
+        operators:
+          type: array
+          items:
+            type: object
+            properties:
+              operatorId:
+                type: string
+                format: uuid
+              taskId:
+                type: string
+                format: uuid
+              parameters:
+                type: object
+                example:
+                  dataset: "/tmp/data/iris.csv"
+                  target: "SepalLengthCm"
+    TrainingRunsDetails:
+      type: array
+      items:
+        oneOf:
+          - $ref: "#/components/schemas/TrainingRunDetails"
     TrainingStatus:
       type: object
       properties:
@@ -621,6 +671,12 @@ components:
           schema:
             $ref: "#/components/schemas/TerminateRun"
     
+    TrainingRunsDetails:
+      description: ""
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/TrainingRunsDetails"
     TrainingStatus:
       description: ""
       content:

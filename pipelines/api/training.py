@@ -5,7 +5,7 @@ from flask import Blueprint, jsonify, request
 
 from ..jupyter import get_operator_logs
 from ..controllers.training import create_training, get_training, \
-    terminate_run_training, retry_run_training
+    get_training_runs, terminate_run_training, retry_run_training
 
 bp = Blueprint("training", __name__)
 
@@ -14,6 +14,12 @@ bp = Blueprint("training", __name__)
 def handle_get_training(training_id):
     """Handles GET requests to /<training_id>."""
     return jsonify(get_training(training_id))
+
+
+@bp.route('<training_id>/runs', methods=['GET'])
+def handle_get_training_runs(training_id):
+    """Handles GET requests to /<training_id>/runs."""
+    return jsonify(get_training_runs(training_id))
 
 
 @bp.route('<training_id>', methods=['PUT'])
