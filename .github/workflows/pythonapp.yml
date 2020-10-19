@@ -126,30 +126,3 @@ jobs:
         registry: registry.hub.docker.com
         repository: platiagro/pipelines
         tags: ${{ steps.var.outputs.TAG }}
-
-  integration:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v2
-      - name: Set up Python 3.6
-        uses: actions/setup-python@v1
-        with:
-          python-version: 3.6
-      - name: Run MinIO image
-        run: |
-          docker run -d -p 9000:9000 \
-          -e "MINIO_ACCESS_KEY=$MINIO_ACCESS_KEY" \
-          -e "MINIO_SECRET_KEY=$MINIO_SECRET_KEY" \
-          minio/minio:RELEASE.2018-02-09T22-40-05Z server /data
-        env:
-          MINIO_ACCESS_KEY: minio
-          MINIO_SECRET_KEY: minio123
-      - name: Installing dependencies
-        run: |
-          pip install .[testing]
-        env:
-          MINIO_ENDPOINT: localhost:9000
-          MINIO_ACCESS_KEY: minio
-          MINIO_SECRET_KEY: minio123
-          KF_PIPELINES_ENDPOINT: localhost:8080/pipelines
