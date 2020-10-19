@@ -28,7 +28,7 @@ def init_pipeline_client():
     Returns:
         An instance of kfp client.
     """
-    return Client(getenv("KF_PIPELINES_ENDPOINT", '10.50.11.60:31380/pipeline'), namespace="deployments")
+    return Client(getenv("KF_PIPELINES_ENDPOINT", '0.0.0.0:31380/pipeline'), namespace="deployments")
 
 
 def load_kube_config():
@@ -215,6 +215,21 @@ def convert_parameter_value_to_correct_type(value):
         except Exception:
             pass
     return value
+
+
+def get_operator_task_id(workflow_manifest, operator):
+    templates = workflow_manifest['spec']['templates']
+    for template in templates:
+        name = template['name']
+        if name == operator and 'container' in template and 'args' in template['container']:
+            args = template['container']['args']
+            for arg in args:
+                if 'papermill' in arg:
+                    splited_arg = arg.split()
+                    task_id = splited_arg[1] \
+                        .replace('s3://anonymous/tasks/', '') \
+                        .replace('/Experiment.ipynb', '')
+                    return task_id
 
 
 def format_deployment_pipeline(run):
