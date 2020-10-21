@@ -13,7 +13,7 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
-    
+
     services:
       mysql:
         image: mysql:5.7
@@ -25,6 +25,49 @@ jobs:
         options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
 
     steps:
+    - name: Code review tips
+      uses: unsplash/comment-on-pr@master
+      if: ${{ github.event_name == 'pull_request' && github.event.action == 'opened' }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        msg: |
+          ## Dicas para revisão de código
+
+          ### Commits
+          - Título (1a linha do commit): apresentar resumo do que foi alterado/adicionado/removido.
+            ex: adiciona action que salva parametros no backend; exibe rótulo no componente de selecao de dataset;
+          - Descrição (outras linhas): dar mais detalhes de cada alteração:
+            - motivos das alterações
+              ex: havia um bug que causava...; nova funcionalidade que faz isso...; código foi movido para...;
+            - bibliotecas adicionadas e versões (requirements.txt)
+              ex: atualiza para Kubeflow Pipelines SDK 1.0.3;
+            - testes unitários criados/alterados
+              ex: adiciona testes para a API GET /trainings/{trainingId}/operators/{operatorId};
+            - alterações do `swagger.yaml`
+              ex: adiciona documentação para `PUT /trainings/{trainingId}`
+          - Mensagens auto-explicativas! Quem revisa o código deve entender o que foi feito (e porque foi feito) **sem perguntar para quem fez o commit**.
+          - Não devem ter conflitos. Solicitar que sejam resolvidas as ocorrências de "This branch has conflicts that must be resolved".
+
+          ### SonarCloud Quality Gate
+          - Coverage > 80.0%, e sempre que possível = 100%
+          - 0 Bugs, 0 Code Smells, 0 Vulnerabilities
+          - São permitidos os seguintes Security Hotspots:
+            - Make sure this permissive CORS policy is safe here.
+            - Make sure publicly writable directories are used safely here.
+            - Using http protocol is insecure. Use https instead.
+            - Make sure disabling CSRF protection is safe here.
+
+          ### Build Github actions COM SUCESSO
+
+          ### Python
+          - Usar Python 3.6
+          - Remover `print`.
+          - Não deixar código-fonte comentado.
+          - f-string `f'text-{variable}'` é melhor que `'text-{}'.format(variable)` e `'text-' + variable`
+          - async/await NÃO EXISTEM no Python3.6
+          - Métodos que são chamados de outros arquivos `.py` **DEVEM TER Docstring**.
+          - Usar Google Style Python Docstring: https://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_google.html
     - name: Set Docker TAG
       id: var
       run: |
@@ -83,30 +126,3 @@ jobs:
         registry: registry.hub.docker.com
         repository: platiagro/pipelines
         tags: ${{ steps.var.outputs.TAG }}
-
-  integration:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v2
-      - name: Set up Python 3.6
-        uses: actions/setup-python@v1
-        with:
-          python-version: 3.6
-      - name: Run MinIO image
-        run: |
-          docker run -d -p 9000:9000 \
-          -e "MINIO_ACCESS_KEY=$MINIO_ACCESS_KEY" \
-          -e "MINIO_SECRET_KEY=$MINIO_SECRET_KEY" \
-          minio/minio:RELEASE.2018-02-09T22-40-05Z server /data
-        env:
-          MINIO_ACCESS_KEY: minio
-          MINIO_SECRET_KEY: minio123
-      - name: Installing dependencies
-        run: |
-          pip install .[testing]
-        env:
-          MINIO_ENDPOINT: localhost:9000
-          MINIO_ACCESS_KEY: minio
-          MINIO_SECRET_KEY: minio123
-          KF_PIPELINES_ENDPOINT: localhost:8080/pipelines
