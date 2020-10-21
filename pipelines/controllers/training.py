@@ -120,7 +120,7 @@ def get_training_runs(training_id):
         experiment = client.get_experiment(experiment_name=training_id)
 
         experiment_runs = client.list_runs(
-            page_size='100', sort_by='created_at asc', experiment_id=experiment.id)
+            page_size='100', sort_by=created_at_desc, experiment_id=experiment.id)
 
         response = []
         for run in experiment_runs.runs:
