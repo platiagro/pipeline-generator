@@ -13,6 +13,7 @@ from .operator import Operator
 
 from kubernetes.client.models import V1PersistentVolumeClaim
 
+KF_PIPELINES_NAMESPACE = getenv('KF_PIPELINES_NAMESPACE', 'deployments')
 MEMORY_REQUEST = getenv('MEMORY_REQUEST', '2G')
 MEMORY_LIMIT = getenv('MEMORY_LIMIT', '4G')
 CPU_REQUEST = getenv('CPU_REQUEST', '500m')
@@ -215,7 +216,7 @@ class Pipeline():
                 kind="PersistentVolumeClaim",
                 metadata={
                     'name': f'vol-{self._experiment_id}',
-                    'namespace': 'deployments'
+                    'namespace': KF_PIPELINES_NAMESPACE,
                 },
                 spec={
                     'accessModes': ['ReadWriteOnce'],
@@ -265,7 +266,7 @@ class Pipeline():
         @dsl.pipeline(name='Common Seldon Deployment.')
         def deployment_pipeline():
             seldonserving = SELDON_DEPLOYMENT.substitute({
-                "namespace": "deployments",
+                "namespace": KF_PIPELINES_NAMESPACE,
                 "experimentId": self._experiment_id,
                 "deploymentName": self._name,
                 "componentSpecs": operator_specs,

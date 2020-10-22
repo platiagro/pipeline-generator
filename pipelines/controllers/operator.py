@@ -2,6 +2,7 @@
 import base64
 import yaml
 import json
+import os
 from json import dumps
 from string import Template
 
@@ -11,6 +12,8 @@ from kubernetes import client as k8s_client
 from ..resources.templates import COMPONENT_SPEC, GRAPH, LOGGER, \
     POD_DEPLOYMENT, POD_DEPLOYMENT_VOLUME
 from .utils import TRAINING_DATASETS_DIR, check_pvc_is_bound, validate_notebook_path
+
+KF_PIPELINES_NAMESPACE = os.getenv('KF_PIPELINES_NAMESPACE', 'deployments')
 
 
 class Operator():
@@ -157,7 +160,7 @@ class Operator():
 
     def build_operator(self):
         volume_spec = POD_DEPLOYMENT_VOLUME.substitute({
-            "namespace": "deployments",
+            "namespace": KF_PIPELINES_NAMESPACE,
             'operatorId': self._operator_id,
         })
         dsl.ResourceOp(
@@ -165,7 +168,7 @@ class Operator():
             k8s_resource=json.loads(volume_spec)
         )
         operator_spec = POD_DEPLOYMENT.substitute({
-            "namespace": "deployments",
+            "namespace": KF_PIPELINES_NAMESPACE,
             'notebookPath': self._notebook_path,
             'status': "$?",
             'experimentId': self._experiment_id,

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import io
 import json
+import os
 import re
 
 from kfp import dsl
@@ -11,6 +12,9 @@ from werkzeug.exceptions import BadRequest, NotFound
 from .utils import load_kube_config, init_pipeline_client, format_deployment_pipeline, get_cluster_ip,\
     remove_non_deployable_operators
 from .pipeline import Pipeline
+
+
+KF_PIPELINES_NAMESPACE = os.getenv('KF_PIPELINES_NAMESPACE', 'deployments')
 
 
 def create_deployment(deployment_id, pipeline_parameters):
@@ -163,7 +167,7 @@ def delete_deployment_resource(deployment_resource):
         undeploy,
         {},
         run_name='undeploy',
-        namespace='deployment'
+        namespace=KF_PIPELINES_NAMESPACE,
     )
 
 
@@ -194,11 +198,10 @@ def get_deployment_log(deploy_name):
     custom_api = client.CustomObjectsApi()
     core_api = client.CoreV1Api()
     try:
-        namespace = 'deployments'
         api_response = custom_api.get_namespaced_custom_object(
             'machinelearning.seldon.io',
             'v1',
-            namespace,
+            KF_PIPELINES_NAMESPACE,
             'seldondeployments',
             deploy_name,
         )
@@ -206,21 +209,21 @@ def get_deployment_log(deploy_name):
         response = []
         for deployment_name in api_response['status']['deploymentStatus'].keys():
             api_response = core_api.list_namespaced_pod(
-                namespace,
+                KF_PIPELINES_NAMESPACE,
                 label_selector=f'app={deployment_name}'
             )
             for i in api_response.items:
                 pod_name = i.metadata.name
                 api_response = core_api.read_namespaced_pod(
                     pod_name,
-                    namespace,
+                    KF_PIPELINES_NAMESPACE,
                 )
                 for container in api_response.spec.containers:
                     name = container.name
                     if name != 'istio-proxy' and name != 'seldon-container-engine':
                         pod_log = core_api.read_namespaced_pod_log(
                             pod_name,
-                            namespace,
+                            KF_PIPELINES_NAMESPACE,
                             container=name,
                             pretty='true',
                             tail_lines=512,
