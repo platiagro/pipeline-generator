@@ -9,9 +9,9 @@ from kubernetes.client.rest import ApiException
 from kubernetes import client
 from werkzeug.exceptions import BadRequest, NotFound
 
-from .utils import load_kube_config, init_pipeline_client, format_deployment_pipeline, get_cluster_ip,\
-    remove_non_deployable_operators
-from .pipeline import Pipeline
+from pipelines.controllers.pipeline import Pipeline
+from pipelines.controllers.utils import load_kube_config, init_pipeline_client, \
+    format_deployment_pipeline, get_cluster_ip, remove_non_deployable_operators
 
 
 KF_PIPELINES_NAMESPACE = os.getenv('KF_PIPELINES_NAMESPACE', 'deployments')

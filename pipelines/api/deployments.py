@@ -3,7 +3,7 @@
 
 from flask import Blueprint, jsonify, request
 
-from ..controllers.deployment import get_deployments, get_deployment_by_id, \
+from pipelines.controllers.deployments import get_deployments, get_deployment_by_id, \
     create_deployment, get_deployment_log, delete_deployment, retry_run_deployment
 
 bp = Blueprint("deployments", __name__)

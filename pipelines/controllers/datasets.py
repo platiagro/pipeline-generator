@@ -5,8 +5,8 @@ import platiagro
 
 from werkzeug.exceptions import NotFound
 
-from ..database import db_session
-from ..models import Experiment, Operator
+from pipelines.database import db_session
+from pipelines.models import Experiment, Operator
 
 
 def raise_if_experiment_does_not_exist(experiment_id):

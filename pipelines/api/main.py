@@ -8,13 +8,13 @@ from flask_cors import CORS
 from werkzeug.exceptions import BadRequest, NotFound, MethodNotAllowed, \
     Forbidden, InternalServerError
 
-from ..database import db_session, init_db
-from ..controllers.logger import create_seldon_logger
-from .datasets import bp as datasets_blueprint
-from .deployments import bp as deployments_blueprint
-from .figures import bp as figures_blueprint
-from .metrics import bp as metrics_blueprint
-from .training import bp as training_blueprint
+from pipelines.api.datasets import bp as datasets_blueprint
+from pipelines.api.deployments import bp as deployments_blueprint
+from pipelines.api.figures import bp as figures_blueprint
+from pipelines.api.metrics import bp as metrics_blueprint
+from pipelines.api.trainings import bp as training_blueprint
+from pipelines.controllers.logger import create_seldon_logger
+from pipelines.database import db_session, init_db
 
 
 app = Flask(__name__)
@@ -37,7 +37,7 @@ def shutdown_session(exception=None):
 @app.route('/', methods=['GET'])
 def index():
     """Handles GET requests to /."""
-    return jsonify(message='PlatIAgro Pipelines v0.0.1')
+    return jsonify(message='PlatIAgro Pipelines v0.1.0')
 
 
 @app.route('/seldon/logger/<training_id>', methods=['POST'])

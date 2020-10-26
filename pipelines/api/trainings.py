@@ -3,9 +3,9 @@
 
 from flask import Blueprint, jsonify, request
 
-from ..jupyter import get_operator_logs
-from ..controllers.training import create_training, get_training, \
+from pipelines.controllers.trainings import create_training, get_training, \
     get_training_runs, terminate_run_training, retry_run_training
+from pipelines.jupyter import get_operator_logs
 
 bp = Blueprint("training", __name__)
 

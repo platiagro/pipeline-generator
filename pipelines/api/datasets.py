@@ -3,7 +3,7 @@
 
 from flask_smorest import Blueprint
 
-from ..controllers.datasets import get_dataset_pagination
+from pipelines.controllers.datasets import get_dataset_pagination
 
 bp = Blueprint("datasets", __name__)
 

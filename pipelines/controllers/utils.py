@@ -6,17 +6,15 @@ import random
 import re
 import uuid
 import yaml
-
 from os import getenv
 from itertools import chain
 
 from kfp import Client
 from kubernetes import config, client
 from kubernetes.client.rest import ApiException
+from minio import Minio
 from schema import Schema, SchemaError, Or, Optional
 from werkzeug.exceptions import BadRequest, InternalServerError
-
-from minio import Minio
 
 TRAINING_DATASETS_DIR = '/tmp/data'
 TRAINING_DATASETS_VOLUME_NAME = 'vol-tmp-data'
