@@ -2,8 +2,8 @@
 """Dependency model."""
 from sqlalchemy import Column, String, ForeignKey
 
-from ..database import Base
-from ..utils import to_camel_case
+from pipelines.database import Base
+from pipelines.utils import to_camel_case
 
 
 class Dependency(Base):

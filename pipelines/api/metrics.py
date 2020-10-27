@@ -3,7 +3,7 @@
 
 from flask import Blueprint, jsonify
 
-from ..controllers.metrics import list_metrics
+from pipelines.controllers.metrics import list_metrics
 
 bp = Blueprint("metrics", __name__)
 

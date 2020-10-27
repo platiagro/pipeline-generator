@@ -1,8 +1,8 @@
-from .dependencies import Dependency
-from .experiment import Experiment
-from .operators import Operator
-from .project import Project
-from .task import Task
-from .template import Template
+from pipelines.models.dependency import Dependency
+from pipelines.models.experiment import Experiment
+from pipelines.models.operator import Operator
+from pipelines.models.project import Project
+from pipelines.models.task import Task
+from pipelines.models.template import Template
 
 __all__ = ['Dependency', 'Experiment', 'Operator', 'Project', 'Task', 'Template']

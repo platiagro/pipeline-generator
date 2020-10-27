@@ -6,10 +6,10 @@ from collections import defaultdict
 from kfp import compiler, dsl
 from werkzeug.exceptions import BadRequest
 
-from ..resources.templates import SELDON_DEPLOYMENT
-from .utils import TRAINING_DATASETS_DIR, TRAINING_DATASETS_VOLUME_NAME, \
+from pipelines.controllers.utils import TRAINING_DATASETS_DIR, TRAINING_DATASETS_VOLUME_NAME, \
     init_pipeline_client, validate_operator, validate_parameters
-from .operator import Operator
+from pipelines.models.operator import Operator
+from pipelines.resources.templates import SELDON_DEPLOYMENT
 
 from kubernetes.client.models import V1PersistentVolumeClaim
 

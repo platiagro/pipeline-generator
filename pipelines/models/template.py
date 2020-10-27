@@ -4,8 +4,8 @@ from datetime import datetime
 
 from sqlalchemy import Column, DateTime, JSON, String, Text
 
-from ..database import Base
-from ..utils import to_camel_case
+from pipelines.database import Base
+from pipelines.utils import to_camel_case
 
 
 class Template(Base):

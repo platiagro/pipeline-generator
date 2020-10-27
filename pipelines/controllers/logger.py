@@ -3,13 +3,10 @@ import pandas as pd
 import json
 from io import StringIO
 
-
-from minio.error import (BucketAlreadyOwnedByYou,
-                         BucketAlreadyExists)
-
+from minio.error import BucketAlreadyOwnedByYou, BucketAlreadyExists
 from werkzeug.exceptions import BadRequest
 
-from .utils import connect_minio
+from pipelines.controllers.utils import connect_minio
 
 FILE_LOGGER = 'seldon.csv'
 BUCKET = 'anonymous'

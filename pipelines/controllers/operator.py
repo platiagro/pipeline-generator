@@ -9,9 +9,10 @@ from string import Template
 from kfp import dsl
 from kubernetes import client as k8s_client
 
-from ..resources.templates import COMPONENT_SPEC, GRAPH, LOGGER, \
+from pipelines.controllers.utils import TRAINING_DATASETS_DIR, check_pvc_is_bound, \
+    validate_notebook_path
+from pipelines.resources.templates import COMPONENT_SPEC, GRAPH, LOGGER, \
     POD_DEPLOYMENT, POD_DEPLOYMENT_VOLUME
-from .utils import TRAINING_DATASETS_DIR, check_pvc_is_bound, validate_notebook_path
 
 KF_PIPELINES_NAMESPACE = os.getenv('KF_PIPELINES_NAMESPACE', 'deployments')
 

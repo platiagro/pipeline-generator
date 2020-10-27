@@ -22,10 +22,39 @@ Make sure you have all requirements installed on your computer. Then, you may st
 
 ### Run using Docker
 
-Export this environment variable:
+Export these environment variables:
 
 ```bash
 export KF_PIPELINES_ENDPOINT=0.0.0.0:31380/pipeline
+export MINIO_ENDPOINT=localhost:9000
+export MINIO_ACCESS_KEY=minio
+export MINIO_SECRET_KEY=minio123
+export MYSQL_DB_HOST=mysql
+export MYSQL_DB_NAME=platiagro
+export MYSQL_DB_USER=root
+export MYSQL_DB_PASSWORD=
+```
+
+(Optional) Start a MinIO instance:
+
+```bash
+docker run -d -p 9000:9000 \
+  --name minio \
+  --env "MINIO_ACCESS_KEY=$MINIO_ACCESS_KEY" \
+  --env "MINIO_SECRET_KEY=$MINIO_SECRET_KEY" \
+  minio/minio:RELEASE.2018-02-09T22-40-05Z \
+  server /data
+```
+
+(Optional) Start a MySQL server instance:
+
+```bash
+docker run -d -p 3306:3306 \
+  --name mysql \
+  --env "MYSQL_DATABASE=$MYSQL_DB_NAME" \
+  --env "MYSQL_ROOT_PASSWORD=$MYSQL_DB_PASSWORD" \
+  --env "MYSQL_ALLOW_EMPTY_PASSWORD=yes" \
+  mysql:5.7
 ```
 
 Build a docker image that launches the API server:
@@ -44,10 +73,17 @@ docker run -it -p 8080:8080 \
 
 ### Run Local:
 
-Export this environment variable:
+Export these environment variables:
 
 ```bash
 export KF_PIPELINES_ENDPOINT=0.0.0.0:31380/pipeline
+export MINIO_ENDPOINT=localhost:9000
+export MINIO_ACCESS_KEY=minio
+export MINIO_SECRET_KEY=minio123
+export MYSQL_DB_HOST=localhost
+export MYSQL_DB_NAME=platiagro
+export MYSQL_DB_USER=root
+export MYSQL_DB_PASSWORD=
 ```
 
 (Optional) Create a virtualenv:

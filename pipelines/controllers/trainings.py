@@ -2,8 +2,8 @@
 import json
 from werkzeug.exceptions import BadRequest, NotFound
 
-from .pipeline import Pipeline
-from .utils import init_pipeline_client, format_pipeline_run_details, \
+from pipelines.controllers.pipeline import Pipeline
+from pipelines.controllers.utils import init_pipeline_client, format_pipeline_run_details, \
     get_operator_parameters, get_operator_task_id
 
 created_at_desc = 'created_at desc'

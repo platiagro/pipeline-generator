@@ -5,8 +5,8 @@ from datetime import datetime
 from sqlalchemy import Boolean, Column, DateTime, JSON, String, Text
 from sqlalchemy.sql import expression
 
-from ..database import Base
-from ..utils import to_camel_case
+from pipelines.database import Base
+from pipelines.utils import to_camel_case
 
 DEFAULT_IMAGE = 'platiagro/platiagro-notebook-image:0.1.0'
 DEFAULT_COMMANDS = ['sh', '-c']
