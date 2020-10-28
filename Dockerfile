@@ -12,9 +12,9 @@ ENV BRANCH=${BRANCH}
 
 RUN apt-get install libstdc++ g++
 
-COPY ./requirements /app/requirements
+COPY ./requirements.txt /app/
 
-RUN pip install -r /app/requirements/requirements.txt
+RUN pip install -r /app/requirements.txt
 
 COPY ./pipelines /app/pipelines
 COPY ./setup.py /app/setup.py
