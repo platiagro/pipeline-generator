@@ -477,7 +477,7 @@ components:
             example: "cmd"
         image:
           type: string
-          example: "platiagro/platiagro-notebook-image:0.1.0"
+          example: "platiagro/platiagro-notebook-image:0.2.0"
     OperatorLogs:
       type: object
       properties:
@@ -670,7 +670,7 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/TerminateRun"
-    
+
     TrainingRunsDetails:
       description: ""
       content:

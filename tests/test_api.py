@@ -10,6 +10,6 @@ class TestApi(TestCase):
         with app.test_client() as c:
             rv = c.get("/")
             result = rv.get_data(as_text=True)
-            expected = "{\"message\":\"PlatIAgro Pipelines v0.1.0\"}\n"
+            expected = "{\"message\":\"PlatIAgro Pipelines v0.2.0\"}\n"
             self.assertEqual(result, expected)
             self.assertEqual(rv.status_code, 200)
