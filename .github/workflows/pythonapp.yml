@@ -70,22 +70,22 @@ jobs:
     #       - Usar Google Style Python Docstring: https://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_google.html
     #       - Usar sempre import absoluto.
     #         ex: `from pipelines.database import Base` (BOM), `from .database import Base (RUIM)`
-    # - name: Set output variables
-    #   id: vars
-    #   run: |
-    #     echo ${{ github.ref }}
-    #     if [ ${{ github.ref }} = "refs/heads/master" ]; then
-    #       echo ::set-output name=TAG::0.1.0
-    #     else
-    #       echo ::set-output name=TAG::0.1.0-SNAPSHOT
-    #     fi
-    #     echo ::set-output name=BRANCH::${{ github.ref }}
-    #     echo ::set-output name=COMMIT::${{ github.sha }}
-    # - uses: actions/checkout@v2
-    # - name: Set up Python 3.6
-    #   uses: actions/setup-python@v1
-    #   with:
-    #     python-version: 3.6
+    - name: Set output variables
+      id: vars
+      run: |
+        echo ${{ github.ref }}
+        if [ ${{ github.ref }} = "refs/heads/master" ]; then
+          echo ::set-output name=TAG::0.1.0
+        else
+          echo ::set-output name=TAG::0.1.0-SNAPSHOT
+        fi
+        echo ::set-output name=BRANCH::${{ github.ref }}
+        echo ::set-output name=COMMIT::${{ github.sha }}
+    - uses: actions/checkout@v2
+    - name: Set up Python 3.6
+      uses: actions/setup-python@v1
+      with:
+        python-version: 3.6
     # - name: Run MinIO image
     #   run: |
     #     docker run -d -p 9000:9000 \
@@ -285,7 +285,7 @@ jobs:
       run: |
         pip install pytest pytest-cov
         coverage erase
-        coverage run --branch --source=pipelines -m pytest
+        coverage run --branch --source=pipelines -m pytest tests/test_trainings.py
         coverage xml -i
       env:
         MINIO_ENDPOINT: localhost:9000
