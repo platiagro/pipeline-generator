@@ -116,6 +116,172 @@ jobs:
         kubectl create clusterrolebinding cluster-admin-binding --clusterrole=cluster-admin --user=admin --user=kubelet --group=system:serviceaccounts
         kubectl taint nodes --all node-role.kubernetes.io/master-
         while [ $(kubectl get node |tail -n 1|awk '{print $2}') != "Ready" ]; do echo waiting nodes to be ready...; sleep 1; done 
+    - name: Create Persistent Volumes
+      run: |
+        for i in `seq 1 10`; do
+          sudo mkdir -p "/mnt/disks/vol-$i"
+          sudo mount -t tmpfs -o size=20G "vol-$i" "/mnt/disks/vol-$i"
+        done
+        cat <<EOF | kubectl apply -f -
+          kind: StorageClass
+          apiVersion: storage.k8s.io/v1
+          metadata:
+            name: local-storage
+          provisioner: kubernetes.io/no-provisioner
+          reclaimPolicy: Delete
+        EOF
+        kubectl patch storageclass local-storage -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
+        cat <<EOF | kubectl apply -f -
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: local-provisioner-config
+            namespace: default
+            labels:
+              heritage: "Tiller"
+              release: "release-name"
+              chart: provisioner-2.3.2
+          data:
+            storageClassMap: |
+              local-storage:
+                hostDir: /mnt/disks
+                mountDir: /mnt/disks
+                blockCleanerCommand:
+                  - "/scripts/shred.sh"
+                  - "2"
+                volumeMode: Filesystem
+        EOF
+        cat <<EOF | kubectl apply -f -
+          apiVersion: apps/v1
+          kind: DaemonSet
+          metadata:
+            name: local-volume-provisioner
+            namespace: default
+            labels:
+              app: local-volume-provisioner
+              heritage: "Tiller"
+              release: "release-name"
+              chart: provisioner-2.3.2
+          spec:
+            selector:
+              matchLabels:
+                app: local-volume-provisioner
+            template:
+              metadata:
+                labels:
+                  app: local-volume-provisioner
+              spec:
+                serviceAccountName: local-storage-admin
+                containers:
+                  - image: "quay.io/external_storage/local-volume-provisioner:v2.3.2"
+                    name: provisioner
+                    securityContext:
+                      privileged: true
+                    env:
+                    - name: MY_NODE_NAME
+                      valueFrom:
+                        fieldRef:
+                          fieldPath: spec.nodeName
+                    - name: MY_NAMESPACE
+                      valueFrom:
+                        fieldRef:
+                          fieldPath: metadata.namespace
+                    - name: JOB_CONTAINER_IMAGE
+                      value: "quay.io/external_storage/local-volume-provisioner:v2.3.2"
+                    volumeMounts:
+                      - mountPath: /etc/provisioner/config
+                        name: provisioner-config
+                        readOnly: true
+                      - mountPath: /dev
+                        name: provisioner-dev
+                      - mountPath: /mnt/disks
+                        name: disks
+                        mountPropagation: "HostToContainer"
+                volumes:
+                  - name: provisioner-config
+                    configMap:
+                      name: local-provisioner-config
+                  - name: provisioner-dev
+                    hostPath:
+                      path: /dev
+                  - name: disks
+                    hostPath:
+                      path: /mnt/disks
+        EOF
+        cat <<EOF | kubectl apply -f -
+          apiVersion: v1
+          kind: ServiceAccount
+          metadata:
+            name: local-storage-admin
+            namespace: default
+            labels:
+              heritage: "Tiller"
+              release: "release-name"
+              chart: provisioner-2.3.2
+        EOF
+        cat <<EOF | kubectl apply -f -
+          apiVersion: rbac.authorization.k8s.io/v1
+          kind: ClusterRoleBinding
+          metadata:
+            name: local-storage-provisioner-pv-binding
+            labels:
+              heritage: "Tiller"
+              release: "release-name"
+              chart: provisioner-2.3.2
+          subjects:
+          - kind: ServiceAccount
+            name: local-storage-admin
+            namespace: default
+          roleRef:
+            kind: ClusterRole
+            name: system:persistent-volume-provisioner
+            apiGroup: rbac.authorization.k8s.io
+        EOF
+        cat <<EOF | kubectl apply -f -
+          apiVersion: rbac.authorization.k8s.io/v1
+          kind: ClusterRole
+          metadata:
+            name: local-storage-provisioner-node-clusterrole
+            labels:
+              heritage: "Tiller"
+              release: "release-name"
+              chart: provisioner-2.3.2
+          rules:
+          - apiGroups: [""]
+            resources: ["nodes"]
+            verbs: ["get"]
+        EOF
+        cat <<EOF | kubectl apply -f -
+          apiVersion: rbac.authorization.k8s.io/v1
+          kind: ClusterRoleBinding
+          metadata:
+            name: local-storage-provisioner-node-binding
+            labels:
+              heritage: "Tiller"
+              release: "release-name"
+              chart: provisioner-2.3.2
+          subjects:
+          - kind: ServiceAccount
+            name: local-storage-admin
+            namespace: default
+          roleRef:
+            kind: ClusterRole
+            name: local-storage-provisioner-node-clusterrole
+            apiGroup: rbac.authorization.k8s.io
+        EOF
+        sleep 10
+        kubectl wait --for=condition=Ready pods --all
+    - name: Install Kubeflow Pipelines
+      run: |
+        kubectl apply -k "github.com/kubeflow/pipelines/manifests/kustomize/cluster-scoped-resources?ref=$PIPELINE_VERSION"
+        kubectl wait --for condition=established --timeout=60s crd/applications.app.k8s.io
+        kubectl apply -k "github.com/kubeflow/pipelines/manifests/kustomize/env/platform-agnostic?ref=$PIPELINE_VERSION"
+        kubectl -n kubeflow wait applications/pipeline --for condition=Ready --timeout=1800s
+        nohup kubectl -n kubeflow port-forward svc/ml-pipeline-ui 8080:80 &
+        sleep 10
+        curl -k -L localhost:8080/pipeline/apis/v1beta1/experiments?
+      env:
+        PIPELINE_VERSION: 0.5.1
     # - name: Test with pytest
     #   run: |
     #     pip install pytest pytest-cov
