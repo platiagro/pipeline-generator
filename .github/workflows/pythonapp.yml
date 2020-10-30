@@ -294,7 +294,7 @@ jobs:
         MYSQL_DB_HOST: localhost
         MYSQL_DB_NAME: platiagro
         MYSQL_DB_USER: root
-        KF_PIPELINES_ENDPOINT: localhost:30000
+        KF_PIPELINES_ENDPOINT: localhost:30000/pipeline
         JUPYTER_ENDPOINT: http://localhost:8888
     # - name: SonarCloud Scan
     #   uses: sonarsource/sonarcloud-github-action@master
