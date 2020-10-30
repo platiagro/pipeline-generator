@@ -8,6 +8,7 @@ TRAINING_ID = str(uuid_alpha())
 
 
 class TestTrainings(TestCase):
+
     def test_put_training(self):
         with app.test_client() as c:
             rv = c.put(f"/trainings/{TRAINING_ID}")
