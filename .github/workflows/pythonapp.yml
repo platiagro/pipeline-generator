@@ -97,11 +97,6 @@ jobs:
     #     MINIO_SECRET_KEY: minio123
     # - name: Run jupyter image
     #   run: docker run --name jupyter -d -p 8888:8888 jupyter/base-notebook start-notebook.sh --NotebookApp.token=''
-    # - name: Install dependencies
-    #   run: |
-    #     python -m pip install --upgrade pip
-    #     pip install -r requirements/requirements.txt
-    #     pip install .
     - name: Install Kubernetes 1.15.7
       run: |
         curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add
@@ -277,26 +272,30 @@ jobs:
         kubectl wait --for condition=established --timeout=60s crd/applications.app.k8s.io
         kubectl apply -k "github.com/kubeflow/pipelines/manifests/kustomize/env/platform-agnostic?ref=$PIPELINE_VERSION"
         kubectl -n kubeflow wait applications/pipeline --for condition=Ready --timeout=1800s
-        nohup kubectl -n kubeflow port-forward svc/ml-pipeline-ui 8080:80 &
-        sleep 10
-        curl -k -L localhost:8080/pipeline/apis/v1beta1/experiments?
+        kubectl -n kubeflow patch svc ml-pipeline --patch \
+          '{ "spec": { "type": "NodePort", "ports": [ { "nodePort": 30000  , "port": 8888, "protocol": "TCP", "targetPort": 8888 } ] } }'
       env:
         PIPELINE_VERSION: 0.5.1
-    # - name: Test with pytest
-    #   run: |
-    #     pip install pytest pytest-cov
-    #     coverage erase
-    #     coverage run --branch --source=pipelines -m pytest
-    #     coverage xml -i
-    #   env:
-    #     MINIO_ENDPOINT: localhost:9000
-    #     MINIO_ACCESS_KEY: minio
-    #     MINIO_SECRET_KEY: minio123
-    #     MYSQL_DB_HOST: localhost
-    #     MYSQL_DB_NAME: platiagro
-    #     MYSQL_DB_USER: root
-    #     KF_PIPELINES_ENDPOINT: localhost:8080/pipelines
-    #     JUPYTER_ENDPOINT: http://localhost:8888
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements/requirements.txt
+        pip install .
+    - name: Test with pytest
+      run: |
+        pip install pytest pytest-cov
+        coverage erase
+        coverage run --branch --source=pipelines -m pytest
+        coverage xml -i
+      env:
+        MINIO_ENDPOINT: localhost:9000
+        MINIO_ACCESS_KEY: minio
+        MINIO_SECRET_KEY: minio123
+        MYSQL_DB_HOST: localhost
+        MYSQL_DB_NAME: platiagro
+        MYSQL_DB_USER: root
+        KF_PIPELINES_ENDPOINT: localhost:30000
+        JUPYTER_ENDPOINT: http://localhost:8888
     # - name: SonarCloud Scan
     #   uses: sonarsource/sonarcloud-github-action@master
     #   env:
