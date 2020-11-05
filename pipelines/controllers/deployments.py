@@ -32,7 +32,10 @@ def create_deployment(deployment_id, pipeline_parameters):
             name = pipeline_parameters['name']
         operators = pipeline_parameters['operators']
 
-        operators = remove_non_deployable_operators(operators)
+        if len(operators) != 0:
+            operators = remove_non_deployable_operators(operators)
+        else:
+            raise BadRequest('Necessary at least one operator')
 
     except KeyError as e:
         raise BadRequest(
