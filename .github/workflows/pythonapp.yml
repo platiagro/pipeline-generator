@@ -283,6 +283,7 @@ jobs:
         pip install .
     - name: Test with pytest
       run: |
+        echo $KF_PIPELINES_ENDPOINT
         pip install pytest pytest-cov
         coverage erase
         coverage run --branch --source=pipelines -m pytest tests/test_trainings.py
