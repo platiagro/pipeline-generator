@@ -8,7 +8,7 @@ from werkzeug.exceptions import BadRequest
 
 from pipelines.controllers.utils import TRAINING_DATASETS_DIR, TRAINING_DATASETS_VOLUME_NAME, \
     init_pipeline_client, validate_operator, validate_parameters
-from pipelines.models.operator import Operator
+from pipelines.controllers.operator import Operator
 from pipelines.resources.templates import SELDON_DEPLOYMENT
 
 from kubernetes.client.models import V1PersistentVolumeClaim
