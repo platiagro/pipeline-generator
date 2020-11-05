@@ -107,7 +107,7 @@ class Pipeline():
 
         # validate parameters
         if parameters and not validate_parameters(parameters):
-            raise ValueError('Invalid parameter.')
+            raise BadRequest('Invalid parameter.')
 
         dependencies = operator.get('dependencies', [])
         if dependencies:
