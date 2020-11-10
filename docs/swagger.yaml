@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: PlatIAgro Pipelines API
-  version: "1.0.0"
+  version: "0.2.0"
   description: >
     These are the docs for PlatIAgro Pipelines API.
     The endpoints below are usually accessed by the PlatIAgro Web-UI.
@@ -14,6 +14,9 @@ tags:
   - name: "Deployments"
     description: >
       Manage deployment pipelines.
+  - name: "Projects"
+    description: >
+      Manage projects deployments.
   - name: "Trainings"
     description: >
       Manage training pipelines.
@@ -123,6 +126,157 @@ paths:
           $ref: "#/components/responses/TerminateRun"
         "400":
           $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  projects/{projectsId}/deployments:
+    get:
+      summary: "List all project deployments."
+      tags:
+        - "Projects"
+      parameters:
+        - in: path
+          name: projectsId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          $ref: "#/components/responses/ProjectDeployments"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+    post:
+      summary: "Create a project deployment."
+      tags:
+        - "Projects"
+      parameters:
+        - in: path
+          name: projectsId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        $ref: "#/components/requestBodies/ProjectDeploymentPost"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProjectDeployment"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  projects/{projectsId}/deployments/{deploymentId}:
+    get:
+      summary: "Get a project deployment by uuid."
+      tags:
+        - "Projects"
+      parameters:
+        - in: path
+          name: projectsId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: path
+          name: deploymentId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          $ref: "#/components/responses/ProjectDeployment"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+    patch:
+      summary: "Update a project deployment by uuid."
+      tags:
+        - "Projects"
+      parameters:
+        - in: path
+          name: projectsId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: path
+          name: deploymentId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        $ref: "#/components/requestBodies/ProjectDeploymentPatch"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProjectDeployment"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+    delete:
+      summary: "Delete a project deployment by uuid."
+      tags:
+        - "Projects"
+      parameters:
+        - in: path
+          name: projectsId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: deploymentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          $ref: "#/components/responses/ProjectDeploymentDelete"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  projects/{projectsId}/deployments/{deploymentId}/operators/{operatorId}:
+    patch:
+      summary: "Update a deployment operator by uuid."
+      tags:
+        - "Projects"
+      parameters:
+        - name: projectsId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: deploymentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: operatorId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        $ref: "#/components/requestBodies/ProjectDeploymentOperatorPatch"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProjectOperator"
         "500":
           $ref: "#/components/responses/InternalServerError"
         "503":
@@ -518,6 +672,71 @@ components:
             - type: array
             - type: object
           example: 8
+    ProjectDeployment:
+      type: object
+      properties:
+        createdAt:
+          type: string
+          format: date-time
+        experimentId:
+          type: string
+          format: uuid
+        isActive:
+          type: boolean
+        name:
+          type: string
+        operators:
+          type: array
+          items:
+            oneOf:
+              - $ref: "#/components/schemas/ProjectOperator"
+        position:
+          type: integer
+        status:
+          type: string
+        uuid:
+          type: string
+          format: uuid
+    ProjectDeployments:
+      type: array
+      items:
+        $ref: "#/components/schemas/ProjectDeployment"
+    ProjectOperator:
+      type: object
+      properties:
+        createdAt:
+          type: string
+          format: date-time
+        dependencies:
+          type: array
+          items:
+            type: string
+            format: uuid
+        deploymentId:
+          type: string
+          format: uuid
+        experimentId:
+          type: string
+          format: uuid
+        parameters:
+          type: object
+          additionalProperties:
+            type: string
+        positionX:
+          type: number
+          format: float
+        positionY:
+          type: number
+          format: float
+        taskId:
+          type: string
+          format: uuid
+        updatedAt:
+          type: string
+          format: date-time
+        uuid:
+          type: string
+          format: uuid
     Run:
       type: object
       properties:
@@ -597,6 +816,74 @@ components:
                 items:
                   oneOf:
                     - $ref: "#/components/schemas/Operator"
+    ProjectDeploymentPatch:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              isActive:
+                type: boolean
+              name:
+                type: string
+              position:
+                type: integer
+    ProjectDeploymentPost:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              experimentId:
+                type: string
+                format: uuid
+              isActive:
+                type: boolean
+              name:
+                type: string
+              operators:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    dependencies:
+                      type: array
+                      items:
+                        type: string
+                        format: uuid
+                    parameters:
+                      type: object
+                      additionalProperties:
+                        type: string
+                    positionX:
+                      type: number
+                      format: float
+                    positionY:
+                      type: number
+                      format: float
+                    taskId:
+                      type: string
+                      format: uuid
+              position:
+                type: integer
+              status:
+                type: string
+    ProjectDeploymentOperatorPatch:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              parameters:
+                type: object
+                additionalProperties:
+                  type: string
+              positionX:
+                type: number
+                format: float
+              positionY:
+                type: number
+                format: float
     TrainingPut:
       content:
         application/json:
@@ -658,6 +945,34 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/OperatorLogs"
+    ProjectDeployment:
+      description: ""
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ProjectDeployment"
+    ProjectDeploymentDelete:
+      description: ""
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: "Deployment deleted."
+    ProjectDeployments:
+      description: ""
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ProjectDeployments"
+    ProjectOperator:
+      description: ""
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ProjectOperator"
     Run:
       description: ""
       content:
