@@ -281,13 +281,12 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install .
-    - name: Test with pytest
+    - name: Connect to Kubeflow Pipelines
       run: |
-        echo $KF_PIPELINES_ENDPOINT
-        pip install pytest pytest-cov
-        coverage erase
-        coverage run --branch --source=pipelines -m pytest tests/test_trainings.py
-        coverage xml -i
+        python -c "from kfp import Client;
+                   client = Client(host=getenv('KF_PIPELINES_ENDPOINT', '0.0.0.0:31380/pipeline'),
+                   namespace=getenv('KF_PIPELINES_NAMESPACE', 'deployments'));
+                   client.list_runs();"
       env:
         MINIO_ENDPOINT: localhost:9000
         MINIO_ACCESS_KEY: minio
@@ -298,6 +297,23 @@ jobs:
         KF_PIPELINES_ENDPOINT: localhost:30000
         KF_PIPELINES_NAMESPACE: kubeflow
         JUPYTER_ENDPOINT: http://localhost:8888
+    # - name: Test with pytest
+    #   run: |
+    #     echo $KF_PIPELINES_ENDPOINT
+    #     pip install pytest pytest-cov
+    #     coverage erase
+    #     coverage run --branch --source=pipelines -m pytest tests/test_trainings.py
+    #     coverage xml -i
+    #   env:
+    #     MINIO_ENDPOINT: localhost:9000
+    #     MINIO_ACCESS_KEY: minio
+    #     MINIO_SECRET_KEY: minio123
+    #     MYSQL_DB_HOST: localhost
+    #     MYSQL_DB_NAME: platiagro
+    #     MYSQL_DB_USER: root
+    #     KF_PIPELINES_ENDPOINT: localhost:30000
+    #     KF_PIPELINES_NAMESPACE: kubeflow
+    #     JUPYTER_ENDPOINT: http://localhost:8888
     # - name: SonarCloud Scan
     #   uses: sonarsource/sonarcloud-github-action@master
     #   env:
