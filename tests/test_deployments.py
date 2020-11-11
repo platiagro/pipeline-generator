@@ -9,7 +9,7 @@ COMPONENT_ID = str(uuid_alpha())
 EXPERIMENT_ID = str(uuid_alpha())
 OPERATOR_ID = str(uuid_alpha())
 OPERATOR_ID_2 = str(uuid_alpha())
-TRAINING_ID = str(uuid_alpha())
+DEPLOYMENT_ID = str(uuid_alpha())
 NOTEBOOK_PATH = f"s3://anonymous/tasks/{COMPONENT_ID}/Experiment.ipynb"
 IMAGE = "platiagro/platiagro-notebook-image:0.2.0"
 
@@ -26,7 +26,7 @@ class TestDeployments(TestCase):
     def test_put_deployment(self):
         with app.test_client() as c:
 
-            rv = c.put(f"/deployments/{TRAINING_ID}", json={
+            rv = c.put(f"/deployments/{DEPLOYMENT_ID}", json={
                     "experimentId": EXPERIMENT_ID,
                 }
             )
@@ -35,7 +35,7 @@ class TestDeployments(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
-            rv = c.put(f"/deployments/{TRAINING_ID}", json={
+            rv = c.put(f"/deployments/{DEPLOYMENT_ID}", json={
                     "experimentId": EXPERIMENT_ID,
                     "operators": [],
                 }
@@ -45,7 +45,7 @@ class TestDeployments(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
-            rv = c.put(f"/deployments/{TRAINING_ID}", json={
+            rv = c.put(f"/deployments/{DEPLOYMENT_ID}", json={
                     "experimentId": EXPERIMENT_ID,
                     "operators": [{
                         "operatorId": OPERATOR_ID
@@ -57,7 +57,7 @@ class TestDeployments(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
-            rv = c.put(f"/deployments/{TRAINING_ID}", json={
+            rv = c.put(f"/deployments/{DEPLOYMENT_ID}", json={
                     "experimentId": EXPERIMENT_ID,
                     "operators": [
                         {
@@ -85,7 +85,7 @@ class TestDeployments(TestCase):
 
 
             # cyclical pipeline
-            rv = c.put(f"/deployments/{TRAINING_ID}", json={
+            rv = c.put(f"/deployments/{DEPLOYMENT_ID}", json={
                     "experimentId": EXPERIMENT_ID,
                     "operators": [
                         {
@@ -114,7 +114,7 @@ class TestDeployments(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
-            rv = c.put(f"/deployments/{TRAINING_ID}", json={
+            rv = c.put(f"/deployments/{DEPLOYMENT_ID}", json={
                     "name": "foo",
                     "experimentId": EXPERIMENT_ID,
                     "operators": [
@@ -141,3 +141,25 @@ class TestDeployments(TestCase):
 
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 200)
+
+    def test_get_deployments(self):
+        with app.test_client() as c:
+            rv = c.get("/deployments")
+            result = rv.get_json()
+            self.assertIsInstance(result, list)
+
+    def test_get_deployment(self):
+        with app.test_client() as c:
+            rv = c.get(f"/deployments/{MOCKED_DEPLOYMENT_ID}")
+            result = rv.get_json()
+
+            self.assertIsInstance(result, dict)
+            self.assertEqual(result['experimentId'], MOCKED_DEPLOYMENT_ID)
+
+    def test_delete_deployment(self):
+        with app.test_client() as c:
+            rv = c.delete(f"/deployments/{MOCKED_DEPLOYMENT_ID}")
+            result = rv.get_json()
+            expected = {"message": "Deployment deleted."}
+
+            self.assertDictEqual(expected, result)
