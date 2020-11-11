@@ -14,6 +14,16 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    services:
+      mysql:
+        image: mysql:5.7
+        env:
+          MYSQL_ALLOW_EMPTY_PASSWORD: yes
+          MYSQL_DATABASE: platiagro
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
     steps:
     - name: Code review tips
       uses: unsplash/comment-on-pr@master
@@ -76,6 +86,15 @@ jobs:
       uses: actions/setup-python@v1
       with:
         python-version: 3.6
+    - name: Run MinIO image
+      run: |
+        docker run -d -p 9000:9000 \
+        -e "MINIO_ACCESS_KEY=$MINIO_ACCESS_KEY" \
+        -e "MINIO_SECRET_KEY=$MINIO_SECRET_KEY" \
+        minio/minio:RELEASE.2018-02-09T22-40-05Z server /data
+      env:
+        MINIO_ACCESS_KEY: minio
+        MINIO_SECRET_KEY: minio123
     - name: Run jupyter image
       run: docker run --name jupyter -d -p 8888:8888 jupyter/base-notebook start-notebook.sh --NotebookApp.token=''
     - name: Install Kubernetes 1.15.7
@@ -84,7 +103,7 @@ jobs:
         sudo swapoff -a
         sudo apt-add-repository "deb http://apt.kubernetes.io/ kubernetes-xenial main"
         sudo apt-get install -y --allow-downgrades kubeadm=1.15.7-00 kubelet=1.15.7-00 kubectl=1.15.7-00
-        echo 'KUBELET_EXTRA_ARGS=--eviction-hard=nodefs.available<1%,nodefs.inodesFree<1%,imagefs.available<1%' | sudo tee /etc/default/kubelet
+        echo 'KUBELET_EXTRA_ARGS=--eviction-hard=nodefs.available<1%,nodefs.inodesFree<1%,imagefs.available<1% --image-gc-high-threshold=99' | sudo tee /etc/default/kubelet
         sudo systemctl daemon-reload
         sudo systemctl restart kubelet
         sudo kubeadm init
@@ -259,10 +278,6 @@ jobs:
         kubectl -n kubeflow wait applications/pipeline --for condition=Ready --timeout=600s
         kubectl -n kubeflow patch svc ml-pipeline --patch \
           '{ "spec": { "type": "NodePort", "ports": [ { "nodePort": 30000, "port": 8888, "protocol": "TCP", "targetPort": 8888 } ] } }'
-        kubectl -n kubeflow patch svc mysql --patch \
-          '{ "spec": { "type": "NodePort", "ports": [ { "nodePort": 30001, "port": 3306, "protocol": "TCP", "targetPort": 3306 } ] } }'
-        kubectl -n kubeflow patch svc minio-service --patch \
-          '{ "spec": { "type": "NodePort", "ports": [ { "nodePort": 30002, "port": 9000, "protocol": "TCP", "targetPort": 9000 } ] } }'
       env:
         PIPELINE_VERSION: 0.5.1
     - name: Install dependencies
@@ -274,13 +289,13 @@ jobs:
       run: |
         pip install pytest pytest-cov
         coverage erase
-        coverage run --branch --source=pipelines -m pytest
+        coverage run --branch --source=pipelines -m pytest -v
         coverage xml -i
       env:
-        MINIO_ENDPOINT: 127.0.0.1:30002
+        MINIO_ENDPOINT: localhost:9000
         MINIO_ACCESS_KEY: minio
         MINIO_SECRET_KEY: minio123
-        MYSQL_DB_HOST: 127.0.0.1:30001
+        MYSQL_DB_HOST: localhost
         MYSQL_DB_NAME: platiagro
         MYSQL_DB_USER: root
         KF_PIPELINES_ENDPOINT: 127.0.0.1:30000
