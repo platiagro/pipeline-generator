@@ -6,6 +6,7 @@ from collections import defaultdict
 from kfp import compiler, dsl
 from werkzeug.exceptions import BadRequest
 
+from pipelines.controllers.operator import Operator
 from pipelines.controllers.utils import TRAINING_DATASETS_DIR, TRAINING_DATASETS_VOLUME_NAME, \
     init_pipeline_client, validate_operator, validate_parameters
 from pipelines.controllers.operator import Operator
@@ -246,15 +247,11 @@ class Pipeline():
 
             # Define operators volumes and dependecies
             for operator_id, operator in self._operators.items():
-                if operator_id in self._roots:
-                    operator.container_op.add_pvolumes({TRAINING_DATASETS_DIR: wrkdirop.volume})
-                else:
+                if operator_id not in self._roots:
                     dependencies = self._inverted_edges[operator_id]
                     dependencies_ops = [self._get_operator(d).container_op for d in dependencies]
                     operator.container_op.after(*dependencies_ops)
-
-                    volume = self._get_operator(dependencies[0]).container_op.pvolume
-                    operator.container_op.add_pvolumes({TRAINING_DATASETS_DIR: volume})
+                operator.container_op.add_pvolumes({TRAINING_DATASETS_DIR: wrkdirop.volume})
 
         compiler.Compiler().compile(training_pipeline, self._experiment_id + '.yaml')
 

@@ -61,7 +61,7 @@ docker run -d -p 3306:3306 \
 Build a docker image that launches the API server:
 
 ```bash
-docker build -t platiagro/pipelines:0.1.0 .
+docker build -t platiagro/pipelines:0.2.0 .
 ```
 
 Finally, start the API server:
@@ -69,7 +69,7 @@ Finally, start the API server:
 ```bash
 docker run -it -p 8080:8080 \
   --name pipelines \
-  platiagro/pipelines:0.1.0
+  platiagro/pipelines:0.2.0
 ```
 
 ### Run Local:
