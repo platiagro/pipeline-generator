@@ -3,7 +3,7 @@
 from werkzeug.exceptions import NotFound
 
 from pipelines.database import db_session
-from pipelines.models import Deployment, Experiment, Operator, Project, Task
+from pipelines.models import Deployment, Experiment, Project, Task
 
 
 def raise_if_deployment_does_not_exist(deployment_id):
@@ -28,21 +28,6 @@ def raise_if_experiment_does_not_exist(experiment_id):
         .scalar() is not None
     if not exists:
         raise NotFound("The specified experiment does not exist")
-
-
-def raise_if_operator_does_not_exist(operator_id, experiment_id=None):
-    """Raises an exception if the specified operator does not exist.
-    Args:
-        operator_id (str): the operator uuid.
-    """
-    operator = db_session.query(Operator) \
-        .filter_by(uuid=operator_id)
-    if operator.scalar() is None:
-        raise NotFound("The specified operator does not exist")
-    else:
-        # verify if operator is from the provided experiment
-        if experiment_id and operator.one().as_dict()["experimentId"] != experiment_id:
-            raise NotFound("The specified operator is from another experiment")
 
 
 def raise_if_project_does_not_exist(project_id):

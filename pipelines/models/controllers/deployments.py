@@ -75,21 +75,17 @@ def create_deployment(experiment_id=None,
                             project_id=project_id,
                             status=status)
     db_session.add(deployment)
-    db_session.commit()
 
-    try:
-        if operators and len(operators) > 0:
-            for operator in operators:
-                create_operator(deployment_id=deployment.uuid,
-                                project_id=project_id,
-                                task_id=operator.get('taskId'),
-                                parameters=operator.get('parameters'),
-                                dependencies=operator.get('dependencies'),
-                                position_x=operator.get('positionX'),
-                                position_y=operator.get('positionY'))
-    except Exception as ex:
-        delete_deployment(uuid=deployment.uuid, project_id=project_id)
-        raise ex
+    if operators and len(operators) > 0:
+        for operator in operators:
+            create_operator(deployment_id=deployment.uuid,
+                            project_id=project_id,
+                            task_id=operator.get('taskId'),
+                            parameters=operator.get('parameters'),
+                            dependencies=operator.get('dependencies'),
+                            position_x=operator.get('positionX'),
+                            position_y=operator.get('positionY'))
+    db_session.commit()
 
     if position is None:
         position = sys.maxsize  # will add to end of list

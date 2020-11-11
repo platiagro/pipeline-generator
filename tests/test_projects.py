@@ -189,12 +189,31 @@ class TestExperiments(TestCase):
 
             rv = c.post(f"/projects/{PROJECT_ID}/deployments", json={
                 "experimentId": EXPERIMENT_ID,
-                "name": "test",
+                "name": "test create without parameters and dependencies",
+                "operators": [{"taskId": TASK_ID,}]
+            })
+            result = rv.get_json()
+            expected = {
+                "createdAt": result['createdAt'],
+                "experimentId": EXPERIMENT_ID,
+                "isActive": IS_ACTIVE,
+                "name": "test create without parameters and dependencies",
+                "operators": result['operators'],
+                "position": 2,
+                "projectId": PROJECT_ID,
+                'status': None,
+                "updatedAt": result['updatedAt'],
+                "uuid": result['uuid']
+            }
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 200)
+
+            rv = c.post(f"/projects/{PROJECT_ID}/deployments", json={
+                "experimentId": EXPERIMENT_ID,
+                "name": "test create without dependencies",
                 "operators": [
                     {
-                        "parameters": {
-                            "additionalProp1": "string",
-                        },
+                        "parameters": {"additionalProp1": "string"},
                         "taskId": TASK_ID,
                     }
                 ]
@@ -204,9 +223,36 @@ class TestExperiments(TestCase):
                 "createdAt": result['createdAt'],
                 "experimentId": EXPERIMENT_ID,
                 "isActive": IS_ACTIVE,
-                "name": "test",
+                "name": "test create without dependencies",
                 "operators": result['operators'],
-                "position": 2,
+                "position": 3,
+                "projectId": PROJECT_ID,
+                'status': None,
+                "updatedAt": result['updatedAt'],
+                "uuid": result['uuid']
+            }
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 200)
+
+            rv = c.post(f"/projects/{PROJECT_ID}/deployments", json={
+                "experimentId": EXPERIMENT_ID,
+                "name": "test create with parameters and dependencies",
+                "operators": [
+                    {
+                        "dependencies": [TASK_ID],
+                        "parameters": {"additionalProp1": "string"},
+                        "taskId": TASK_ID,
+                    }
+                ]
+            })
+            result = rv.get_json()
+            expected = {
+                "createdAt": result['createdAt'],
+                "experimentId": EXPERIMENT_ID,
+                "isActive": IS_ACTIVE,
+                "name": "test create with parameters and dependencies",
+                "operators": result['operators'],
+                "position": 4,
                 "projectId": PROJECT_ID,
                 'status': None,
                 "updatedAt": result['updatedAt'],

@@ -130,7 +130,7 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
-  projects/{projectsId}/deployments:
+  /projects/{projectsId}/deployments:
     get:
       summary: "List all project deployments."
       tags:
@@ -171,7 +171,7 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
-  projects/{projectsId}/deployments/{deploymentId}:
+  /projects/{projectsId}/deployments/{deploymentId}:
     get:
       summary: "Get a project deployment by uuid."
       tags:
@@ -248,7 +248,7 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
-  projects/{projectsId}/deployments/{deploymentId}/operators/{operatorId}:
+  /projects/{projectsId}/deployments/{deploymentId}/operators/{operatorId}:
     patch:
       summary: "Update a deployment operator by uuid."
       tags:
@@ -623,12 +623,24 @@ components:
           items:
             anyOf:
               - $ref: "#/components/schemas/Parameter"
+        arguments:
+          description: "List of commands."
+          type: array
+          items:
+            type: string
+            example: [papermill $notebookPath output.ipynb -b $parameters;
+                        status=$?;
+                        bash save-dataset.sh;
+                        bash save-figure.sh;
+                        bash make-cells-read-only.sh
+                        bash upload-to-jupyter.sh $experimentId $operatorId Experiment.ipynb;
+                        exit $status]
         commands:
           description: "List of commands."
           type: array
           items:
             type: string
-            example: "cmd"
+            example: [sh, -c]
         image:
           type: string
           example: "platiagro/platiagro-notebook-image:0.2.0"

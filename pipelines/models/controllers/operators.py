@@ -29,9 +29,6 @@ def create_operator(project_id, deployment_id, task_id=None,
     Returns:
         The operator info.
     """
-    raise_if_project_does_not_exist(project_id)
-    raise_if_deployment_does_not_exist(deployment_id)
-
     if not isinstance(task_id, str):
         raise BadRequest("taskId is required")
 
@@ -56,7 +53,6 @@ def create_operator(project_id, deployment_id, task_id=None,
                         position_x=position_x,
                         position_y=position_y)
     db_session.add(operator)
-    db_session.commit()
 
     return operator.as_dict()
 
