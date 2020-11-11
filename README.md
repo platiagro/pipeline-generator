@@ -26,6 +26,7 @@ Export these environment variables:
 
 ```bash
 export KF_PIPELINES_ENDPOINT=0.0.0.0:31380/pipeline
+export KF_PIPELINES_NAMESPACE=deployments
 export MINIO_ENDPOINT=localhost:9000
 export MINIO_ACCESS_KEY=minio
 export MINIO_SECRET_KEY=minio123
