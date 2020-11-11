@@ -3,17 +3,26 @@ from unittest import TestCase
 
 from pipelines.api.main import app
 from pipelines.utils import uuid_alpha
+from pipelines.controllers.utils import init_pipeline_client
 
 COMPONENT_ID = str(uuid_alpha())
 EXPERIMENT_ID = str(uuid_alpha())
 OPERATOR_ID = str(uuid_alpha())
 OPERATOR_ID_2 = str(uuid_alpha())
 TRAINING_ID = str(uuid_alpha())
-NOTEBOOK_PATH = f"minio://anonymous/components/{COMPONENT_ID}/Training.ipynb"
+NOTEBOOK_PATH = f"s3://anonymous/tasks/{COMPONENT_ID}/Experiment.ipynb"
 IMAGE = "platiagro/platiagro-notebook-image:0.2.0"
 
+MOCKED_DEPLOYMENT_ID = "aa23c286-1524-4ae9-ae44-6c3e63eb9861"
 
 class TestDeployments(TestCase):
+    def setUp(self):
+        client = init_pipeline_client()
+        experiment = client.create_experiment(name=MOCKED_DEPLOYMENT_ID)
+
+        # Run a default pipeline for tests
+        client.run_pipeline(experiment.id, MOCKED_DEPLOYMENT_ID, "tests/resources/mocked_deployment.yaml")
+
     def test_put_deployment(self):
         with app.test_client() as c:
 
@@ -111,13 +120,13 @@ class TestDeployments(TestCase):
                     "operators": [
                         {
                         "operatorId": OPERATOR_ID,
-                        "notebookPath": "minio://anonymous/components/eee8b9a5-4bee-450f-9f3b-ac58453d9c3d/Training.ipynb",
+                        "notebookPath": NOTEBOOK_PATH,
                         "commands": [
                             "cmd"
                         ],
                         "dependencies": [],
                         "arguments": [],
-                        "image": "platiagro/platiagro-notebook-image:0.2.0"
+                        "image": IMAGE
                         }
                     ]
                 }
