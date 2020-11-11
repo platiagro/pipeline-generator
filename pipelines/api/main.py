@@ -37,7 +37,7 @@ def shutdown_session(exception=None):
 @app.route('/', methods=['GET'])
 def index():
     """Handles GET requests to /."""
-    return jsonify(message='PlatIAgro Pipelines v0.1.0')
+    return jsonify(message='PlatIAgro Pipelines v0.2.0')
 
 
 @app.route('/seldon/logger/<training_id>', methods=['POST'])
