@@ -3,31 +3,22 @@ from unittest import TestCase
 
 from pipelines.api.main import app
 from pipelines.utils import uuid_alpha
-from pipelines.controllers.utils import init_pipeline_client
 
 COMPONENT_ID = str(uuid_alpha())
 EXPERIMENT_ID = str(uuid_alpha())
 OPERATOR_ID = str(uuid_alpha())
 OPERATOR_ID_2 = str(uuid_alpha())
 TRAINING_ID = str(uuid_alpha())
-NOTEBOOK_PATH = f"s3://anonymous/tasks/{COMPONENT_ID}/Experiment.ipynb"
+NOTEBOOK_PATH = f"minio://anonymous/components/{COMPONENT_ID}/Training.ipynb"
 IMAGE = "platiagro/platiagro-notebook-image:0.2.0"
 
-MOCKED_TRAINING_ID = "b281185b-6104-4c8c-8185-31eb53bef8de"
 
-class TestTrainings(TestCase):
-    def setUp(self):
-        client = init_pipeline_client()
-        experiment = client.create_experiment(name=MOCKED_TRAINING_ID)
-
-        # Run a default pipeline for tests
-        client.run_pipeline(experiment.id, MOCKED_TRAINING_ID, "tests/resources/mocked_training.yaml")
-
-    def test_put_training(self):
+class TestDeployments(TestCase):
+    def test_put_deployment(self):
         with app.test_client() as c:
 
-            rv = c.put(f"/trainings/{TRAINING_ID}", json={
-                    "experimentId": EXPERIMENT_ID
+            rv = c.put(f"/deployments/{TRAINING_ID}", json={
+                    "experimentId": EXPERIMENT_ID,
                 }
             )
             result = rv.get_json()
@@ -35,7 +26,7 @@ class TestTrainings(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
-            rv = c.put(f"/trainings/{TRAINING_ID}", json={
+            rv = c.put(f"/deployments/{TRAINING_ID}", json={
                     "experimentId": EXPERIMENT_ID,
                     "operators": [],
                 }
@@ -45,7 +36,7 @@ class TestTrainings(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
-            rv = c.put(f"/trainings/{TRAINING_ID}", json={
+            rv = c.put(f"/deployments/{TRAINING_ID}", json={
                     "experimentId": EXPERIMENT_ID,
                     "operators": [{
                         "operatorId": OPERATOR_ID
@@ -53,11 +44,11 @@ class TestTrainings(TestCase):
                 }
             )
             result = rv.get_json()
-            expected = {"message": "Invalid operator in request."}
+            expected = {"message": "Invalid request body, missing the parameter: 'notebookPath'"}
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
-            rv = c.put(f"/trainings/{TRAINING_ID}", json={
+            rv = c.put(f"/deployments/{TRAINING_ID}", json={
                     "experimentId": EXPERIMENT_ID,
                     "operators": [
                         {
@@ -85,7 +76,7 @@ class TestTrainings(TestCase):
 
 
             # cyclical pipeline
-            rv = c.put(f"/trainings/{TRAINING_ID}", json={
+            rv = c.put(f"/deployments/{TRAINING_ID}", json={
                     "experimentId": EXPERIMENT_ID,
                     "operators": [
                         {
@@ -114,19 +105,19 @@ class TestTrainings(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
-            rv = c.put(f"/trainings/{TRAINING_ID}", json={
+            rv = c.put(f"/deployments/{TRAINING_ID}", json={
+                    "name": "foo",
                     "experimentId": EXPERIMENT_ID,
                     "operators": [
                         {
                         "operatorId": OPERATOR_ID,
-                        "notebookPath": NOTEBOOK_PATH,
+                        "notebookPath": "minio://anonymous/components/eee8b9a5-4bee-450f-9f3b-ac58453d9c3d/Training.ipynb",
                         "commands": [
                             "cmd"
                         ],
-                        "arguments": [
-                            "notebookPath"
-                        ],
-                        "image": IMAGE
+                        "dependencies": [],
+                        "arguments": [],
+                        "image": "platiagro/platiagro-notebook-image:0.2.0"
                         }
                     ]
                 }
@@ -139,22 +130,5 @@ class TestTrainings(TestCase):
             self.assertIn("runId", result)
             del result["runId"]
 
-            self.assertDictEqual(expected, result)
-            self.assertEqual(rv.status_code, 200)
-
-    def test_get_training(self):
-        with app.test_client() as c:
-            rv = c.get(f"/trainings/{MOCKED_TRAINING_ID}")
-            result = rv.get_json()
-            
-            self.assertIn("operators", result)
-            self.assertEqual(rv.status_code, 200)
-
-    def test_terminate_training(self):
-        with app.test_client() as c:
-            rv = c.delete(f"/trainings/{MOCKED_TRAINING_ID}")
-            result = rv.get_json()
-            expected = {"message": "Training deleted."}
-            
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 200)
