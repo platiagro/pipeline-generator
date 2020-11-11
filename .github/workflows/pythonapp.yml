@@ -301,6 +301,7 @@ jobs:
         kubectl apply -k "github.com/kubeflow/pipelines/manifests/kustomize/env/platform-agnostic?ref=$PIPELINE_VERSION"
         sleep 60
         kubectl describe pod -n kubeflow
+        kubectl describe node
         # kubectl -n kubeflow wait applications/pipeline --for condition=Ready --timeout=1800s
         # kubectl -n kubeflow patch svc ml-pipeline --patch \
         #   '{ "spec": { "type": "NodePort", "ports": [ { "nodePort": 30000  , "port": 8888, "protocol": "TCP", "targetPort": 8888 } ] } }'
