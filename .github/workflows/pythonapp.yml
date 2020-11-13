@@ -306,6 +306,7 @@ jobs:
         KUBEFLOW_MASTER_IP_ADDRESS: 0.0.0.0
     - name: Install Seldon
       run: |
+        kubectl apply -k "github.com/platiagro/manifests/cert-manager/cert-manager-crds/base?ref=v0.2.0-kubeflow-v1.1-branch"
         kubectl apply -k "github.com/platiagro/manifests/seldon/seldon-core-operator/base?ref=v0.2.0-kubeflow-v1.1-branch"
     - name: Install dependencies
       run: |
