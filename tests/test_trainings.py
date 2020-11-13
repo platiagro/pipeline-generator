@@ -155,6 +155,40 @@ class TestTrainings(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 200)
 
+            rv = c.put(f"/trainings/{TRAINING_ID}", json={
+                    "experimentId": EXPERIMENT_ID,
+                    "operators": [
+                        {
+                        "operatorId": OPERATOR_ID,
+                        "notebookPath": None,
+                        "parameters": [
+                            {
+                                "name": "dataset",
+                                "value": "foo.csv"
+                            },
+                            {
+                                "name": "foo",
+                                "value": "bar"
+                            }
+                        ],
+                        "commands": COMMANDS,
+                        "arguments": ARGUMENTS,
+                        "image": IMAGE
+                        }
+                    ]
+                }
+            )
+            result = rv.get_json()
+            expected = {"message": "Pipeline running."}
+
+            # uuid is machine-generated
+            # we assert they exist, but we don't assert their values
+            self.assertIn("runId", result)
+            del result["runId"]
+
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 200)
+
     def test_get_training(self):
         with app.test_client() as c:
             rv = c.get(f"/trainings/{MOCKED_TRAINING_ID}")
