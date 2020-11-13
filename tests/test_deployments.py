@@ -150,11 +150,33 @@ class TestDeployments(TestCase):
 
     def test_get_deployment(self):
         with app.test_client() as c:
+            rv = c.get("/deployments/foo")
+            result = rv.get_json()
+            expected = {"message": "Deployment not found."}
+            
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 404)
+
             rv = c.get(f"/deployments/{MOCKED_DEPLOYMENT_ID}")
             result = rv.get_json()
 
             self.assertIsInstance(result, dict)
             self.assertEqual(result['experimentId'], MOCKED_DEPLOYMENT_ID)
+
+    def test_get_deployment_log(self):
+        with app.test_client() as c:
+            rv = c.get("/deployments/foo/logs")
+            result = rv.get_json()
+            expected = {"message": "The specified deployment does not exist"}
+            
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 404)
+
+            rv = c.get(f"/deployments/{MOCKED_DEPLOYMENT_ID}/logs")
+            result = rv.get_json()
+
+            self.assertIsInstance(result, list)
+            self.assertEqual(rv.status_code, 200)
 
     def test_delete_deployment(self):
         with app.test_client() as c:
@@ -163,3 +185,4 @@ class TestDeployments(TestCase):
             expected = {"message": "Deployment deleted."}
 
             self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 200)

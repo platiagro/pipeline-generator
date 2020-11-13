@@ -179,9 +179,6 @@ def get_deployment_log(deploy_name):
     Args:
         deploy_name (str): Deployment name.
     """
-    if not deploy_name:
-        raise BadRequest('Missing the parameter: name')
-
     timestamp_with_tz = r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d+Z'
     timestamp_without_tz = r'\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d+'
     timestamp_regex = timestamp_with_tz + '|' + timestamp_without_tz
