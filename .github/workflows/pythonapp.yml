@@ -280,6 +280,12 @@ jobs:
           '{ "spec": { "type": "NodePort", "ports": [ { "nodePort": 30000, "port": 8888, "protocol": "TCP", "targetPort": 8888 } ] } }'
       env:
         PIPELINE_VERSION: 0.5.1
+    - name: Install Istio
+      run: |
+        kubectl apply -k "github.com/platiagro/manifests/istio/istio-crds/base?ref=v0.2.0-kubeflow-v1.1-branch"
+        kubectl apply -k "github.com/platiagro/manifests/istio/istio-install/base?ref=v0.2.0-kubeflow-v1.1-branch"
+        kubectl apply -k "github.com/platiagro/manifests/istio/istio/base?ref=v0.2.0-kubeflow-v1.1-branch"
+        kubectl apply -k "github.com/platiagro/manifests/istio/add-anonymous-user-filter/base?ref=v0.2.0-kubeflow-v1.1-branch"
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
