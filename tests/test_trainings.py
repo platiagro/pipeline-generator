@@ -65,9 +65,7 @@ class TestTrainings(TestCase):
                         {
                             "operatorId": OPERATOR_ID,
                             "notebookPath": NOTEBOOK_PATH,
-                            "commands": [
-                                "cmd"
-                            ],
+                            "commands": [],
                             "arguments": [],
                             "dependencies": [],
                             "image": IMAGE,
@@ -85,6 +83,25 @@ class TestTrainings(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
+            rv = c.put(f"/trainings/{TRAINING_ID}", json={
+                    "experimentId": EXPERIMENT_ID,
+                    "operators": [
+                        {
+                            "operatorId": OPERATOR_ID,
+                            "notebookPath": NOTEBOOK_PATH,
+                            "commands": [],
+                            "arguments": [],
+                            "dependencies": ["foo"],
+                            "image": IMAGE,
+                            "parameters": []
+                        }
+                    ],
+                }
+            )
+            result = rv.get_json()
+            expected = {"message": "Invalid dependency."}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 400)
 
             # cyclical pipeline
             rv = c.put(f"/trainings/{TRAINING_ID}", json={
@@ -93,9 +110,7 @@ class TestTrainings(TestCase):
                         {
                             "operatorId": OPERATOR_ID,
                             "notebookPath": NOTEBOOK_PATH,
-                            "commands": [
-                                "cmd"
-                            ],
+                            "commands": [],
                             "arguments": [],
                             "dependencies": [OPERATOR_ID_2],
                             "image": IMAGE
