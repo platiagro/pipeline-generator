@@ -12,6 +12,7 @@ from werkzeug.exceptions import BadRequest, NotFound
 from pipelines.controllers.pipeline import Pipeline
 from pipelines.controllers.utils import load_kube_config, init_pipeline_client, \
     format_deployment_pipeline, get_cluster_ip, remove_non_deployable_operators
+from pipelines.models import Operator, Task
 
 
 KF_PIPELINES_NAMESPACE = os.getenv('KF_PIPELINES_NAMESPACE', 'deployments')
@@ -253,6 +254,13 @@ def get_deployment_log(deploy_name):
                             log['message'] = message
                             logs.append(log)
                             line = buf.readline()
+
+                        # get task name
+                        operator = Operator.query.get(name)
+                        if operator:
+                            task = Task.query.get(operator.task_id)
+                            if task:
+                                name = task.name
 
                         resp = {}
                         resp['containerName'] = name
