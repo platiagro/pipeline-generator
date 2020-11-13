@@ -13,6 +13,7 @@ from pipelines.api.deployments import bp as deployments_blueprint
 from pipelines.api.figures import bp as figures_blueprint
 from pipelines.api.metrics import bp as metrics_blueprint
 from pipelines.api.projects import bp as projects_blueprint
+from pipelines.api.runs import bp as runs_blueprint
 from pipelines.api.trainings import bp as training_blueprint
 from pipelines.controllers.logger import create_seldon_logger
 from pipelines.database import db_session, init_db
@@ -22,6 +23,8 @@ app = Flask(__name__)
 app.config['JSON_AS_ASCII'] = False
 app.register_blueprint(deployments_blueprint, url_prefix="/deployments")
 app.register_blueprint(projects_blueprint, url_prefix="/projects")
+app.register_blueprint(runs_blueprint,
+                       url_prefix="/projects/<project_id>/deployments/<deployment_id>/runs")
 app.register_blueprint(training_blueprint, url_prefix="/trainings")
 app.register_blueprint(datasets_blueprint,
                        url_prefix="/trainings/<training_id>/runs/<run_id>/operators/<operator_id>/datasets")

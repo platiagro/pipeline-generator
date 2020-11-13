@@ -281,31 +281,7 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
-  /projects/{projectsId}/deployments/{deploymentId}/run:
-    get:
-      summary: "Get a project deployment run status."
-      tags:
-        - "Projects"
-      parameters:
-        - in: path
-          name: projectsId
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - in: path
-          name: deploymentId
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "200":
-          $ref: "#/components/responses/ProjectDeploymentRunStatus"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
+  /projects/{projectsId}/deployments/{deploymentId}/runs:
     post:
       summary: "Run a project deployment pipeline."
       tags:
@@ -1036,15 +1012,6 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/ProjectOperator"
-    ProjectDeploymentRunStatus:
-      description: ""
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              status:
-                type: string
     Run:
       description: ""
       content:
