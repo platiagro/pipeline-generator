@@ -132,7 +132,7 @@ class Pipeline():
         try:
             return self._operators[operator_id]
         except KeyError:
-            raise BadRequest('Invalid dependencie.')
+            raise BadRequest('Invalid dependency.')
 
     def _is_sequential(self):
         """Check if the pipeline is sequential (dont have any branchs).

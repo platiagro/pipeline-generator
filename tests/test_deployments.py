@@ -9,6 +9,7 @@ COMPONENT_ID = str(uuid_alpha())
 EXPERIMENT_ID = str(uuid_alpha())
 OPERATOR_ID = str(uuid_alpha())
 OPERATOR_ID_2 = str(uuid_alpha())
+OPERATOR_ID_3 = str(uuid_alpha())
 DEPLOYMENT_ID = str(uuid_alpha())
 NOTEBOOK_PATH = f"s3://anonymous/tasks/{COMPONENT_ID}/Experiment.ipynb"
 IMAGE = "platiagro/platiagro-notebook-image:0.2.0"
@@ -63,9 +64,7 @@ class TestDeployments(TestCase):
                         {
                             "operatorId": OPERATOR_ID,
                             "notebookPath": NOTEBOOK_PATH,
-                            "commands": [
-                                "cmd"
-                            ],
+                            "commands": [],
                             "arguments": [],
                             "dependencies": [],
                             "image": IMAGE,
@@ -83,6 +82,123 @@ class TestDeployments(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
+            rv = c.put(f"/deployments/{DEPLOYMENT_ID}", json={
+                    "experimentId": EXPERIMENT_ID,
+                    "operators": [
+                        {
+                            "operatorId": OPERATOR_ID,
+                            "notebookPath": NOTEBOOK_PATH,
+                            "commands": [],
+                            "arguments": [],
+                            "dependencies": ["foo"],
+                            "image": IMAGE,
+                            "parameters": []
+                        }
+                    ],
+                }
+            )
+            result = rv.get_json()
+            expected = {"message": "Invalid dependency."}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 400)
+
+            # test non-sequential pipelines
+            rv = c.put(f"/deployments/{DEPLOYMENT_ID}", json={
+                    "experimentId": EXPERIMENT_ID,
+                    "operators": [
+                        {
+                            "operatorId": OPERATOR_ID,
+                            "notebookPath": NOTEBOOK_PATH,
+                            "commands": [],
+                            "arguments": [],
+                            "dependencies": [],
+                            "image": IMAGE
+                        },
+                        {
+                            "operatorId": OPERATOR_ID_2,
+                            "notebookPath": NOTEBOOK_PATH,
+                            "commands": [],
+                            "arguments": [],
+                            "dependencies": [OPERATOR_ID],
+                            "image": IMAGE
+                        },
+                        {
+                            "operatorId": OPERATOR_ID_3,
+                            "notebookPath": NOTEBOOK_PATH,
+                            "commands": [],
+                            "arguments": [],
+                            "dependencies": [OPERATOR_ID, OPERATOR_ID_2],
+                            "image": IMAGE
+                        }
+                    ]
+                }
+            )
+            result = rv.get_json()
+            expected = {"message": "Non-sequential pipeline."}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 400)
+
+            rv = c.put(f"/deployments/{DEPLOYMENT_ID}", json={
+                    "experimentId": EXPERIMENT_ID,
+                    "operators": [
+                        {
+                            "operatorId": OPERATOR_ID,
+                            "notebookPath": NOTEBOOK_PATH,
+                            "commands": [],
+                            "arguments": [],
+                            "dependencies": [],
+                            "image": IMAGE
+                        },
+                        {
+                            "operatorId": OPERATOR_ID_2,
+                            "notebookPath": NOTEBOOK_PATH,
+                            "commands": [],
+                            "arguments": [],
+                            "dependencies": [OPERATOR_ID],
+                            "image": IMAGE
+                        },
+                        {
+                            "operatorId": OPERATOR_ID_3,
+                            "notebookPath": NOTEBOOK_PATH,
+                            "commands": [],
+                            "arguments": [],
+                            "dependencies": [OPERATOR_ID],
+                            "image": IMAGE
+                        }
+                    ]
+                }
+            )
+            result = rv.get_json()
+            expected = {"message": "Non-sequential pipeline."}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 400)
+
+            rv = c.put(f"/deployments/{DEPLOYMENT_ID}", json={
+                    "experimentId": EXPERIMENT_ID,
+                    "operators": [
+                        {
+                            "operatorId": OPERATOR_ID,
+                            "notebookPath": NOTEBOOK_PATH,
+                            "commands": [],
+                            "arguments": [],
+                            "dependencies": [],
+                            "image": IMAGE
+                        },
+                        {
+                            "operatorId": OPERATOR_ID_2,
+                            "notebookPath": NOTEBOOK_PATH,
+                            "commands": [],
+                            "arguments": [],
+                            "dependencies": [],
+                            "image": IMAGE
+                        }
+                    ]
+                }
+            )
+            result = rv.get_json()
+            expected = {"message": "Non-sequential pipeline."}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 400)
 
             # cyclical pipeline
             rv = c.put(f"/deployments/{DEPLOYMENT_ID}", json={
@@ -91,9 +207,7 @@ class TestDeployments(TestCase):
                         {
                             "operatorId": OPERATOR_ID,
                             "notebookPath": NOTEBOOK_PATH,
-                            "commands": [
-                                "cmd"
-                            ],
+                            "commands": [],
                             "arguments": [],
                             "dependencies": [OPERATOR_ID_2],
                             "image": IMAGE
@@ -119,14 +233,12 @@ class TestDeployments(TestCase):
                     "experimentId": EXPERIMENT_ID,
                     "operators": [
                         {
-                        "operatorId": OPERATOR_ID,
-                        "notebookPath": NOTEBOOK_PATH,
-                        "commands": [
-                            "cmd"
-                        ],
-                        "dependencies": [],
-                        "arguments": [],
-                        "image": IMAGE
+                            "operatorId": OPERATOR_ID,
+                            "notebookPath": NOTEBOOK_PATH,
+                            "commands": [],
+                            "dependencies": [],
+                            "arguments": [],
+                            "image": IMAGE
                         }
                     ]
                 }

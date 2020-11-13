@@ -284,7 +284,6 @@ jobs:
       run: |
         kubectl apply -k "github.com/platiagro/manifests/istio/istio-crds/base?ref=v0.2.0-kubeflow-v1.1-branch"
         kubectl apply -k "github.com/platiagro/manifests/istio/istio-install/base?ref=v0.2.0-kubeflow-v1.1-branch"
-        kubectl apply -k "github.com/platiagro/manifests/istio/istio/base?ref=v0.2.0-kubeflow-v1.1-branch"
         kubectl apply -k "github.com/platiagro/manifests/istio/add-anonymous-user-filter/base?ref=v0.2.0-kubeflow-v1.1-branch"
     - name: Install dependencies
       run: |
