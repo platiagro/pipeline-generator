@@ -292,7 +292,7 @@ jobs:
         coverage run --branch --source=pipelines -m pytest -v
         coverage xml -i
       env:
-        MINIO_ENDPOINT: localhost
+        MINIO_ENDPOINT: localhost:9000
         MINIO_ACCESS_KEY: minio
         MINIO_SECRET_KEY: minio123
         MYSQL_DB_HOST: localhost

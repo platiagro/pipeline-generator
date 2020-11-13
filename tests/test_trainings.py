@@ -12,6 +12,8 @@ OPERATOR_ID_2 = str(uuid_alpha())
 TRAINING_ID = str(uuid_alpha())
 NOTEBOOK_PATH = f"s3://anonymous/tasks/{COMPONENT_ID}/Experiment.ipynb"
 IMAGE = "platiagro/platiagro-notebook-image:0.2.0"
+ARGUMENTS = ["papermill $notebookPath output.ipynb -b $parameters;"]
+COMMANDS = ['sh', '-c']
 
 MOCKED_TRAINING_ID = "b281185b-6104-4c8c-8185-31eb53bef8de"
 
@@ -120,12 +122,8 @@ class TestTrainings(TestCase):
                         {
                         "operatorId": OPERATOR_ID,
                         "notebookPath": NOTEBOOK_PATH,
-                        "commands": [
-                            "cmd"
-                        ],
-                        "arguments": [
-                            "notebookPath"
-                        ],
+                        "commands": COMMANDS,
+                        "arguments": ARGUMENTS,
                         "image": IMAGE
                         }
                     ]
@@ -158,3 +156,10 @@ class TestTrainings(TestCase):
             
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 200)
+
+    def test_list_training_runs(self):
+        with app.test_client() as c:
+            rv = c.get(f"/trainings/{MOCKED_TRAINING_ID}/runs")
+            result = rv.get_json()
+
+            self.assertIsInstance(result, list)

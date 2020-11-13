@@ -7,23 +7,13 @@ metadata:
 spec:
   entrypoint: common-pipeline
   templates:
-    - name: common-pipeline
-      dag:
-        tasks:
-          - name: d4560e7e-0a22-425f-9125-19816d060e76
-            template: d4560e7e-0a22-425f-9125-19816d060e76
-            dependencies: [vol-tmp-data]
-            arguments:
-              parameters:
-                - {
-                    name: vol-tmp-data-name,
-                    value: "{{tasks.vol-tmp-data.outputs.parameters.vol-tmp-data-name}}",
-                  }
-          - { name: vol-tmp-data, template: vol-tmp-data }
     - name: d4560e7e-0a22-425f-9125-19816d060e76
       container:
-        args: []
-        command: [cmd]
+        args: [
+            "papermill s3://anonymous/tasks/f8de0800-cccc-4766-96f3-6bfa4dfeb8a9/Experiment.ipynb
+            output.ipynb -b e30K;",
+          ]
+        command: [sh, -c]
         env:
           - { name: EXPERIMENT_ID, value: b281185b-6104-4c8c-8185-31eb53bef8de }
           - { name: OPERATOR_ID, value: d4560e7e-0a22-425f-9125-19816d060e76 }
@@ -42,6 +32,19 @@ spec:
         - name: vol-tmp-data
           persistentVolumeClaim:
             { claimName: "{{inputs.parameters.vol-tmp-data-name}}" }
+    - name: common-pipeline
+      dag:
+        tasks:
+          - name: d4560e7e-0a22-425f-9125-19816d060e76
+            template: d4560e7e-0a22-425f-9125-19816d060e76
+            dependencies: [vol-tmp-data]
+            arguments:
+              parameters:
+                - {
+                    name: vol-tmp-data-name,
+                    value: "{{tasks.vol-tmp-data.outputs.parameters.vol-tmp-data-name}}",
+                  }
+          - { name: vol-tmp-data, template: vol-tmp-data }
     - name: vol-tmp-data
       resource:
         action: apply
