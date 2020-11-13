@@ -107,7 +107,7 @@ class Pipeline():
 
         # validate parameters
         if parameters and not validate_parameters(parameters):
-            raise ValueError('Invalid parameter.')
+            raise BadRequest('Invalid parameter.')
 
         dependencies = operator.get('dependencies', [])
         if dependencies:
@@ -131,7 +131,7 @@ class Pipeline():
         try:
             return self._operators[operator_id]
         except KeyError:
-            raise BadRequest('Invalid dependencie.')
+            raise BadRequest('Invalid dependency.')
 
     def _is_sequential(self):
         """Check if the pipeline is sequential (dont have any branchs).

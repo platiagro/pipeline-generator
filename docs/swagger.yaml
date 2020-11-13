@@ -638,7 +638,7 @@ components:
           format: uuid
         notebookPath:
           type: string
-          example: "minio://anonymous/components/eee8b9a5-4bee-450f-9f3b-ac58453d9c3d/Training.ipynb"
+          example: "s3://anonymous/tasks/eee8b9a5-4bee-450f-9f3b-ac58453d9c3d/Experiment.ipynb"
         dependencies:
           description: "List of operator ids."
           type: array
@@ -674,28 +674,28 @@ components:
     OperatorLogs:
       type: object
       properties:
-          exception:
+        exception:
+          type: string
+          example: "KeyError"
+        traceback:
+          type: array
+          items:
             type: string
-            example: "KeyError"
-          traceback:
-            type: array
-            items:
-              type: string
-              example:
-                - "---------------------------------------------------------------------------"
-                - "KeyError                                  Traceback (most recent call last)"
-                - "<ipython-input-6-3c08f8d95ae4> in <module>"
-                - "----> 1 df.dropna(subset = [target],inplace=True)"
-                - "      2 y = df[target].to_numpy()"
-                - ""
-                - "/opt/conda/lib/python3.7/site-packages/pandas/core/frame.py in dropna(self, axis, how, thresh, subset, inplace)"
-                - "   4857                 check = indices == -1"
-                - "   4858                 if check.any():"
-                - "-> 4859                     raise KeyError(list(np.compress(check, subset)))"
-                - "   4860                 agg_obj = self.take(indices, axis=agg_axis)"
-                - "   4861 "
-                - ""
-                - "KeyError: ['species']"
+            example:
+              - "---------------------------------------------------------------------------"
+              - "KeyError                                  Traceback (most recent call last)"
+              - "<ipython-input-6-3c08f8d95ae4> in <module>"
+              - "----> 1 df.dropna(subset = [target],inplace=True)"
+              - "      2 y = df[target].to_numpy()"
+              - ""
+              - "/opt/conda/lib/python3.7/site-packages/pandas/core/frame.py in dropna(self, axis, how, thresh, subset, inplace)"
+              - "   4857                 check = indices == -1"
+              - "   4858                 if check.any():"
+              - "-> 4859                     raise KeyError(list(np.compress(check, subset)))"
+              - "   4860                 agg_obj = self.take(indices, axis=agg_axis)"
+              - "   4861 "
+              - ""
+              - "KeyError: ['species']"
     Parameter:
       type: object
       properties:

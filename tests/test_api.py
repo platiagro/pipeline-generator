@@ -1,10 +1,19 @@
 # -*- coding: utf-8 -*-
 from unittest import TestCase
 
-from pipelines.api.main import app
+from pipelines.api.main import app, parse_args
 
 
 class TestApi(TestCase):
+
+    def test_parse_args(self):
+        parser = parse_args([])
+        self.assertEqual(parser.port, 8080)
+        self.assertFalse(parser.enable_cors)
+
+        parser = parse_args(["--enable-cors", "--port", "3000"])
+        self.assertEqual(parser.port, 3000)
+        self.assertTrue(parser.enable_cors)
 
     def test_index(self):
         with app.test_client() as c:
