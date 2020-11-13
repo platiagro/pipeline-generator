@@ -7,6 +7,7 @@ from sqlalchemy.exc import InvalidRequestError, ProgrammingError
 from werkzeug.exceptions import BadRequest, NotFound
 
 from pipelines.database import db_session
+from pipelines.controllers.deployments import get_deployment_by_id
 from pipelines.models import Deployment, Operator
 from pipelines.models.controllers.operators import create_operator
 from pipelines.models.utils import raise_if_experiment_does_not_exist, \
@@ -106,7 +107,17 @@ def get_deployment(uuid, project_id):
     deployment = Deployment.query.get(uuid)
     if deployment is None:
         raise NOT_FOUND
-    return deployment.as_dict()
+
+    resp = deployment.as_dict()
+    try:
+        deployment_status = get_deployment_by_id(uuid)
+        resp['deployedAt'] = deployment_status['createdAt']
+        resp['runId'] = deployment_status['runId']
+        resp['status'] = deployment_status['status']
+        resp['url'] = deployment_status['url']
+    except NotFound:
+        pass
+    return resp
 
 
 def update_deployment(uuid, project_id, **kwargs):

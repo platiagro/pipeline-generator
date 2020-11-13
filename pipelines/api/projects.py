@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """Projects blueprint."""
-
 from flask import Blueprint, jsonify, request
 
 from pipelines.models.controllers.deployments import list_deployments, create_deployment, \
