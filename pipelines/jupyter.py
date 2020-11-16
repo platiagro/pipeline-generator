@@ -7,7 +7,7 @@ from requests.exceptions import HTTPError
 from requests.packages.urllib3.util.retry import Retry
 from werkzeug.exceptions import NotFound
 
-from pipelines.controllers.trainings import get_training
+from pipelines.controllers.experiments import get_experiment_run
 from pipelines.controllers.utils import remove_ansi_escapes, search_for_pod_name
 
 JUPYTER_ENDPOINT = getenv("JUPYTER_ENDPOINT", "http://server.anonymous:80/notebook/anonymous/server")
@@ -32,20 +32,17 @@ ADAPTER = HTTPAdapter(max_retries=RETRY_STRATEGY)
 SESSION.mount("http://", ADAPTER)
 
 
-def get_operator_logs(training_id: str, operator_id: str):
+def get_operator_logs(experiment_id: str, operator_id: str):
     """Retrive logs from a failed operator.
-
     Args:
-        training_id (str): training id
+        experiment_id (str): experiment id
         operator_id (str): operator id
-
     Raises:
         NotFound: notebook does not exist.
-
     Returns:
         dict: response.
     """
-    operator_endpoint = f"experiments/{training_id}/operators/{operator_id}/Experiment.ipynb"
+    operator_endpoint = f"experiments/{experiment_id}/operators/{operator_id}/Experiment.ipynb"
 
     try:
         r = SESSION.get(url=f"{URL_CONTENTS}/{operator_endpoint}").content
@@ -69,7 +66,7 @@ def get_operator_logs(training_id: str, operator_id: str):
         except KeyError:
             pass
 
-    run_details = get_training(training_id, pretty=False)
+    run_details = get_experiment_run(experiment_id, pretty=False)
     details = loads(run_details.pipeline_runtime.workflow_manifest)
     operator_container = search_for_pod_name(details, operator_id)
 

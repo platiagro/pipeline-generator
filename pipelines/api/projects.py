@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
-"""Projects blueprint."""
 from flask import Blueprint, jsonify, request
 
-from pipelines.models.controllers.deployments import list_deployments, create_deployment, \
+from pipelines.controllers.project_deployments import list_deployments, create_deployment, \
     get_deployment, update_deployment, delete_deployment
-from pipelines.models.controllers.operators import update_operator
+from pipelines.controllers.operators import update_operator
 from pipelines.utils import to_snake_case
 
 bp = Blueprint("projects", __name__)

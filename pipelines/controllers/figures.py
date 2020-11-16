@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-"""Figures controller."""
-
 import platiagro
 
 

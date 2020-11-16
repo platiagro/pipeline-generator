@@ -14,14 +14,14 @@ tags:
   - name: "Deployments"
     description: >
       Manage deployment pipelines.
+  - name: "Experiments"
+    description: >
+      Manage experiment pipelines.
   - name: "Projects"
     description: >
       Manage projects deployments.
-  - name: "Trainings"
-    description: >
-      Manage training pipelines.
 paths:
-  /deployments:
+  /deployments/runs:
     get:
       summary: "List all deployments."
       tags:
@@ -33,7 +33,7 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
-  /deployments/{deploymentId}:
+  /deployments/{deploymentId}/runs:
     put:
       summary: "Run a deployment pipeline"
       tags:
@@ -91,7 +91,7 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
-  /deployments/{deploymentId}/logs:
+  /deployments/{deploymentId}/runs/logs:
     get:
       summary: "Get logs from a deployment."
       tags:
@@ -109,7 +109,7 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
-  /deployments/retry/{deploymentId}:
+  /deployments/{deploymentId}/runs/retry:
     put:
       summary: "Re-initiate a failed or terminated deployment"
       tags:
@@ -308,13 +308,32 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
-  /trainings/{trainingId}:
+  /experiments/{experimentId}/runs:
+    get:
+      summary: "Get the training status of a run."
+      tags:
+        - "Experiments"
+      parameters:
+        - name: experimentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/TrainingStatus"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
     put:
       summary: "Run a training pipeline"
       tags:
-        - "Trainings"
+        - "Experiments"
       parameters:
-        - name: trainingId
+        - name: experimentId
           in: path
           required: true
           schema:
@@ -330,29 +349,10 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
-    get:
-      summary: "Get the training status of a run."
-      tags:
-        - "Trainings"
-      parameters:
-        - name: trainingId
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          $ref: "#/components/responses/TrainingStatus"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
     delete:
       summary: "Terminate trainings pipeline"
       tags:
-        - "Trainings"
+        - "Experiments"
       parameters:
         - in: path
           name: trainingId
@@ -369,13 +369,13 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
-  /trainings/{trainingId}/runs:
+  /experiments/{experimentId}/runs/history:
     get:
       summary: "Get training runs details."
       tags:
-        - "Trainings"
+        - "Experiments"
       parameters:
-        - name: trainingId
+        - name: experimentId
           in: path
           required: true
           schema:
@@ -389,14 +389,14 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
-  /trainings/retry/{trainingId}:
+  /experiments/{experimentId}/runs/retry:
     put:
       summary: "Re-initiate a failed or terminated training"
       tags:
-        - "Trainings"
+        - "Experiments"
       parameters:
         - in: path
-          name: trainingId
+          name: experimentId
           required: true
           schema:
             type: string
@@ -410,13 +410,13 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
-  /trainings/{trainingId}/runs/{runId}/operators/{operatorId}/datasets:
+  /experiments/{experimentId}/runs/{runId}/operators/{operatorId}/datasets:
     get:
       summary: "List datasets paginated"
       tags:
-        - "Trainings"
+        - "Experiments"
       parameters:
-        - name: trainingId
+        - name: experimentId
           in: path
           required: true
           schema:
@@ -450,13 +450,13 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
-  /trainings/{trainingId}/runs/{runId}/operators/{operatorId}/figures:
+  /experiments/{experimentId}/runs/{runId}/operators/{operatorId}/figures:
     get:
       summary: "List all figures"
       tags:
-        - "Trainings"
+        - "Experiments"
       parameters:
-        - name: trainingId
+        - name: experimentId
           in: path
           required: true
           schema:
@@ -480,13 +480,13 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
-  /trainings/{trainingId}/runs/{runId}/operators/{operatorId}/logs:
+  /experiments/{experimentId}/runs/{runId}/operators/{operatorId}/logs:
     get:
       summary: "Get logs from Jupyter Notebook"
       tags:
-        - "Trainings"
+        - "Experiments"
       parameters:
-        - name: trainingId
+        - name: experimentId
           in: path
           required: true
           schema:
@@ -510,13 +510,13 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
-  /trainings/{trainingId}/runs/{runId}/operators/{operatorId}/metrics:
+  /experiments/{experimentId}/runs/{runId}/operators/{operatorId}/metrics:
     get:
       summary: "List all metrics"
       tags:
-        - "Trainings"
+        - "Experiments"
       parameters:
-        - name: trainingId
+        - name: experimentId
           in: path
           required: true
           schema:

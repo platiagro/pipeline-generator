@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-"""Operator controller."""
 from datetime import datetime
 
 from sqlalchemy.exc import InvalidRequestError, ProgrammingError

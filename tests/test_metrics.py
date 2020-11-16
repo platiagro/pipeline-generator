@@ -26,7 +26,7 @@ class TestMetrics(TestCase):
 
     def test_list_metrics(self):
         with app.test_client() as c:
-            rv = c.get(f"/trainings/{EXPERIMENT_ID}/runs/{RUN_ID}/operators/{OPERATOR_ID}/metrics")
+            rv = c.get(f"/experiments/{EXPERIMENT_ID}/runs/{RUN_ID}/operators/{OPERATOR_ID}/metrics")
             result = rv.get_json()
             self.assertIsInstance(result, list)
             self.assertEquals(result, [{"accuracy": 1.0}])

@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-"""Runs controller."""
 from werkzeug.exceptions import NotFound
 
 from pipelines.controllers.pipeline import Pipeline

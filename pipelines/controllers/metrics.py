@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-"""Metrics controller."""
-
 import platiagro
 
 from werkzeug.exceptions import NotFound

@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-"""Deployment controller."""
 import sys
 from datetime import datetime
 
@@ -7,9 +6,9 @@ from sqlalchemy.exc import InvalidRequestError, ProgrammingError
 from werkzeug.exceptions import BadRequest, NotFound
 
 from pipelines.database import db_session
+from pipelines.controllers.operators import create_operator
 from pipelines.controllers.deployments import get_deployment_by_id
 from pipelines.models import Deployment, Operator
-from pipelines.models.controllers.operators import create_operator
 from pipelines.models.utils import raise_if_experiment_does_not_exist, \
     raise_if_project_does_not_exist
 from pipelines.utils import uuid_alpha

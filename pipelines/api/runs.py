@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-"""Runs blueprint."""
 from flask import Blueprint, jsonify
 
 from pipelines.controllers.runs import create_run
