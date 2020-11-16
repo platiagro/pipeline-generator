@@ -34,6 +34,7 @@ export MYSQL_DB_HOST=mysql
 export MYSQL_DB_NAME=platiagro
 export MYSQL_DB_USER=root
 export MYSQL_DB_PASSWORD=
+export JUPYTER_ENDPOINT=http://localhost:8888
 ```
 
 (Optional) Start a MinIO instance:
@@ -56,6 +57,15 @@ docker run -d -p 3306:3306 \
   --env "MYSQL_ROOT_PASSWORD=$MYSQL_DB_PASSWORD" \
   --env "MYSQL_ALLOW_EMPTY_PASSWORD=yes" \
   mysql:5.7
+```
+
+(Optional) Start a Jupyter Notebook instance:
+
+```bash
+docker run -d -p 8888:8888 \
+  --name jupyter \
+  jupyter/base-notebook \
+  start-notebook.sh --NotebookApp.token=''
 ```
 
 Build a docker image that launches the API server:
