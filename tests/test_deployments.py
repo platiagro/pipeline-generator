@@ -27,7 +27,7 @@ class TestDeployments(TestCase):
     def test_put_deployment(self):
         with app.test_client() as c:
 
-            rv = c.put(f"/deployments/{DEPLOYMENT_ID}", json={
+            rv = c.put(f"/deployments/{DEPLOYMENT_ID}/runs", json={
                     "experimentId": EXPERIMENT_ID,
                 }
             )
@@ -36,7 +36,7 @@ class TestDeployments(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
-            rv = c.put(f"/deployments/{DEPLOYMENT_ID}", json={
+            rv = c.put(f"/deployments/{DEPLOYMENT_ID}/runs", json={
                     "experimentId": EXPERIMENT_ID,
                     "operators": [],
                 }
@@ -46,7 +46,7 @@ class TestDeployments(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
-            rv = c.put(f"/deployments/{DEPLOYMENT_ID}", json={
+            rv = c.put(f"/deployments/{DEPLOYMENT_ID}/runs", json={
                     "experimentId": EXPERIMENT_ID,
                     "operators": [{
                         "operatorId": OPERATOR_ID
@@ -58,7 +58,7 @@ class TestDeployments(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
-            rv = c.put(f"/deployments/{DEPLOYMENT_ID}", json={
+            rv = c.put(f"/deployments/{DEPLOYMENT_ID}/runs", json={
                     "experimentId": EXPERIMENT_ID,
                     "operators": [
                         {
@@ -82,7 +82,7 @@ class TestDeployments(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
-            rv = c.put(f"/deployments/{DEPLOYMENT_ID}", json={
+            rv = c.put(f"/deployments/{DEPLOYMENT_ID}/runs", json={
                     "experimentId": EXPERIMENT_ID,
                     "operators": [
                         {
@@ -103,7 +103,7 @@ class TestDeployments(TestCase):
             self.assertEqual(rv.status_code, 400)
 
             # test non-sequential pipelines
-            rv = c.put(f"/deployments/{DEPLOYMENT_ID}", json={
+            rv = c.put(f"/deployments/{DEPLOYMENT_ID}/runs", json={
                     "experimentId": EXPERIMENT_ID,
                     "operators": [
                         {
@@ -138,7 +138,7 @@ class TestDeployments(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
-            rv = c.put(f"/deployments/{DEPLOYMENT_ID}", json={
+            rv = c.put(f"/deployments/{DEPLOYMENT_ID}/runs", json={
                     "experimentId": EXPERIMENT_ID,
                     "operators": [
                         {
@@ -173,7 +173,7 @@ class TestDeployments(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
-            rv = c.put(f"/deployments/{DEPLOYMENT_ID}", json={
+            rv = c.put(f"/deployments/{DEPLOYMENT_ID}/runs", json={
                     "experimentId": EXPERIMENT_ID,
                     "operators": [
                         {
@@ -201,7 +201,7 @@ class TestDeployments(TestCase):
             self.assertEqual(rv.status_code, 400)
 
             # cyclical pipeline
-            rv = c.put(f"/deployments/{DEPLOYMENT_ID}", json={
+            rv = c.put(f"/deployments/{DEPLOYMENT_ID}/runs", json={
                     "experimentId": EXPERIMENT_ID,
                     "operators": [
                         {
@@ -228,7 +228,7 @@ class TestDeployments(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
-            rv = c.put(f"/deployments/{DEPLOYMENT_ID}", json={
+            rv = c.put(f"/deployments/{DEPLOYMENT_ID}/runs", json={
                     "name": "foo",
                     "experimentId": EXPERIMENT_ID,
                     "operators": [
@@ -256,45 +256,40 @@ class TestDeployments(TestCase):
 
     def test_get_deployments(self):
         with app.test_client() as c:
-            rv = c.get("/deployments")
+            rv = c.get("/deployments/runs")
             result = rv.get_json()
             self.assertIsInstance(result, list)
 
     def test_get_deployment(self):
         with app.test_client() as c:
-            rv = c.get("/deployments/foo")
+            rv = c.get("/deployments/foo/runs")
             result = rv.get_json()
             expected = {"message": "Deployment not found."}
-            
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 404)
 
-            rv = c.get(f"/deployments/{MOCKED_DEPLOYMENT_ID}")
+            rv = c.get(f"/deployments/{MOCKED_DEPLOYMENT_ID}/runs")
             result = rv.get_json()
-
             self.assertIsInstance(result, dict)
             self.assertEqual(result['experimentId'], MOCKED_DEPLOYMENT_ID)
 
     def test_get_deployment_log(self):
         with app.test_client() as c:
-            rv = c.get("/deployments/foo/logs")
+            rv = c.get("/deployments/foo/runs/logs")
             result = rv.get_json()
             expected = {"message": "The specified deployment does not exist"}
-            
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 404)
 
-            rv = c.get(f"/deployments/{MOCKED_DEPLOYMENT_ID}/logs")
+            rv = c.get(f"/deployments/{MOCKED_DEPLOYMENT_ID}/runs/logs")
             result = rv.get_json()
-
             self.assertIsInstance(result, list)
             self.assertEqual(rv.status_code, 200)
 
     def test_delete_deployment(self):
         with app.test_client() as c:
-            rv = c.delete(f"/deployments/{MOCKED_DEPLOYMENT_ID}")
+            rv = c.delete(f"/deployments/{MOCKED_DEPLOYMENT_ID}/runs")
             result = rv.get_json()
             expected = {"message": "Deployment deleted."}
-
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 200)
