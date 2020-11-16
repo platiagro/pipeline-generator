@@ -239,6 +239,14 @@ class TestDeployments(TestCase):
                             "dependencies": [],
                             "arguments": [],
                             "image": IMAGE
+                        },
+                        {
+                            "operatorId": OPERATOR_ID_2,
+                            "notebookPath": None,
+                            "commands": [],
+                            "dependencies": [OPERATOR_ID],
+                            "arguments": [],
+                            "image": IMAGE
                         }
                     ]
                 }
