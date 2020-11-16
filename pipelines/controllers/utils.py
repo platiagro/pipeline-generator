@@ -114,9 +114,8 @@ def validate_notebook_path(notebook_path):
         raise BadRequest('Invalid notebook path. ' + notebook_path)
 
 
-def format_pipeline_run_details(run_details):
-    workflow_manifest = json.loads(
-        run_details.pipeline_runtime.workflow_manifest)
+def format_pipeline_run_details(run_workflow_manifest):
+    workflow_manifest = json.loads(run_workflow_manifest)
 
     if 'nodes' not in workflow_manifest['status']:
         # nodes are creating, returns the tasks with no dependencies as Pending

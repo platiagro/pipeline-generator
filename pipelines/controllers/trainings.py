@@ -71,7 +71,7 @@ def get_training(training_id, pretty=True):
         return {}
 
     if pretty:
-        return format_pipeline_run_details(run_details)
+        return format_pipeline_run_details(run_details.pipeline_runtime.workflow_manifest)
     else:
         return run_details
 
@@ -104,7 +104,7 @@ def retry_run_training(training_id):
     if not retry:
         raise NotFound('There is no failed experimentation')
     run_details = client.get_run(run.id)
-    return format_pipeline_run_details(run_details)
+    return format_pipeline_run_details(run_details.pipeline_runtime.workflow_manifest)
 
 
 def get_training_runs(training_id):
