@@ -77,7 +77,7 @@ jobs:
         if [ ${{ github.ref }} = "refs/heads/master" ]; then
           echo ::set-output name=TAG::0.2.0
         else
-          echo ::set-output name=TAG::0.2.0-SNAPSHOT
+          echo ::set-output name=TAG::0.2.0
         fi
         echo ::set-output name=BRANCH::${{ github.ref }}
         echo ::set-output name=COMMIT::${{ github.sha }}
@@ -335,6 +335,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
     - name: Build and push image
+      if: ${{ always() }}
       uses: docker/build-push-action@v1
       with:
         username: ${{ secrets.DOCKER_USERNAME }}
