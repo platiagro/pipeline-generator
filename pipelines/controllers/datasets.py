@@ -83,7 +83,17 @@ def get_dataset_pagination(experiment_id, operator_id, page, page_size, run_id):
     # get dataset name
     dataset = operator.parameters.get('dataset')
     if dataset is None:
-        raise NotFound()
+        # try to find dataset name in other operators
+        operators = db_session.query(Operator) \
+            .filter_by(experiment_id=experiment_id) \
+            .filter(Operator.uuid != operator_id) \
+            .all()
+        for operator in operators:
+            dataset = operator.parameters.get('dataset')
+            if dataset:
+                break
+        if dataset is None:
+            raise NotFound()
 
     try:
         metadata = platiagro.stat_dataset(name=dataset, operator_id=operator_id)
