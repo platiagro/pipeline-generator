@@ -7,7 +7,7 @@ bp = Blueprint("metrics", __name__)
 
 
 @bp.route("", methods=["GET"])
-def handle_list_metrics_by_run_id(experiment_id, run_id, operator_id):
+def handle_list_metrics_by_run_id(project_id, experiment_id, run_id, operator_id):
     """Handles GET requests to /."""
     metrics = list_metrics(experiment_id=experiment_id,
                            operator_id=operator_id,

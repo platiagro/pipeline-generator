@@ -21,24 +21,68 @@ tags:
     description: >
       Manage projects deployments.
 paths:
-  /deployments/runs:
+  /projects/{projectsId}/deployments/{deploymentId}/runs:
     get:
-      summary: "List all deployments."
+      summary: "Get a deployment by uuid."
       tags:
         - "Deployments"
+      parameters:
+        - in: path
+          name: projectsId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: path
+          name: deploymentId
+          required: true
+          schema:
+            type: string
+            format: uuid
       responses:
         "200":
-          $ref: "#/components/responses/Deployments"
+          $ref: "#/components/schemas/DeploymentStatus"
         "500":
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
-  /deployments/{deploymentId}/runs:
+    post:
+      summary: "Run a project deployment pipeline."
+      tags:
+        - "Projects"
+      parameters:
+        - in: path
+          name: projectsId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: path
+          name: deploymentId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          $ref: "#/components/responses/Run"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
     put:
       summary: "Run a deployment pipeline"
       tags:
         - "Deployments"
       parameters:
+        - in: path
+          name: projectsId
+          required: true
+          schema:
+            type: string
+            format: uuid
         - in: path
           name: deploymentId
           required: true
@@ -56,29 +100,17 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
-    get:
-      summary: "Get a deployment by uuid."
-      tags:
-        - "Deployments"
-      parameters:
-        - in: path
-          name: deploymentId
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "200":
-          $ref: "#/components/schemas/DeploymentStatus"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
     delete:
       summary: "Delete deployment pipeline."
       tags:
         - "Deployments"
       parameters:
+        - in: path
+          name: projectsId
+          required: true
+          schema:
+            type: string
+            format: uuid
         - name: deploymentId
           in: path
           required: true
@@ -91,12 +123,18 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
-  /deployments/{deploymentId}/runs/logs:
+  /projects/{projectsId}/deployments/{deploymentId}/runs/latest/logs:
     get:
       summary: "Get logs from a deployment."
       tags:
         - "Deployments"
       parameters:
+        - in: path
+          name: projectsId
+          required: true
+          schema:
+            type: string
+            format: uuid
         - name: deploymentId
           in: path
           required: true
@@ -109,12 +147,18 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
-  /deployments/{deploymentId}/runs/retry:
+  /projects/{projectsId}/deployments/{deploymentId}/runs/latest/retry:
     put:
       summary: "Re-initiate a failed or terminated deployment"
       tags:
         - "Deployments"
       parameters:
+        - in: path
+          name: projectsId
+          required: true
+          schema:
+            type: string
+            format: uuid
         - in: path
           name: deploymentId
           required: true
@@ -126,6 +170,286 @@ paths:
           $ref: "#/components/responses/TerminateRun"
         "400":
           $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /projects/{projectsId}/experiments/{experimentId}/runs:
+    get:
+      summary: "Get training runs details."
+      tags:
+        - "Experiments"
+      parameters:
+        - in: path
+          name: projectsId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: experimentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/TrainingRunsDetails"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+    put:
+      summary: "Run a training pipeline"
+      tags:
+        - "Experiments"
+      parameters:
+        - in: path
+          name: projectsId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: experimentId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        $ref: "#/components/requestBodies/TrainingPut"
+      responses:
+        "200":
+          $ref: "#/components/responses/Run"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+    delete:
+      summary: "Terminate trainings pipeline"
+      tags:
+        - "Experiments"
+      parameters:
+        - in: path
+          name: trainingId
+          required: true
+          schema:
+            type: string
+            format: trainingId
+      responses:
+        "200":
+          $ref: "#/components/responses/TerminateRun"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /projects/{projectsId}/experiments/{experimentId}/runs/latest:
+    get:
+      summary: "Get the training status of a run."
+      tags:
+        - "Experiments"
+      parameters:
+        - in: path
+          name: projectsId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: experimentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/TrainingStatus"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /projects/{projectsId}/experiments/{experimentId}/runs/latest/retry:
+    put:
+      summary: "Re-initiate a failed or terminated training"
+      tags:
+        - "Experiments"
+      parameters:
+        - in: path
+          name: projectsId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: path
+          name: experimentId
+          required: true
+          schema:
+            type: string
+            format: trainingId
+      responses:
+        "200":
+          $ref: "#/components/responses/TrainingStatus"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /projects/{projectsId}/experiments/{experimentId}/runs/{runId}/operators/{operatorId}/datasets:
+    get:
+      summary: "List datasets paginated"
+      tags:
+        - "Experiments"
+      parameters:
+        - in: path
+          name: projectsId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: experimentId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: runId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: operatorId
+          in: path
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: page
+          schema:
+            type: integer
+          description: Page number
+        - in: query
+          name: page_size
+          schema:
+            type: integer
+          description: Page size
+      responses:
+        "200":
+          $ref: "#/components/responses/Datasets"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /projects/{projectsId}/experiments/{experimentId}/runs/{runId}/operators/{operatorId}/figures:
+    get:
+      summary: "List all figures"
+      tags:
+        - "Experiments"
+      parameters:
+        - in: path
+          name: projectsId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: experimentId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: runId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: operatorId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/Figures"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /projects/{projectsId}/experiments/{experimentId}/runs/{runId}/operators/{operatorId}/logs:
+    get:
+      summary: "Get logs from Jupyter Notebook"
+      tags:
+        - "Experiments"
+      parameters:
+        - in: path
+          name: projectsId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: experimentId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: runId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: operatorId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/OperatorLogs"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /projects/{projectsId}/experiments/{experimentId}/runs/{runId}/operators/{operatorId}/metrics:
+    get:
+      summary: "List all metrics"
+      tags:
+        - "Experiments"
+      parameters:
+        - in: path
+          name: projectsId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: experimentId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: runId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: operatorId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/Metrics"
+        "404":
+          $ref: "#/components/responses/NotFound"
         "500":
           $ref: "#/components/responses/InternalServerError"
         "503":
@@ -281,266 +605,6 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
-  /projects/{projectsId}/deployments/{deploymentId}/runs:
-    post:
-      summary: "Run a project deployment pipeline."
-      tags:
-        - "Projects"
-      parameters:
-        - in: path
-          name: projectsId
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - in: path
-          name: deploymentId
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "200":
-          $ref: "#/components/responses/Run"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
-  /experiments/{experimentId}/runs:
-    get:
-      summary: "Get the training status of a run."
-      tags:
-        - "Experiments"
-      parameters:
-        - name: experimentId
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          $ref: "#/components/responses/TrainingStatus"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
-    put:
-      summary: "Run a training pipeline"
-      tags:
-        - "Experiments"
-      parameters:
-        - name: experimentId
-          in: path
-          required: true
-          schema:
-            type: string
-      requestBody:
-        $ref: "#/components/requestBodies/TrainingPut"
-      responses:
-        "200":
-          $ref: "#/components/responses/Run"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
-    delete:
-      summary: "Terminate trainings pipeline"
-      tags:
-        - "Experiments"
-      parameters:
-        - in: path
-          name: trainingId
-          required: true
-          schema:
-            type: string
-            format: trainingId
-      responses:
-        "200":
-          $ref: "#/components/responses/TerminateRun"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
-  /experiments/{experimentId}/runs/history:
-    get:
-      summary: "Get training runs details."
-      tags:
-        - "Experiments"
-      parameters:
-        - name: experimentId
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          $ref: "#/components/responses/TrainingRunsDetails"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
-  /experiments/{experimentId}/runs/retry:
-    put:
-      summary: "Re-initiate a failed or terminated training"
-      tags:
-        - "Experiments"
-      parameters:
-        - in: path
-          name: experimentId
-          required: true
-          schema:
-            type: string
-            format: trainingId
-      responses:
-        "200":
-          $ref: "#/components/responses/TrainingStatus"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
-  /experiments/{experimentId}/runs/{runId}/operators/{operatorId}/datasets:
-    get:
-      summary: "List datasets paginated"
-      tags:
-        - "Experiments"
-      parameters:
-        - name: experimentId
-          in: path
-          required: true
-          schema:
-            type: string
-        - name: runId
-          in: path
-          required: true
-          schema:
-            type: string
-        - name: operatorId
-          in: path
-          required: true
-          schema:
-            type: string
-        - in: query
-          name: page
-          schema:
-            type: integer
-          description: Page number
-        - in: query
-          name: page_size
-          schema:
-            type: integer
-          description: Page size
-      responses:
-        "200":
-          $ref: "#/components/responses/Datasets"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
-  /experiments/{experimentId}/runs/{runId}/operators/{operatorId}/figures:
-    get:
-      summary: "List all figures"
-      tags:
-        - "Experiments"
-      parameters:
-        - name: experimentId
-          in: path
-          required: true
-          schema:
-            type: string
-        - name: runId
-          in: path
-          required: true
-          schema:
-            type: string
-        - name: operatorId
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          $ref: "#/components/responses/Figures"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
-  /experiments/{experimentId}/runs/{runId}/operators/{operatorId}/logs:
-    get:
-      summary: "Get logs from Jupyter Notebook"
-      tags:
-        - "Experiments"
-      parameters:
-        - name: experimentId
-          in: path
-          required: true
-          schema:
-            type: string
-        - name: runId
-          in: path
-          required: true
-          schema:
-            type: string
-        - name: operatorId
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          $ref: "#/components/responses/OperatorLogs"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
-  /experiments/{experimentId}/runs/{runId}/operators/{operatorId}/metrics:
-    get:
-      summary: "List all metrics"
-      tags:
-        - "Experiments"
-      parameters:
-        - name: experimentId
-          in: path
-          required: true
-          schema:
-            type: string
-        - name: runId
-          in: path
-          required: true
-          schema:
-            type: string
-        - name: operatorId
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          $ref: "#/components/responses/Metrics"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
-
 components:
   schemas:
     Datasets:

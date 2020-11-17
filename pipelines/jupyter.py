@@ -7,7 +7,7 @@ from requests.exceptions import HTTPError
 from requests.packages.urllib3.util.retry import Retry
 from werkzeug.exceptions import NotFound
 
-from pipelines.controllers.experiments import get_experiment_run
+from pipelines.controllers.experiment_runs import get_experiment_run
 from pipelines.controllers.utils import remove_ansi_escapes, search_for_pod_name
 
 JUPYTER_ENDPOINT = getenv("JUPYTER_ENDPOINT", "http://server.anonymous:80/notebook/anonymous/server")

@@ -9,30 +9,31 @@ from werkzeug.exceptions import BadRequest, NotFound, MethodNotAllowed, \
     Forbidden, InternalServerError
 
 from pipelines.api.datasets import bp as datasets_blueprint
-from pipelines.api.deployments import bp as deployments_blueprint
-from pipelines.api.experiments import bp as experiments_blueprint
+from pipelines.api.deployment_runs import bp as deployment_runs_blueprint
+from pipelines.api.experiment_runs import bp as experiment_runs_blueprint
 from pipelines.api.figures import bp as figures_blueprint
 from pipelines.api.metrics import bp as metrics_blueprint
 from pipelines.api.projects import bp as projects_blueprint
-from pipelines.api.runs import bp as runs_blueprint
 from pipelines.controllers.logger import create_seldon_logger
 from pipelines.database import db_session, init_db
 
+PROJECT_ID_URL = "/projects/<project_id>"
+EXPERIMENT_ID_URL = f"{PROJECT_ID_URL}/experiments/<experiment_id>"
 
 app = Flask(__name__)
 app.config['JSON_AS_ASCII'] = False
-app.register_blueprint(deployments_blueprint, url_prefix="/deployments")
-app.register_blueprint(experiments_blueprint,
-                       url_prefix="/experiments/<experiment_id>/runs")
+app.register_blueprint(projects_blueprint,
+                       url_prefix=f"{PROJECT_ID_URL}/deployments")
+app.register_blueprint(deployment_runs_blueprint,
+                       url_prefix=f"{PROJECT_ID_URL}/deployments/<deployment_id>/runs")
+app.register_blueprint(experiment_runs_blueprint,
+                       url_prefix=f"{PROJECT_ID_URL}/experiments/<experiment_id>/runs")
 app.register_blueprint(datasets_blueprint,
-                       url_prefix="/experiments/<experiment_id>/runs/<run_id>/operators/<operator_id>/datasets")
+                       url_prefix=f"{EXPERIMENT_ID_URL}/runs/<run_id>/operators/<operator_id>/datasets")
 app.register_blueprint(figures_blueprint,
-                       url_prefix="/experiments/<experiment_id>/runs/<run_id>/operators/<operator_id>/figures")
+                       url_prefix=f"{EXPERIMENT_ID_URL}/runs/<run_id>/operators/<operator_id>/figures")
 app.register_blueprint(metrics_blueprint,
-                       url_prefix="/experiments/<experiment_id>/runs/<run_id>/operators/<operator_id>/metrics")
-app.register_blueprint(projects_blueprint, url_prefix="/projects")
-app.register_blueprint(runs_blueprint,
-                       url_prefix="/projects/<project_id>/deployments/<deployment_id>/runs")
+                       url_prefix=f"{EXPERIMENT_ID_URL}/runs/<run_id>/operators/<operator_id>/metrics")
 
 
 @app.teardown_appcontext

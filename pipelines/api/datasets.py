@@ -8,7 +8,8 @@ bp = Blueprint("datasets", __name__)
 
 @bp.route("", methods=["GET"])
 @bp.paginate()
-def handle_list_datasets_by_run_id(experiment_id,
+def handle_list_datasets_by_run_id(project_id,
+                                   experiment_id,
                                    run_id,
                                    operator_id,
                                    pagination_parameters):
