@@ -6,7 +6,7 @@ from pipelines.controllers.project_deployments import list_deployments, create_d
 from pipelines.controllers.operators import update_operator
 from pipelines.utils import to_snake_case
 
-bp = Blueprint("projects", __name__)
+bp = Blueprint("project_deployments", __name__)
 
 
 @bp.route("", methods=["GET"])

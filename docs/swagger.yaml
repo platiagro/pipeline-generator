@@ -17,13 +17,161 @@ tags:
   - name: "Experiments"
     description: >
       Manage experiment pipelines.
-  - name: "Projects"
-    description: >
-      Manage projects deployments.
 paths:
+  /projects/{projectsId}/deployments:
+    get:
+      summary: "List all project deployments."
+      tags:
+        - "Deployments"
+      parameters:
+        - in: path
+          name: projectsId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          $ref: "#/components/responses/ProjectDeployments"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+    post:
+      summary: "Create a project deployment."
+      tags:
+        - "Deployments"
+      parameters:
+        - in: path
+          name: projectsId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        $ref: "#/components/requestBodies/ProjectDeploymentPost"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProjectDeployment"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /projects/{projectsId}/deployments/{deploymentId}:
+    get:
+      summary: "Get a project deployment by uuid."
+      tags:
+        - "Deployments"
+      parameters:
+        - in: path
+          name: projectsId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: path
+          name: deploymentId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          $ref: "#/components/responses/ProjectDeployment"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+    patch:
+      summary: "Update a project deployment by uuid."
+      tags:
+        - "Deployments"
+      parameters:
+        - in: path
+          name: projectsId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: path
+          name: deploymentId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        $ref: "#/components/requestBodies/ProjectDeploymentPatch"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProjectDeployment"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+    delete:
+      summary: "Delete a project deployment by uuid."
+      tags:
+        - "Deployments"
+      parameters:
+        - in: path
+          name: projectsId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: deploymentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          $ref: "#/components/responses/ProjectDeploymentDelete"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /projects/{projectsId}/deployments/{deploymentId}/operators/{operatorId}:
+    patch:
+      summary: "Update a deployment operator by uuid."
+      tags:
+        - "Deployments"
+      parameters:
+        - name: projectsId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: deploymentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: operatorId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        $ref: "#/components/requestBodies/ProjectDeploymentOperatorPatch"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProjectOperator"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
   /projects/{projectsId}/deployments/{deploymentId}/runs:
     get:
-      summary: "Get a deployment by uuid."
+      summary: "Get deployment run details."
       tags:
         - "Deployments"
       parameters:
@@ -47,33 +195,7 @@ paths:
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
     post:
-      summary: "Run a project deployment pipeline."
-      tags:
-        - "Projects"
-      parameters:
-        - in: path
-          name: projectsId
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - in: path
-          name: deploymentId
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "200":
-          $ref: "#/components/responses/Run"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
-    put:
-      summary: "Run a deployment pipeline"
+      summary: "Run deployment."
       tags:
         - "Deployments"
       parameters:
@@ -89,8 +211,12 @@ paths:
           schema:
             type: string
             format: uuid
+        - in: query
+          name: experimentDeploy
+          schema:
+            type: boolean
       requestBody:
-        $ref: "#/components/requestBodies/DeploymentPut"
+        $ref: "#/components/requestBodies/DeploymentPost"
       responses:
         "200":
           $ref: "#/components/responses/Run"
@@ -101,7 +227,7 @@ paths:
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
     delete:
-      summary: "Delete deployment pipeline."
+      summary: "Terminate deployment run."
       tags:
         - "Deployments"
       parameters:
@@ -123,9 +249,9 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
-  /projects/{projectsId}/deployments/{deploymentId}/runs/latest/logs:
+  /projects/{projectsId}/deployments/{deploymentId}/runs/{runId}/logs:
     get:
-      summary: "Get logs from a deployment."
+      summary: "Get logs from a deployment run."
       tags:
         - "Deployments"
       parameters:
@@ -140,6 +266,11 @@ paths:
           required: true
           schema:
             type: string
+        - name: runId
+          in: path
+          required: true
+          schema:
+            type: string
       responses:
         "200":
           $ref: "#/components/responses/DeploymentLog"
@@ -147,9 +278,9 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
-  /projects/{projectsId}/deployments/{deploymentId}/runs/latest/retry:
+  /projects/{projectsId}/deployments/{deploymentId}/runs/{runId}/retry:
     put:
-      summary: "Re-initiate a failed or terminated deployment"
+      summary: "Re-initiate a failed or terminated deployment run"
       tags:
         - "Deployments"
       parameters:
@@ -165,6 +296,11 @@ paths:
           schema:
             type: string
             format: deploymentId
+        - name: runId
+          in: path
+          required: true
+          schema:
+            type: string
       responses:
         "200":
           $ref: "#/components/responses/TerminateRun"
@@ -176,7 +312,7 @@ paths:
           $ref: "#/components/responses/ServiceUnavailable"
   /projects/{projectsId}/experiments/{experimentId}/runs:
     get:
-      summary: "Get training runs details."
+      summary: "Get experiment runs details."
       tags:
         - "Experiments"
       parameters:
@@ -201,7 +337,7 @@ paths:
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
     put:
-      summary: "Run a training pipeline"
+      summary: "Run experiment"
       tags:
         - "Experiments"
       parameters:
@@ -228,7 +364,7 @@ paths:
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
     delete:
-      summary: "Terminate trainings pipeline"
+      summary: "Terminate experiment run"
       tags:
         - "Experiments"
       parameters:
@@ -247,9 +383,9 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
-  /projects/{projectsId}/experiments/{experimentId}/runs/latest:
+  /projects/{projectsId}/experiments/{experimentId}/runs/{runId}:
     get:
-      summary: "Get the training status of a run."
+      summary: "Get the experiment run status."
       tags:
         - "Experiments"
       parameters:
@@ -264,6 +400,11 @@ paths:
           required: true
           schema:
             type: string
+        - name: runId
+          in: path
+          required: true
+          schema:
+            type: string
       responses:
         "200":
           $ref: "#/components/responses/TrainingStatus"
@@ -273,9 +414,9 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
-  /projects/{projectsId}/experiments/{experimentId}/runs/latest/retry:
+  /projects/{projectsId}/experiments/{experimentId}/runs/{runId}/retry:
     put:
-      summary: "Re-initiate a failed or terminated training"
+      summary: "Re-initiate a failed or terminated experiment run."
       tags:
         - "Experiments"
       parameters:
@@ -291,6 +432,11 @@ paths:
           schema:
             type: string
             format: trainingId
+        - name: runId
+          in: path
+          required: true
+          schema:
+            type: string
       responses:
         "200":
           $ref: "#/components/responses/TrainingStatus"
@@ -450,157 +596,6 @@ paths:
           $ref: "#/components/responses/Metrics"
         "404":
           $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
-  /projects/{projectsId}/deployments:
-    get:
-      summary: "List all project deployments."
-      tags:
-        - "Projects"
-      parameters:
-        - in: path
-          name: projectsId
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "200":
-          $ref: "#/components/responses/ProjectDeployments"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
-    post:
-      summary: "Create a project deployment."
-      tags:
-        - "Projects"
-      parameters:
-        - in: path
-          name: projectsId
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        $ref: "#/components/requestBodies/ProjectDeploymentPost"
-      responses:
-        "200":
-          $ref: "#/components/responses/ProjectDeployment"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
-  /projects/{projectsId}/deployments/{deploymentId}:
-    get:
-      summary: "Get a project deployment by uuid."
-      tags:
-        - "Projects"
-      parameters:
-        - in: path
-          name: projectsId
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - in: path
-          name: deploymentId
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "200":
-          $ref: "#/components/responses/ProjectDeployment"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
-    patch:
-      summary: "Update a project deployment by uuid."
-      tags:
-        - "Projects"
-      parameters:
-        - in: path
-          name: projectsId
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - in: path
-          name: deploymentId
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        $ref: "#/components/requestBodies/ProjectDeploymentPatch"
-      responses:
-        "200":
-          $ref: "#/components/responses/ProjectDeployment"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
-    delete:
-      summary: "Delete a project deployment by uuid."
-      tags:
-        - "Projects"
-      parameters:
-        - in: path
-          name: projectsId
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: deploymentId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "200":
-          $ref: "#/components/responses/ProjectDeploymentDelete"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
-  /projects/{projectsId}/deployments/{deploymentId}/operators/{operatorId}:
-    patch:
-      summary: "Update a deployment operator by uuid."
-      tags:
-        - "Projects"
-      parameters:
-        - name: projectsId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: deploymentId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: operatorId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        $ref: "#/components/requestBodies/ProjectDeploymentOperatorPatch"
-      responses:
-        "200":
-          $ref: "#/components/responses/ProjectOperator"
         "500":
           $ref: "#/components/responses/InternalServerError"
         "503":
@@ -906,7 +901,8 @@ components:
           type: string
           example: "Training deleted."
   requestBodies:
-    DeploymentPut:
+    DeploymentPost:
+      description: Necessary body if experimentDeploy equals true
       content:
         application/json:
           schema:

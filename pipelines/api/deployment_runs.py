@@ -17,15 +17,12 @@ def handle_get_deployment(project_id, deployment_id):
 @bp.route("", methods=["POST"])
 def handle_post_runs(project_id, deployment_id):
     """Handles POST requests to /."""
-    run_id = create_run(project_id, deployment_id)
-    return jsonify({"message": "Pipeline running.", "runId": run_id})
-
-
-@bp.route('', methods=['PUT'])
-def handle_create_deployment(project_id, deployment_id):
-    """Handles PUT requests to /."""
-    req_data = request.get_json()
-    run_id = create_deployment(deployment_id, req_data)
+    experiment_deployment = request.args.get('experimentDeploy')
+    if experiment_deployment and experiment_deployment == 'true':
+        req_data = request.get_json()
+        run_id = create_deployment(deployment_id, req_data)
+    else:
+        run_id = create_run(project_id, deployment_id)
     return jsonify({"message": "Pipeline running.", "runId": run_id})
 
 
@@ -35,14 +32,14 @@ def handle_delete_deployment(project_id, deployment_id):
     return jsonify(delete_deployment(deployment_id))
 
 
-@bp.route("latest/logs", methods=["GET"])
-def handle_get_deployment_log(project_id, deployment_id):
-    """Handles GET requests to "/latest/logs."""
+@bp.route("<run_id>/logs", methods=["GET"])
+def handle_get_deployment_log(project_id, deployment_id, run_id):
+    """Handles GET requests to "/<run_id>/logs."""
     log = get_deployment_log(deployment_id)
     return jsonify(log)
 
 
-@bp.route("latest/retry", methods=["PUT"])
-def handle_post_retry_run_deloy(project_id, deployment_id):
-    """Handles PUT requests to "/latest/retry"."""
+@bp.route("<run_id>/retry", methods=["PUT"])
+def handle_post_retry_run_deloy(project_id, deployment_id, run_id):
+    """Handles PUT requests to "/<run_id>/retry"."""
     return jsonify(retry_run_deployment(deployment_id=deployment_id))

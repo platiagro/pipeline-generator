@@ -28,15 +28,15 @@ def handle_delete_experiment_run(project_id, experiment_id):
     return jsonify(terminate_experiment_run(experiment_id))
 
 
-@bp.route('latest', methods=['GET'])
-def handle_get_experiment_run(project_id, experiment_id):
-    """Handles GET requests to /latest."""
+@bp.route('<run_id>', methods=['GET'])
+def handle_get_experiment_run(project_id, experiment_id, run_id):
+    """Handles GET requests to /<run_id>."""
     return jsonify(get_experiment_run(experiment_id))
 
 
-@bp.route("latest/retry", methods=["PUT"])
-def handle_put_experiment_run_retry(project_id, experiment_id):
-    """Handles PUT requests to /latest/retry."""
+@bp.route("<run_id>/retry", methods=["PUT"])
+def handle_put_experiment_run_retry(project_id, experiment_id, run_id):
+    """Handles PUT requests to /<run_id>/retry."""
     return jsonify(retry_experiment_run(experiment_id))
 
 
