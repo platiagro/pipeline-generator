@@ -14,7 +14,7 @@ def handle_get_experiment_run_history(project_id, experiment_id):
     return jsonify(get_experiment_run_history(experiment_id))
 
 
-@bp.route('', methods=['PUT'])
+@bp.route('', methods=['POST'])
 def handle_put_experiment_run(project_id, experiment_id):
     """Handles PUT requests to /."""
     req_data = request.get_json()

@@ -25,10 +25,10 @@ class TestDeployments(TestCase):
         # Run a default pipeline for tests
         client.run_pipeline(experiment.id, MOCKED_DEPLOYMENT_ID, "tests/resources/mocked_deployment.yaml")
 
-    def test_put_deployment(self):
+    def test_post_deployment(self):
         with app.test_client() as c:
 
-            rv = c.put(f"/projects/1/deployments/{DEPLOYMENT_ID}/runs", json={
+            rv = c.post(f"/projects/1/deployments/{DEPLOYMENT_ID}/runs?experimentDeploy=true", json={
                     "experimentId": EXPERIMENT_ID,
                 }
             )
@@ -37,7 +37,7 @@ class TestDeployments(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
-            rv = c.put(f"/projects/1/deployments/{DEPLOYMENT_ID}/runs", json={
+            rv = c.post(f"/projects/1/deployments/{DEPLOYMENT_ID}/runs?experimentDeploy=true", json={
                     "experimentId": EXPERIMENT_ID,
                     "operators": [],
                 }
@@ -47,7 +47,7 @@ class TestDeployments(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
-            rv = c.put(f"/projects/1/deployments/{DEPLOYMENT_ID}/runs", json={
+            rv = c.post(f"/projects/1/deployments/{DEPLOYMENT_ID}/runs?experimentDeploy=true", json={
                     "experimentId": EXPERIMENT_ID,
                     "operators": [{
                         "operatorId": OPERATOR_ID
@@ -59,7 +59,7 @@ class TestDeployments(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
-            rv = c.put(f"/projects/1/deployments/{DEPLOYMENT_ID}/runs", json={
+            rv = c.post(f"/projects/1/deployments/{DEPLOYMENT_ID}/runs?experimentDeploy=true", json={
                     "experimentId": EXPERIMENT_ID,
                     "operators": [
                         {
@@ -83,7 +83,7 @@ class TestDeployments(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
-            rv = c.put(f"/projects/1/deployments/{DEPLOYMENT_ID}/runs", json={
+            rv = c.post(f"/projects/1/deployments/{DEPLOYMENT_ID}/runs?experimentDeploy=true", json={
                     "experimentId": EXPERIMENT_ID,
                     "operators": [
                         {
@@ -104,7 +104,7 @@ class TestDeployments(TestCase):
             self.assertEqual(rv.status_code, 400)
 
             # test non-sequential pipelines
-            rv = c.put(f"/projects/1/deployments/{DEPLOYMENT_ID}/runs", json={
+            rv = c.post(f"/projects/1/deployments/{DEPLOYMENT_ID}/runs?experimentDeploy=true", json={
                     "experimentId": EXPERIMENT_ID,
                     "operators": [
                         {
@@ -139,7 +139,7 @@ class TestDeployments(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
-            rv = c.put(f"/projects/1/deployments/{DEPLOYMENT_ID}/runs", json={
+            rv = c.post(f"/projects/1/deployments/{DEPLOYMENT_ID}/runs?experimentDeploy=true", json={
                     "experimentId": EXPERIMENT_ID,
                     "operators": [
                         {
@@ -174,7 +174,7 @@ class TestDeployments(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
-            rv = c.put(f"/projects/1/deployments/{DEPLOYMENT_ID}/runs", json={
+            rv = c.post(f"/projects/1/deployments/{DEPLOYMENT_ID}/runs?experimentDeploy=true", json={
                     "experimentId": EXPERIMENT_ID,
                     "operators": [
                         {
@@ -202,7 +202,7 @@ class TestDeployments(TestCase):
             self.assertEqual(rv.status_code, 400)
 
             # cyclical pipeline
-            rv = c.put(f"/projects/1/deployments/{DEPLOYMENT_ID}/runs", json={
+            rv = c.post(f"/projects/1/deployments/{DEPLOYMENT_ID}/runs?experimentDeploy=true", json={
                     "experimentId": EXPERIMENT_ID,
                     "operators": [
                         {
@@ -229,7 +229,7 @@ class TestDeployments(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
-            rv = c.put(f"/projects/1/deployments/{DEPLOYMENT_ID}/runs", json={
+            rv = c.post(f"/projects/1/deployments/{DEPLOYMENT_ID}/runs?experimentDeploy=true", json={
                     "name": "foo",
                     "experimentId": EXPERIMENT_ID,
                     "operators": [

@@ -26,10 +26,10 @@ class TestTrainings(TestCase):
         # Run a default pipeline for tests
         client.run_pipeline(experiment.id, MOCKED_TRAINING_ID, "tests/resources/mocked_training.yaml")
 
-    def test_put_training(self):
+    def test_post_training(self):
         with app.test_client() as c:
 
-            rv = c.put(f"/projects/1/experiments/{TRAINING_ID}/runs", json={
+            rv = c.post(f"/projects/1/experiments/{TRAINING_ID}/runs", json={
                     "experimentId": EXPERIMENT_ID
                 }
             )
@@ -38,7 +38,7 @@ class TestTrainings(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
-            rv = c.put(f"/projects/1/experiments/{TRAINING_ID}/runs", json={
+            rv = c.post(f"/projects/1/experiments/{TRAINING_ID}/runs", json={
                     "experimentId": EXPERIMENT_ID,
                     "operators": [],
                 }
@@ -48,7 +48,7 @@ class TestTrainings(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
-            rv = c.put(f"/projects/1/experiments/{TRAINING_ID}/runs", json={
+            rv = c.post(f"/projects/1/experiments/{TRAINING_ID}/runs", json={
                     "experimentId": EXPERIMENT_ID,
                     "operators": [{
                         "operatorId": OPERATOR_ID
@@ -60,7 +60,7 @@ class TestTrainings(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
-            rv = c.put(f"/projects/1/experiments/{TRAINING_ID}/runs", json={
+            rv = c.post(f"/projects/1/experiments/{TRAINING_ID}/runs", json={
                     "experimentId": EXPERIMENT_ID,
                     "operators": [
                         {
@@ -84,7 +84,7 @@ class TestTrainings(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
-            rv = c.put(f"/projects/1/experiments/{TRAINING_ID}/runs", json={
+            rv = c.post(f"/projects/1/experiments/{TRAINING_ID}/runs", json={
                     "experimentId": EXPERIMENT_ID,
                     "operators": [
                         {
@@ -105,7 +105,7 @@ class TestTrainings(TestCase):
             self.assertEqual(rv.status_code, 400)
 
             # cyclical pipeline
-            rv = c.put(f"/projects/1/experiments/{TRAINING_ID}/runs", json={
+            rv = c.post(f"/projects/1/experiments/{TRAINING_ID}/runs", json={
                     "experimentId": EXPERIMENT_ID,
                     "operators": [
                         {
@@ -132,7 +132,7 @@ class TestTrainings(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
-            rv = c.put(f"/projects/1/experiments/{TRAINING_ID}/runs", json={
+            rv = c.post(f"/projects/1/experiments/{TRAINING_ID}/runs", json={
                     "experimentId": EXPERIMENT_ID,
                     "operators": [
                         {
@@ -156,7 +156,7 @@ class TestTrainings(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 200)
 
-            rv = c.put(f"/projects/1/experiments/{TRAINING_ID}/runs", json={
+            rv = c.post(f"/projects/1/experiments/{TRAINING_ID}/runs", json={
                     "experimentId": EXPERIMENT_ID,
                     "operators": [
                         {

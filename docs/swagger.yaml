@@ -336,7 +336,7 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
-    put:
+    post:
       summary: "Run experiment"
       tags:
         - "Experiments"
@@ -353,7 +353,7 @@ paths:
           schema:
             type: string
       requestBody:
-        $ref: "#/components/requestBodies/TrainingPut"
+        $ref: "#/components/requestBodies/TrainingPost"
       responses:
         "200":
           $ref: "#/components/responses/Run"
@@ -983,7 +983,7 @@ components:
               positionY:
                 type: number
                 format: float
-    TrainingPut:
+    TrainingPost:
       content:
         application/json:
           schema:
