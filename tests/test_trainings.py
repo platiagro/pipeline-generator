@@ -17,6 +17,7 @@ COMMANDS = ['sh', '-c']
 
 MOCKED_TRAINING_ID = "b281185b-6104-4c8c-8185-31eb53bef8de"
 
+
 class TestTrainings(TestCase):
     def setUp(self):
         client = init_pipeline_client()
@@ -25,10 +26,10 @@ class TestTrainings(TestCase):
         # Run a default pipeline for tests
         client.run_pipeline(experiment.id, MOCKED_TRAINING_ID, "tests/resources/mocked_training.yaml")
 
-    def test_put_training(self):
+    def test_post_training(self):
         with app.test_client() as c:
 
-            rv = c.put(f"/trainings/{TRAINING_ID}", json={
+            rv = c.post(f"/projects/1/experiments/{TRAINING_ID}/runs", json={
                     "experimentId": EXPERIMENT_ID
                 }
             )
@@ -37,7 +38,7 @@ class TestTrainings(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
-            rv = c.put(f"/trainings/{TRAINING_ID}", json={
+            rv = c.post(f"/projects/1/experiments/{TRAINING_ID}/runs", json={
                     "experimentId": EXPERIMENT_ID,
                     "operators": [],
                 }
@@ -47,7 +48,7 @@ class TestTrainings(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
-            rv = c.put(f"/trainings/{TRAINING_ID}", json={
+            rv = c.post(f"/projects/1/experiments/{TRAINING_ID}/runs", json={
                     "experimentId": EXPERIMENT_ID,
                     "operators": [{
                         "operatorId": OPERATOR_ID
@@ -59,7 +60,7 @@ class TestTrainings(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
-            rv = c.put(f"/trainings/{TRAINING_ID}", json={
+            rv = c.post(f"/projects/1/experiments/{TRAINING_ID}/runs", json={
                     "experimentId": EXPERIMENT_ID,
                     "operators": [
                         {
@@ -83,7 +84,7 @@ class TestTrainings(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
-            rv = c.put(f"/trainings/{TRAINING_ID}", json={
+            rv = c.post(f"/projects/1/experiments/{TRAINING_ID}/runs", json={
                     "experimentId": EXPERIMENT_ID,
                     "operators": [
                         {
@@ -104,7 +105,7 @@ class TestTrainings(TestCase):
             self.assertEqual(rv.status_code, 400)
 
             # cyclical pipeline
-            rv = c.put(f"/trainings/{TRAINING_ID}", json={
+            rv = c.post(f"/projects/1/experiments/{TRAINING_ID}/runs", json={
                     "experimentId": EXPERIMENT_ID,
                     "operators": [
                         {
@@ -131,15 +132,15 @@ class TestTrainings(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
-            rv = c.put(f"/trainings/{TRAINING_ID}", json={
+            rv = c.post(f"/projects/1/experiments/{TRAINING_ID}/runs", json={
                     "experimentId": EXPERIMENT_ID,
                     "operators": [
                         {
-                        "operatorId": OPERATOR_ID,
-                        "notebookPath": NOTEBOOK_PATH,
-                        "commands": COMMANDS,
-                        "arguments": ARGUMENTS,
-                        "image": IMAGE
+                            "operatorId": OPERATOR_ID,
+                            "notebookPath": NOTEBOOK_PATH,
+                            "commands": COMMANDS,
+                            "arguments": ARGUMENTS,
+                            "image": IMAGE
                         }
                     ]
                 }
@@ -155,25 +156,25 @@ class TestTrainings(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 200)
 
-            rv = c.put(f"/trainings/{TRAINING_ID}", json={
+            rv = c.post(f"/projects/1/experiments/{TRAINING_ID}/runs", json={
                     "experimentId": EXPERIMENT_ID,
                     "operators": [
                         {
-                        "operatorId": OPERATOR_ID,
-                        "notebookPath": None,
-                        "parameters": [
-                            {
-                                "name": "dataset",
-                                "value": "foo.csv"
-                            },
-                            {
-                                "name": "foo",
-                                "value": "bar"
-                            }
-                        ],
-                        "commands": COMMANDS,
-                        "arguments": ARGUMENTS,
-                        "image": IMAGE
+                            "operatorId": OPERATOR_ID,
+                            "notebookPath": None,
+                            "parameters": [
+                                {
+                                    "name": "dataset",
+                                    "value": "foo.csv"
+                                },
+                                {
+                                    "name": "foo",
+                                    "value": "bar"
+                                }
+                            ],
+                            "commands": COMMANDS,
+                            "arguments": ARGUMENTS,
+                            "image": IMAGE
                         }
                     ]
                 }
@@ -191,24 +192,22 @@ class TestTrainings(TestCase):
 
     def test_get_training(self):
         with app.test_client() as c:
-            rv = c.get(f"/trainings/{MOCKED_TRAINING_ID}")
+            rv = c.get(f"/projects/1/experiments/{MOCKED_TRAINING_ID}/runs/latest")
             result = rv.get_json()
-            
             self.assertIn("operators", result)
             self.assertEqual(rv.status_code, 200)
 
     def test_terminate_training(self):
         with app.test_client() as c:
-            rv = c.delete(f"/trainings/{MOCKED_TRAINING_ID}")
+            rv = c.delete(f"/projects/1/experiments/{MOCKED_TRAINING_ID}/runs")
             result = rv.get_json()
             expected = {"message": "Training deleted."}
-            
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 200)
 
     def test_list_training_runs(self):
         with app.test_client() as c:
-            rv = c.get(f"/trainings/{MOCKED_TRAINING_ID}/runs")
+            rv = c.get(f"/projects/1/experiments/{MOCKED_TRAINING_ID}/runs")
             result = rv.get_json()
-
-            self.assertIsInstance(result, list)
+            self.assertIsInstance(result, object)
+            self.assertEqual(rv.status_code, 200)

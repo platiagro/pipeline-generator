@@ -35,6 +35,6 @@ class TestFigures(TestCase):
 
     def test_list_figures(self):
         with app.test_client() as c:
-            rv = c.get(f"/trainings/{EXPERIMENT_ID}/runs/{RUN_ID}/operators/{OPERATOR_ID}/figures")
+            rv = c.get(f"/projects/1/experiments/{EXPERIMENT_ID}/runs/{RUN_ID}/operators/{OPERATOR_ID}/figures")
             result = rv.get_json()
             self.assertIsInstance(result, list)

@@ -9,11 +9,10 @@ from pipelines.controllers.utils import init_pipeline_client, format_pipeline_ru
 created_at_desc = 'created_at desc'
 
 
-def create_training(training_id, pipeline_parameters):
-    """Compile and run a training pipeline.
-
+def create_experiment_run(experiment_id, pipeline_parameters):
+    """Compile and run a experiment pipeline.
     Args:
-        training_id (str): training id.
+        experiment_id (str): experiment id.
         pipeline_parameters (dict): request body json, format:
             operators (list): list of pipeline operators.
     Returns:
@@ -29,18 +28,16 @@ def create_training(training_id, pipeline_parameters):
     if len(operators) == 0:
         raise BadRequest('Necessary at least one operator')
 
-    pipeline = Pipeline(training_id, None, operators)
+    pipeline = Pipeline(experiment_id, None, operators)
     pipeline.compile_training_pipeline()
     return pipeline.run_pipeline()
 
 
-def get_training(training_id, pretty=True):
-    """Get run details.
-
+def get_experiment_run(experiment_id, pretty=True):
+    """Get experiment run details.
     Args:
-        training_id (str): PlatIA experiment_id.
+        experiment_id (str): PlatIA experiment_id.
         pretty (boolean): well formated response
-
     Returns:
        Run details.
     """
@@ -48,7 +45,7 @@ def get_training(training_id, pretty=True):
     try:
         client = init_pipeline_client()
 
-        experiment = client.get_experiment(experiment_name=training_id)
+        experiment = client.get_experiment(experiment_name=experiment_id)
 
         # lists runs for trainings and deployments of an experiment
         experiment_runs = client.list_runs(
@@ -76,48 +73,17 @@ def get_training(training_id, pretty=True):
         return run_details
 
 
-def terminate_run_training(training_id):
-    client = init_pipeline_client()
-    experiment = client.get_experiment(experiment_name=training_id)
-    experiment_runs = client.list_runs(
-        page_size='1', sort_by=created_at_desc, experiment_id=experiment.id)
-
-    for run in experiment_runs.runs:
-        client.runs.terminate_run(run_id=run.id)
-    response = {
-        "message": "Training deleted."
-    }
-    return response
-
-
-def retry_run_training(training_id):
-    client = init_pipeline_client()
-    experiment = client.get_experiment(experiment_name=training_id)
-    experiment_runs = client.list_runs(
-        page_size='1', sort_by=created_at_desc, experiment_id=experiment.id)
-    retry = False
-
-    for run in experiment_runs.runs:
-        if 'Failed' == run.status:
-            init_pipeline_client().runs.retry_run(run_id=run.id)
-            retry = True
-    if not retry:
-        raise NotFound('There is no failed experimentation')
-    run_details = client.get_run(run.id)
-    return format_pipeline_run_details(run_details)
-
-
-def get_training_runs(training_id):
-    """Get training runs details.
+def get_experiment_run_history(experiment_id):
+    """Get experiment run history.
     Args:
-        training_id (str): PlatIA experiment_id.
+        experiment_id (str): PlatIA experiment_id.
     Returns:
-       Training runs details.
+       Experiment run history.
     """
     try:
         client = init_pipeline_client()
 
-        experiment = client.get_experiment(experiment_name=training_id)
+        experiment = client.get_experiment(experiment_name=experiment_id)
 
         experiment_runs = client.list_runs(
             page_size='100', sort_by=created_at_desc, experiment_id=experiment.id)
@@ -139,6 +105,49 @@ def get_training_runs(training_id):
         return []
 
     return response
+
+
+def terminate_experiment_run(experiment_id):
+    """Terminate experiment run.
+    Args:
+        experiment_id (str): PlatIA experiment_id.
+    Returns:
+       Deleted message.
+    """
+    client = init_pipeline_client()
+    experiment = client.get_experiment(experiment_name=experiment_id)
+    experiment_runs = client.list_runs(
+        page_size='1', sort_by=created_at_desc, experiment_id=experiment.id)
+
+    for run in experiment_runs.runs:
+        client.runs.terminate_run(run_id=run.id)
+    response = {
+        "message": "Training deleted."
+    }
+    return response
+
+
+def retry_experiment_run(experiment_id):
+    """Re-initiate a failed or terminated experiment run.
+    Args:
+        experiment_id (str): PlatIA experiment_id.
+    Returns:
+       Experiment run details.
+    """
+    client = init_pipeline_client()
+    experiment = client.get_experiment(experiment_name=experiment_id)
+    experiment_runs = client.list_runs(
+        page_size='1', sort_by=created_at_desc, experiment_id=experiment.id)
+    retry = False
+
+    for run in experiment_runs.runs:
+        if 'Failed' == run.status:
+            init_pipeline_client().runs.retry_run(run_id=run.id)
+            retry = True
+    if not retry:
+        raise NotFound('There is no failed experimentation')
+    run_details = client.get_run(run.id)
+    return format_pipeline_run_details(run_details)
 
 
 def format_run_operators(run_details):

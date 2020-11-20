@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-"""Datasets controller."""
-
 import platiagro
 
 from werkzeug.exceptions import NotFound

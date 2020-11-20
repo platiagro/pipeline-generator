@@ -141,19 +141,19 @@ class TestDatasets(TestCase):
 
     def test_get_dataset(self):
         with app.test_client() as c:
-            rv = c.get(f"/trainings/unk/runs/{RUN_ID}/operators/{OPERATOR_ID}/datasets")
+            rv = c.get(f"/projects/1/experiments/unk/runs/{RUN_ID}/operators/{OPERATOR_ID}/datasets")
             result = rv.get_json()
             expected = {"message": "The specified experiment does not exist"}
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 404)
 
-            rv = c.get(f"/trainings/{EXPERIMENT_ID}/runs/{RUN_ID}/operators/unk/datasets")
+            rv = c.get(f"/projects/1/experiments/{EXPERIMENT_ID}/runs/{RUN_ID}/operators/unk/datasets")
             result = rv.get_json()
             expected = {"message": "The specified operator does not exist"}
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 404)
 
-            rv = c.get(f"/trainings/{EXPERIMENT_ID}/runs/{RUN_ID}/operators/{OPERATOR_ID}/datasets")
+            rv = c.get(f"/projects/1/experiments/{EXPERIMENT_ID}/runs/{RUN_ID}/operators/{OPERATOR_ID}/datasets")
             result = rv.get_json()
             expected = {
                 "columns": ["col0", "col1", "col2", "col3", "col4", "col5"],
