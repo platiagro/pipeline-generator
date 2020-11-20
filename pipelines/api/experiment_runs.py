@@ -15,8 +15,8 @@ def handle_get_experiment_run_history(project_id, experiment_id):
 
 
 @bp.route('', methods=['POST'])
-def handle_put_experiment_run(project_id, experiment_id):
-    """Handles PUT requests to /."""
+def handle_post_experiment_run(project_id, experiment_id):
+    """Handles POST requests to /."""
     req_data = request.get_json()
     run_id = create_experiment_run(experiment_id, req_data)
     return jsonify({"message": "Pipeline running.", "runId": run_id})
