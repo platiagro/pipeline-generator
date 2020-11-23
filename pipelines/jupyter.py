@@ -9,9 +9,9 @@ from requests.exceptions import HTTPError
 from requests.packages.urllib3.util.retry import Retry
 from werkzeug.exceptions import NotFound
 
-import pipelines.controllers.experiment_runs as experiment_runs
-from pipelines.object_storage import BUCKET_NAME, get_object
 from pipelines.controllers.utils import remove_ansi_escapes, search_for_pod_name
+from pipelines.object_storage import BUCKET_NAME, get_object
+
 
 JUPYTER_ENDPOINT = getenv("JUPYTER_ENDPOINT", "http://server.anonymous:80/notebook/anonymous/server")
 URL_CONTENTS = f"{JUPYTER_ENDPOINT}/api/contents"
@@ -45,8 +45,9 @@ def get_operator_logs(experiment_id: str, operator_id: str):
     Returns:
         dict: response.
     """
-    operator_endpoint = f"experiments/{experiment_id}/operators/{operator_id}/Experiment.ipynb"
+    from pipelines.controllers.experiment_runs import get_experiment_run
 
+    operator_endpoint = f"experiments/{experiment_id}/operators/{operator_id}/Experiment.ipynb"
     try:
         r = SESSION.get(url=f"{URL_CONTENTS}/{operator_endpoint}").content
         notebook_content = loads(r.decode("utf-8"))["content"]
@@ -69,7 +70,7 @@ def get_operator_logs(experiment_id: str, operator_id: str):
         except KeyError:
             pass
 
-    run_details = experiment_runs.get_experiment_run(experiment_id, pretty=False)
+    run_details = get_experiment_run(experiment_id, pretty=False)
     details = loads(run_details.pipeline_runtime.workflow_manifest)
     operator_container = search_for_pod_name(details, operator_id)
 
