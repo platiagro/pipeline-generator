@@ -27,7 +27,7 @@ app.register_blueprint(project_deployments_blueprint,
 app.register_blueprint(deployment_runs_blueprint,
                        url_prefix=f"{PROJECT_ID_URL}/deployments/<deployment_id>/runs")
 app.register_blueprint(experiment_runs_blueprint,
-                       url_prefix=f"{PROJECT_ID_URL}/experiments/<experiment_id>/runs")
+                       url_prefix=f"{EXPERIMENT_ID_URL}/runs")
 app.register_blueprint(datasets_blueprint,
                        url_prefix=f"{EXPERIMENT_ID_URL}/runs/<run_id>/operators/<operator_id>/datasets")
 app.register_blueprint(figures_blueprint,

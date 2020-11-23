@@ -215,8 +215,6 @@ paths:
           name: experimentDeploy
           schema:
             type: boolean
-      requestBody:
-        $ref: "#/components/requestBodies/DeploymentPost"
       responses:
         "200":
           $ref: "#/components/responses/Run"
@@ -352,8 +350,6 @@ paths:
           required: true
           schema:
             type: string
-      requestBody:
-        $ref: "#/components/requestBodies/TrainingPost"
       responses:
         "200":
           $ref: "#/components/responses/Run"
@@ -901,20 +897,6 @@ components:
           type: string
           example: "Training deleted."
   requestBodies:
-    DeploymentPost:
-      description: Necessary body if experimentDeploy equals true
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              name:
-                type: string
-              operators:
-                type: array
-                items:
-                  oneOf:
-                    - $ref: "#/components/schemas/Operator"
     ProjectDeploymentPatch:
       content:
         application/json:
@@ -983,20 +965,6 @@ components:
               positionY:
                 type: number
                 format: float
-    TrainingPost:
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              experimentId:
-                type: string
-                format: uuid
-              operators:
-                type: array
-                items:
-                  oneOf:
-                    - $ref: "#/components/schemas/Operator"
   responses:
     Datasets:
       description: ""

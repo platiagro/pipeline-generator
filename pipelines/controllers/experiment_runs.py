@@ -5,30 +5,108 @@ from werkzeug.exceptions import BadRequest, NotFound
 from pipelines.controllers.pipeline import Pipeline
 from pipelines.controllers.utils import init_pipeline_client, format_pipeline_run_details, \
     get_operator_parameters, get_operator_task_id
+from pipelines.jupyter import read_parameters
+from pipelines.models import Experiment, Task
+from pipelines.models.utils import raise_if_project_does_not_exist
 
 created_at_desc = 'created_at desc'
 
 
-def create_experiment_run(experiment_id, pipeline_parameters):
+def get_task_parameter(task_parameters, name):
+    """Get task parameter.
+    Args:
+        task_parameters (list): task parameters.
+        name (str): parameter name.
+    Returns:
+        Task parameter
+    """
+    for param in task_parameters:
+        param_name = param.get('name')
+        if param_name == name:
+            return param
+    return
+
+
+def format_run_parameters(operator, task, dataset_name):
+    """Format run parameters.
+    Args:
+        operator (obj): operator model.
+        task (obj): task model.
+        dataset_name (str): dataset name.
+    Returns:
+        Run parameters
+    """
+    task_parameters = read_parameters(task.experiment_notebook_path)
+
+    run_paramenters = []
+    for key, value in operator.parameters.items():
+        if value is None or not value:
+            task_parameter = get_task_parameter(task_parameters, key)
+            if task_parameter:
+                parameter_type = task_parameter.get('type')
+                if parameter_type == 'feature':
+                    parameter_multiple = task_parameter.get('multiple', False)
+                    if parameter_multiple:
+                        value = []
+                    else:
+                        value = ''
+        run_paramenters.append({
+            "name": key,
+            "value": value
+        })
+
+    # add dataset parameter
+    if dataset_name and 'DATASETS' not in task.tags:
+        run_paramenters.append({
+            "name": 'dataset',
+            "value": dataset_name
+        })
+    return run_paramenters
+
+
+def create_experiment_run(project_id, experiment_id):
     """Compile and run a experiment pipeline.
     Args:
+        project_id (str): project id.
         experiment_id (str): experiment id.
-        pipeline_parameters (dict): request body json, format:
-            operators (list): list of pipeline operators.
     Returns:
         Pipeline run id.
     """
-    try:
-        operators = pipeline_parameters['operators']
-    except KeyError as e:
-        raise BadRequest(
-            'Invalid request body, missing the parameter: {}'.format(e)
-        )
+    raise_if_project_does_not_exist(project_id)
 
-    if len(operators) == 0:
+    experiment = Experiment.query.get(experiment_id)
+    if experiment is None:
+        raise NotFound("The specified experiment does not exist")
+
+    run_operators = []
+    operators = experiment.operators
+    if operators and len(operators) > 0:
+
+        # get the dataset name
+        dataset_name = None
+        for operator in operators:
+            for key, value in operator.parameters.items():
+                if key == 'dataset':
+                    dataset_name = value
+                    break
+
+        for operator in operators:
+            task = Task.query.get(operator.task_id)
+            run_operator_paramenters = format_run_parameters(operator, task, dataset_name)
+            run_operator = {
+                "arguments": task.arguments,
+                "commands": task.commands,
+                "dependencies": operator.dependencies,
+                "image": task.image,
+                "notebookPath": task.deployment_notebook_path,
+                "operatorId": operator.uuid,
+                "parameters": run_operator_paramenters,
+            }
+            run_operators.append(run_operator)
+    else:
         raise BadRequest('Necessary at least one operator')
 
-    pipeline = Pipeline(experiment_id, None, operators)
+    pipeline = Pipeline(experiment_id, None, run_operators)
     pipeline.compile_training_pipeline()
     return pipeline.run_pipeline()
 

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify
 
 from pipelines.controllers.experiment_runs import create_experiment_run, get_experiment_run, \
     get_experiment_run_history, terminate_experiment_run, retry_experiment_run
@@ -17,8 +17,7 @@ def handle_get_experiment_run_history(project_id, experiment_id):
 @bp.route('', methods=['POST'])
 def handle_post_experiment_run(project_id, experiment_id):
     """Handles POST requests to /."""
-    req_data = request.get_json()
-    run_id = create_experiment_run(experiment_id, req_data)
+    run_id = create_experiment_run(project_id, experiment_id)
     return jsonify({"message": "Pipeline running.", "runId": run_id})
 
 

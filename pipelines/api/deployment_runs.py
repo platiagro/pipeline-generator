@@ -2,8 +2,8 @@
 from flask import Blueprint, jsonify, request
 
 from pipelines.controllers.deployments import get_deployment_by_id, \
-    create_deployment, get_deployment_log, delete_deployment, retry_run_deployment
-from pipelines.controllers.deployment_runs import create_run
+    get_deployment_log, delete_deployment, retry_run_deployment
+from pipelines.controllers.deployment_runs import create_deployment_run
 
 bp = Blueprint("deployment_runs", __name__)
 
@@ -17,12 +17,11 @@ def handle_get_deployment(project_id, deployment_id):
 @bp.route("", methods=["POST"])
 def handle_post_runs(project_id, deployment_id):
     """Handles POST requests to /."""
+    is_experiment_deployment = False
     experiment_deployment = request.args.get('experimentDeploy')
     if experiment_deployment and experiment_deployment == 'true':
-        req_data = request.get_json()
-        run_id = create_deployment(deployment_id, req_data)
-    else:
-        run_id = create_run(project_id, deployment_id)
+        is_experiment_deployment = True
+    run_id = create_deployment_run(project_id, deployment_id, is_experiment_deployment)
     return jsonify({"message": "Pipeline running.", "runId": run_id})
 
 
