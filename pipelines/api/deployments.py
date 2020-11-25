@@ -4,7 +4,7 @@
 from flask import Blueprint, jsonify, request
 
 from pipelines.controllers.deployments import get_deployments, get_deployment_by_id, \
-    create_deployment, get_deployment_log, delete_deployment, retry_run_deployment
+    create_deployment, get_deployment_log, delete_deployment, retry_run_deployment, read_file_pandas
 
 bp = Blueprint("deployments", __name__)
 
@@ -46,3 +46,8 @@ def handle_get_deployment_log(deployment_id):
 def handle_post_retry_run_deloy(deployment_id):
     """Handles PUT requests to "/retry/<deployment_id>"."""
     return jsonify(retry_run_deployment(deployment_id=deployment_id))
+
+
+@bp.route("seldon/test", methods=["POST"])
+def handle_post_deploy_test():
+    return read_file_pandas(request.files.get('file'), url=request.form.get('url'))

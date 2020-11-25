@@ -3,6 +3,8 @@ import io
 import json
 import os
 import re
+import pandas as pd
+import requests
 
 from kfp import dsl
 from kubernetes.client.rest import ApiException
@@ -279,3 +281,18 @@ def retry_run_deployment(deployment_id):
     experiment = list(filter(lambda d: d['experimentId'] == deployment_id, get_deployments()))[0]
     experiment = init_pipeline_client().runs.retry_run(run_id=experiment['runId'])
     return experiment
+
+
+def read_file_pandas(file, url):
+    df = pd.read_csv(file)
+    df = df.to_dict('split')
+    request = {
+      "data": {
+        "names": df['columns'],
+        "ndarray": df['data']
+      }
+    }
+    response = requests.post(f"http://istio-ingressgateway:31380/seldon{url}", json=request)
+    loads_json = json.loads(response.text)
+    loads_json['data']['names'] = df['columns']
+    return loads_json
