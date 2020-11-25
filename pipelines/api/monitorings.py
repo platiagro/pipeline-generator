@@ -3,7 +3,7 @@ from flask import Blueprint, jsonify, request
 
 from pipelines.controllers.monitorings import list_monitorings, create_monitoring, \
     update_monitoring, delete_monitoring
-from projects.utils import to_snake_case
+from pipelines.utils import to_snake_case
 
 bp = Blueprint("monitorings", __name__)
 
