@@ -248,13 +248,11 @@ def get_deployment_log(deploy_name):
                             message = re.findall(log_message_regex, line)
                             message = ' '.join([str(x) for x in message])
 
-                            # filter get prometheus 404 from logs
-                            if 'GET /prometheus' not in message and '404' not in message:
-                                log = {}
-                                log['timestamp'] = timestamp
-                                log['level'] = level
-                                log['message'] = message
-                                logs.append(log)
+                            log = {}
+                            log['timestamp'] = timestamp
+                            log['level'] = level
+                            log['message'] = message
+                            logs.append(log)
                             line = buf.readline()
 
                         # get task name
