@@ -17,6 +17,9 @@ tags:
   - name: "Experiments"
     description: >
       Manage experiment pipelines.
+  - name: "Monitorings"
+    description: >
+      Manage project monitorings.
 paths:
   /projects/{projectsId}/deployments:
     get:
@@ -600,6 +603,103 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
+  /projects/{projectId}/monitorings:
+    get:
+      summary: "List all monitorings sorted by created_at in ascending order."
+      tags:
+        - "Monitorings"
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/Monitorings"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+    post:
+      summary: "Create a new monitoring."
+      tags:
+        - "Monitorings"
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/Monitoring"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /projects/{projectId}/monitorings/{monitoringId}:
+    patch:
+      summary: "Update a monitoring by ID."
+      tags:
+        - "Monitorings"
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: monitoringId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+             schema:
+              $ref: "#/components/schemas/Monitoring"
+      responses:
+        "200":
+          $ref: "#/components/responses/Monitoring"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+    delete:
+      summary: "Delete a monitoring by ID."
+      tags:
+        - "Monitorings"
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: monitoringId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/Message"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
 components:
   schemas:
     Datasets:
@@ -686,6 +786,46 @@ components:
           - type: object
             example:
               metric_name: metric_value
+    Monitoring:
+      type: object
+      properties:
+        uuid:
+          type: string
+          format: uuid
+        projectId:
+          type: string
+          format: uuid
+        experimentId:
+          type: string
+          format: uuid
+        operatorId:
+          type: string
+          format: uuid
+        runId:
+          type: string
+          format: uuid
+        layout:
+          type: object
+          properties:
+            x:
+              type: number
+            y:
+              type: number
+            w:
+              type: number
+            h:
+              type: number
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    Monitorings:
+      type: array
+      items:
+        oneOf:
+          - $ref: "#/components/schemas/Monitoring"
     Operator:
       type: object
       required:
@@ -1038,6 +1178,18 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Metrics"
+    Monitoring:
+      description: ""
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Monitoring"
+    Monitorings:
+      description: ""
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Monitorings"
     OperatorLogs:
       description: ""
       content:

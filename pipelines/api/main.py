@@ -13,6 +13,7 @@ from pipelines.api.deployment_runs import bp as deployment_runs_blueprint
 from pipelines.api.experiment_runs import bp as experiment_runs_blueprint
 from pipelines.api.figures import bp as figures_blueprint
 from pipelines.api.metrics import bp as metrics_blueprint
+from pipelines.api.monitorings import bp as monitorings_blueprint
 from pipelines.api.project_deployments import bp as project_deployments_blueprint
 from pipelines.controllers.logger import create_seldon_logger
 from pipelines.database import db_session, init_db
@@ -34,6 +35,8 @@ app.register_blueprint(figures_blueprint,
                        url_prefix=f"{EXPERIMENT_ID_URL}/runs/<run_id>/operators/<operator_id>/figures")
 app.register_blueprint(metrics_blueprint,
                        url_prefix=f"{EXPERIMENT_ID_URL}/runs/<run_id>/operators/<operator_id>/metrics")
+app.register_blueprint(monitorings_blueprint,
+                       url_prefix=f"{PROJECT_ID_URL}/monitorings")
 
 
 @app.teardown_appcontext
