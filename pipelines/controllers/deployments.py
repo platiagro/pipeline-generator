@@ -18,36 +18,6 @@ from pipelines.models import Operator, Task
 KF_PIPELINES_NAMESPACE = os.getenv('KF_PIPELINES_NAMESPACE', 'deployments')
 
 
-def create_deployment(deployment_id, pipeline_parameters):
-    """Compile and run a deployment pipeline.
-
-    Args:
-        deployment_id (str): deployment id.
-        pipeline_parameters (dict): request body json, format:
-            name (str): deployment name.
-            operators (list): list of pipeline operators.
-    """
-    try:
-        name = deployment_id
-        if 'name' in pipeline_parameters:
-            name = pipeline_parameters['name']
-        operators = pipeline_parameters['operators']
-
-        if len(operators) != 0:
-            operators = remove_non_deployable_operators(operators)
-        else:
-            raise BadRequest('Necessary at least one operator')
-
-    except KeyError as e:
-        raise BadRequest(
-            'Invalid request body, missing the parameter: {}'.format(e)
-        )
-
-    pipeline = Pipeline(deployment_id, name, operators)
-    pipeline.compile_deployment_pipeline()
-    return pipeline.run_pipeline()
-
-
 def get_deployment_details(runs, ip):
     """Get deployments run list.
     Args:
