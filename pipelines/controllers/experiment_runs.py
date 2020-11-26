@@ -98,7 +98,7 @@ def create_experiment_run(project_id, experiment_id):
                 "commands": task.commands,
                 "dependencies": operator.dependencies,
                 "image": task.image,
-                "notebookPath": task.deployment_notebook_path,
+                "notebookPath": task.experiment_notebook_path,
                 "operatorId": operator.uuid,
                 "parameters": run_operator_paramenters,
             }

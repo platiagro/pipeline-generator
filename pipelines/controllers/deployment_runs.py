@@ -31,14 +31,6 @@ def create_deployment_run(project_id, deployment_id, is_experiment_deployment):
     if operators and len(operators) > 0:
         for operator in operators:
             task = Task.query.get(operator.task_id)
-
-            deploy_paramenters = []
-            for key, value in operator.parameters.items():
-                deploy_paramenters.append({
-                    "name": key,
-                    "value": value
-                })
-
             deploy_operator = {
                 "arguments": task.arguments,
                 "commands": task.commands,
@@ -46,7 +38,6 @@ def create_deployment_run(project_id, deployment_id, is_experiment_deployment):
                 "image": task.image,
                 "notebookPath": task.deployment_notebook_path,
                 "operatorId": operator.uuid,
-                "parameters": deploy_paramenters,
             }
             deploy_operators.append(deploy_operator)
     else:
