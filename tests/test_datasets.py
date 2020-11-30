@@ -243,11 +243,11 @@ class TestDatasets(TestCase):
             rv = c.get(f"/projects/1/experiments/{EXP_ID_1}/runs/{RUN_ID}/operators/{OP_ID_1_1}/datasets",
                        headers={'Accept': 'application/csv'})
             result = rv.data
-            expected = b'col0,col1,col2,col3,col4,col5\r\n01/01/2000,5.1,3.5,1.4,0.2,Iris-setosa\r\n01/01/2000,5.1,3.5,1.4,0.2,Iris-setosa\r\n01/01/2000,5.1,3.5,1.4,0.2,Iris-setosa\r\n'
+            expected = b'col0,col1,col2,col3,col4,col5\n01/01/2000,5.1,3.5,1.4,0.2,Iris-setosa\n01/01/2000,5.1,3.5,1.4,0.2,Iris-setosa\n01/01/2000,5.1,3.5,1.4,0.2,Iris-setosa\n'
             self.assertEquals(expected, result)
 
             rv = c.get(f"/projects/1/experiments/{EXP_ID_1}/runs/{RUN_ID}/operators/{OP_ID_1_1}/datasets?page_size=-1",
                        headers={'Accept': 'application/csv'})
             result = rv.data
-            expected = b'col0,col1,col2,col3,col4,col5\r\n01/01/2000,5.1,3.5,1.4,0.2,Iris-setosa\r\n01/01/2000,5.1,3.5,1.4,0.2,Iris-setosa\r\n01/01/2000,5.1,3.5,1.4,0.2,Iris-setosa\r\n'
+            expected = b'col0,col1,col2,col3,col4,col5\n01/01/2000,5.1,3.5,1.4,0.2,Iris-setosa\n01/01/2000,5.1,3.5,1.4,0.2,Iris-setosa\n01/01/2000,5.1,3.5,1.4,0.2,Iris-setosa\n'
             self.assertEquals(expected, result)
