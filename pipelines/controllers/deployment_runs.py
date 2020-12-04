@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 from werkzeug.exceptions import BadRequest, NotFound
+import pandas as pd
+import requests
+import base64
+import json
 
 from pipelines.controllers.pipeline import Pipeline
 from pipelines.controllers.utils import remove_non_deployable_operators
@@ -47,3 +51,34 @@ def create_deployment_run(project_id, deployment_id, is_experiment_deployment):
     pipeline = Pipeline(deployment_id, deployment.name, deploy_operators)
     pipeline.compile_deployment_pipeline()
     return pipeline.run_pipeline()
+
+
+def sending_requests_to_seldon(file, url):
+    """Seldon file processing.
+    Args:
+        file (file): the project uuid.
+        url (str): url to be requested.
+
+    """
+    request = {}
+    try:
+        df = pd.read_csv(file)
+        df = df.to_dict('split')
+        request = {
+            "data": {
+                "names": df['columns'],
+                "ndarray": df['data']
+              }
+          }
+        response = requests.post(url, json=request, timeout=None)
+        return json.loads(response.text)
+    except Exception:
+        try:
+            file.seek
+            request['binData'] = base64.b64encode(file.read()).decode('utf-8')
+            response = requests.post(url, json=request, timeout=None)
+            return response.text
+        except Exception:
+            raise BadRequest('Error processing file')
+
+

@@ -3,7 +3,7 @@ from flask import Blueprint, jsonify, request
 
 from pipelines.controllers.deployments import get_deployment_by_id, \
     get_deployment_log, delete_deployment, retry_run_deployment
-from pipelines.controllers.deployment_runs import create_deployment_run
+from pipelines.controllers.deployment_runs import create_deployment_run, sending_requests_to_seldon
 
 bp = Blueprint("deployment_runs", __name__)
 
@@ -42,3 +42,9 @@ def handle_get_deployment_log(project_id, deployment_id, run_id):
 def handle_post_retry_run_deloy(project_id, deployment_id, run_id):
     """Handles PUT requests to "/<run_id>/retry"."""
     return jsonify(retry_run_deployment(deployment_id=deployment_id))
+
+
+@bp.route("seldon/test", methods=["POST"])
+def handle_post_deploy_test():
+    """Handles POST requests to "seldon/test"."""
+    return sending_requests_to_seldon(request.files.get('file'), url=request.form.get('url'))

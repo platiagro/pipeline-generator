@@ -7,7 +7,7 @@ from pipelines.controllers.utils import init_pipeline_client
 from pipelines.database import engine
 from pipelines.object_storage import BUCKET_NAME
 from pipelines.utils import uuid_alpha
-
+import io
 
 MOCKED_DEPLOYMENT_ID = "aa23c286-1524-4ae9-ae44-6c3e63eb9861"
 PROJECT_ID = str(uuid_alpha())
@@ -302,6 +302,22 @@ class TestDeployments(TestCase):
             rv = c.get(f"/projects/1/deployments/{MOCKED_DEPLOYMENT_ID}/runs/latest/logs")
             result = rv.get_json()
             self.assertIsInstance(result, list)
+            self.assertEqual(rv.status_code, 200)
+
+    def test_seldon_read_file(self):
+        with app.test_client() as c:
+            data = dict(miles="1",
+                        file=(io.BytesIO(b'"label","text""true","bla, bla, bla""false","fulano, beltrano."'),
+                              "test.csv"), url=' http://localhost/seldon/1/api/v1.0/predictions')
+            rv = c.post('/projects/uu878/deployments/jj89/runs/seldon/test', content_type='multipart/form-data',
+                        data=data)
+            self.assertEqual(rv.status_code, 200)
+
+            data_jpg = dict(miles="1",
+                            file=(io.BytesIO(b'65789jhgf'),
+                                  "test.jpg"), url=' http://localhost/seldon/1/api/v1.0/predictions')
+            rv = c.post('/projects/uu878/deployments/jj89/runs/seldon/test', content_type='multipart/form-data',
+                        data=data_jpg)
             self.assertEqual(rv.status_code, 200)
 
     def test_delete_deployment(self):
