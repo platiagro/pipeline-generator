@@ -146,7 +146,7 @@ class Operator():
             arguments=arguments,
         )
 
-        container_op.container.set_image_pull_policy('Always') \
+        container_op.container.set_image_pull_policy('IfNotPresent') \
             .add_env_variable(k8s_client.V1EnvVar(
                 name='EXPERIMENT_ID',
                 value=self._experiment_id)) \
