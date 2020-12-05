@@ -298,6 +298,7 @@ jobs:
     - name: Create load balancer
       run: |
         kubectl apply -f https://raw.githubusercontent.com/google/metallb/v0.8.3/manifests/metallb.yaml
+        KUBEFLOW_MASTER_IP_ADDRESS=$(ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1')
         cat <<EOF | kubectl apply -f -
           apiVersion: v1
           kind: ConfigMap
@@ -310,10 +311,8 @@ jobs:
               - name: default
                 protocol: layer2
                 addresses:
-                - $KUBEFLOW_MASTER_IP_ADDRESS-$KUBEFLOW_MASTER_IP_ADDRESS
+                - ${KUBEFLOW_MASTER_IP_ADDRESS}-${KUBEFLOW_MASTER_IP_ADDRESS}
         EOF
-      env:
-        KUBEFLOW_MASTER_IP_ADDRESS: 0.0.0.0
 
     - name: Install Seldon
       run: |
