@@ -309,6 +309,7 @@ jobs:
       run: |
         # Need to do kustomize build (instead of kubectl apply -k) due to this error:
         # https://github.com/kubernetes-sigs/kustomize/issues/2205
+        ./kustomize build "github.com/platiagro/manifests/argo/base?ref=$BRANCH" | kubectl apply -f -
         ./kustomize build "github.com/platiagro/manifests/pipeline/api-service/base?ref=$BRANCH" | kubectl -n deployments apply -f -
         ./kustomize build "github.com/platiagro/manifests/pipeline/minio/base?ref=$BRANCH" | kubectl -n kubeflow apply -f -
         ./kustomize build "github.com/platiagro/manifests/pipeline/mysql/base?ref=$BRANCH" | kubectl -n kubeflow apply -f -
@@ -339,14 +340,9 @@ jobs:
         BRANCH: v0.2.0-kubeflow-v1.1-branch
 
     - name: Run jupyter image
-      run: docker run --name jupyter -d -p 8888:8888 jupyter/base-notebook start-notebook.sh --NotebookApp.token=''
-
-    - name: Download platiagro-notebook-image
       run: |
-        df -h
         VERSION=$(python -c "import pipelines; print(pipelines.__version__)")
-        docker pull platiagro/platiagro-notebook-image:${VERSION}
-        docker pull platiagro/platiagro-deployment-image:${VERSION}
+        docker run --name jupyter -d -p 8888:8888 platiagro/platiagro-notebook-image:${VERSION}
 
     - name: Install dependencies
       run: |
@@ -358,23 +354,14 @@ jobs:
       run: |
         pip install pytest pytest-cov
         platiagro-init-db
-        pytest -v tests/test_api.py
-        pytest -v tests/test_database.py
-        pytest -v tests/test_datasets.py
-        pytest -v tests/test_deployments.py
-        pytest -v tests/test_figures.py
-        pytest -v tests/test_logger.py
-        pytest -v tests/test_metrics.py
-        pytest -v tests/test_projects.py
-        pytest -v tests/test_trainings.py
-        # coverage erase
-        # coverage run --branch --source=pipelines -m pytest
-        # coverage xml -i
+        coverage erase
+        coverage run --branch --source=pipelines -m pytest
+        coverage xml -i
       env:
-        MINIO_ENDPOINT: localhost:32000
+        MINIO_ENDPOINT: ${{ steps.lb.outputs.KUBEFLOW_MASTER_IP_ADDRESS }}:32000
         MINIO_ACCESS_KEY: minio
         MINIO_SECRET_KEY: minio123
-        MYSQL_DB_HOST: localhost:31000
+        MYSQL_DB_HOST: ${{ steps.lb.outputs.KUBEFLOW_MASTER_IP_ADDRESS }}:31000
         MYSQL_DB_NAME: platiagro
         MYSQL_DB_USER: root
         JUPYTER_ENDPOINT: http://localhost:8888
@@ -389,6 +376,7 @@ jobs:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
     - name: Set output variables
+      if: ${{ always() }}
       id: vars
       run: |
         VERSION=$(python -c "import pipelines; print(pipelines.__version__)")
