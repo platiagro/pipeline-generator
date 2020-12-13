@@ -256,6 +256,23 @@ def get_cluster_ip():
     return service.status.load_balancer.ingress[0].ip
 
 
+def get_protocol():
+    load_kube_config()
+
+    v1 = client.CustomObjectsApi()
+
+    gateway = v1.get_namespaced_custom_object(
+        group='networking.istio.io', version='v1alpha3', namespace='kubeflow',
+        plural='gateways', name='kubeflow-gateway')
+
+    if 'tls' in gateway['spec']['servers'][0]:
+        protocol = 'https'
+    else:
+        protocol = 'http'
+
+    return protocol
+
+
 def check_pvc_is_bound(name, namespace):
     load_kube_config()
     v1 = client.CoreV1Api()
