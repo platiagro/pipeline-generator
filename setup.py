@@ -39,4 +39,9 @@ setup(
     author='Miguel Figueira Ferraz',
     author_email='mferraz@cpqd.com.br',
     url='https://github.com/platiagro/pipelines',
+    entry_points={
+        "console_scripts": [
+            "platiagro-init-db = pipelines.database:init_db",
+        ]
+    },
 )

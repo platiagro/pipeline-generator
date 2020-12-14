@@ -5,24 +5,14 @@ name: Python application
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master, v*-branch ]
   pull_request:
-    branches: [ master ]
+    branches: [ master, v*-branch ]
 
 jobs:
   build:
 
     runs-on: ubuntu-latest
-
-    services:
-      mysql:
-        image: mysql:5.7
-        env:
-          MYSQL_ALLOW_EMPTY_PASSWORD: yes
-          MYSQL_DATABASE: platiagro
-        ports:
-          - 3306:3306
-        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
 
     steps:
     - name: Code review tips
@@ -70,33 +60,36 @@ jobs:
           - Usar Google Style Python Docstring: https://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_google.html
           - Usar sempre import absoluto.
             ex: `from pipelines.database import Base` (BOM), `from .database import Base (RUIM)`
-    - name: Set output variables
-      id: vars
-      run: |
-        echo ${{ github.ref }}
-        if [ ${{ github.ref }} = "refs/heads/master" ]; then
-          echo ::set-output name=TAG::0.2.0
-        else
-          echo ::set-output name=TAG::0.2.0-SNAPSHOT
-        fi
-        echo ::set-output name=BRANCH::${{ github.ref }}
-        echo ::set-output name=COMMIT::${{ github.sha }}
+
+           ### Padrão de URLs para API REST
+          - Usar REST resource naming guide: https://restfulapi.net/resource-naming/
+          - USE SUBSTANTIVOS! **NÃO USE VERBOS NA URL!**
+            ex: `/projects/:projectId/executions` (BOM), `/project/execute` (RUIM)
+          - **SUBSTANTIVOS SEMPRE NO PLURAL!**
+            ex: `/deployments/:deploymentId` (BOM), `/deployment/:deploymentId` (RUIM)
+          - **SUBSTANTIVOS SÃO SEMPRE SEPARADOS POR UM ID. NÃO USE DOIS SUBSTANTIVOS SEGUIDOS**
+            ex: `/experiments/:experimentId/results` (BOM), `/experiments/results/:experimentId` (RUIM)
+          - Para consultar uma lista de resources (paginada ou não):
+            ex: `GET /resources?page=1&size=10&filter=...`
+          - Para criar um resource (e gerar um resourceId aleatório):
+            ex: `POST /resources`
+          - Para acessar um resource por resourceId:
+            ex: `GET /resources/{resourceId}`
+          - Para substituir/criar (ou atualizar TODOS OS CAMPOS) de um resource com resourceId específico:
+            ex: `PUT /resources/{resourceId}`
+          - Para excluir um resource:
+            ex: `DELETE /resources/{resourceId}`
+          - Para atualizar alguns campos de um resource:
+            ex: `PATCH /resources/{resourceId}`
+          - Em dúvidas? Mantenha uma consistência com as URLs já existem.
+
     - uses: actions/checkout@v2
+
     - name: Set up Python 3.6
       uses: actions/setup-python@v1
       with:
         python-version: 3.6
-    - name: Run MinIO image
-      run: |
-        docker run -d -p 9000:9000 \
-        -e "MINIO_ACCESS_KEY=$MINIO_ACCESS_KEY" \
-        -e "MINIO_SECRET_KEY=$MINIO_SECRET_KEY" \
-        minio/minio:RELEASE.2018-02-09T22-40-05Z server /data
-      env:
-        MINIO_ACCESS_KEY: minio
-        MINIO_SECRET_KEY: minio123
-    - name: Run jupyter image
-      run: docker run --name jupyter -d -p 8888:8888 jupyter/base-notebook start-notebook.sh --NotebookApp.token=''
+
     - name: Install Kubernetes 1.15.7
       run: |
         curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add
@@ -113,7 +106,12 @@ jobs:
         kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
         kubectl create clusterrolebinding cluster-admin-binding --clusterrole=cluster-admin --user=admin --user=kubelet --group=system:serviceaccounts
         kubectl taint nodes --all node-role.kubernetes.io/master-
-        while [ $(kubectl get node |tail -n 1|awk '{print $2}') != "Ready" ]; do echo waiting nodes to be ready...; sleep 1; done
+        while [ $(kubectl get node | tail -n 1 |awk '{print $2}') != "Ready" ]; do echo waiting nodes to be ready...; sleep 1; done
+
+    - name: Install Kustomize
+      run: |
+        curl -sL "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash
+
     - name: Create Persistent Volumes
       run: |
         for i in `seq 1 10`; do
@@ -269,25 +267,13 @@ jobs:
         EOF
         sleep 10
         kubectl wait --for=condition=Ready pods --all --timeout=60s
-    - name: Install Kubeflow Pipelines
-      run: |
-        kubectl apply -k "github.com/kubeflow/pipelines/manifests/kustomize/cluster-scoped-resources?ref=$PIPELINE_VERSION"
-        kubectl wait --for condition=established --timeout=60s crd/applications.app.k8s.io
-        kubectl apply -k "github.com/kubeflow/pipelines/manifests/kustomize/env/platform-agnostic?ref=$PIPELINE_VERSION"
-        sleep 10
-        kubectl -n kubeflow wait applications/pipeline --for condition=Ready --timeout=600s
-        kubectl -n kubeflow patch svc ml-pipeline --patch \
-          '{ "spec": { "type": "NodePort", "ports": [ { "nodePort": 30000, "port": 8888, "protocol": "TCP", "targetPort": 8888 } ] } }'
-      env:
-        PIPELINE_VERSION: 0.5.1
-    - name: Install Istio
-      run: |
-        kubectl apply -k "github.com/platiagro/manifests/istio/istio-crds/base?ref=feature/change-istio-namespace"
-        kubectl apply -k "github.com/platiagro/manifests/istio/istio-install/base?ref=feature/change-istio-namespace"
-        kubectl apply -k "github.com/platiagro/manifests/istio/add-anonymous-user-filter/base?ref=v0.2.0-kubeflow-v1.1-branch"
+
     - name: Create load balancer
+      id: lb
       run: |
         kubectl apply -f https://raw.githubusercontent.com/google/metallb/v0.8.3/manifests/metallb.yaml
+        KUBEFLOW_MASTER_IP_ADDRESS=$(ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1' | head -n 1)
+        echo ::set-output name=KUBEFLOW_MASTER_IP_ADDRESS::${KUBEFLOW_MASTER_IP_ADDRESS}
         cat <<EOF | kubectl apply -f -
           apiVersion: v1
           kind: ConfigMap
@@ -300,40 +286,110 @@ jobs:
               - name: default
                 protocol: layer2
                 addresses:
-                - $KUBEFLOW_MASTER_IP_ADDRESS-$KUBEFLOW_MASTER_IP_ADDRESS
+                - ${KUBEFLOW_MASTER_IP_ADDRESS}-${KUBEFLOW_MASTER_IP_ADDRESS}
         EOF
+        sleep 10
+        kubectl wait --for=condition=Ready pods --all --timeout=60s
+
+    - name: Install Istio
+      run: |
+        # Need to do kustomize build (instead of kubectl apply -k) due to this error:
+        # https://github.com/kubernetes-sigs/kustomize/issues/2205
+        ./kustomize build "github.com/platiagro/manifests/namespaces/base?ref=$BRANCH" | kubectl apply -f -
+        ./kustomize build "github.com/platiagro/manifests/istio/istio-crds/base?ref=$BRANCH" | kubectl apply -f -
+        ./kustomize build "github.com/platiagro/manifests/istio/istio-install/base?ref=$BRANCH" | kubectl apply -f -
+        ./kustomize build "github.com/platiagro/manifests/istio/istio/base?ref=$BRANCH" | kubectl apply -f -
+        ./kustomize build "github.com/platiagro/manifests/istio/add-anonymous-user-filter/base?ref=$BRANCH" | kubectl apply -f -
+        sleep 10
+        kubectl wait --for=condition=Ready pods --all --timeout=60s
       env:
-        KUBEFLOW_MASTER_IP_ADDRESS: 0.0.0.0
+        BRANCH: v0.2.0-kubeflow-v1.1-branch
+
+    - name: Install Kubeflow Pipelines
+      run: |
+        # Need to do kustomize build (instead of kubectl apply -k) due to this error:
+        # https://github.com/kubernetes-sigs/kustomize/issues/2205
+        ./kustomize build "github.com/platiagro/manifests/argo/base?ref=$BRANCH" | kubectl apply -f -
+        ./kustomize build "github.com/platiagro/manifests/pipeline/api-service/base?ref=$BRANCH" | kubectl -n deployments apply -f -
+        ./kustomize build "github.com/platiagro/manifests/pipeline/minio/base?ref=$BRANCH" | kubectl -n kubeflow apply -f -
+        ./kustomize build "github.com/platiagro/manifests/pipeline/mysql/base?ref=$BRANCH" | kubectl -n kubeflow apply -f -
+        ./kustomize build "github.com/platiagro/manifests/pipeline/persistent-agent/base?ref=$BRANCH" | kubectl -n deployments apply -f -
+        ./kustomize build "github.com/platiagro/manifests/pipeline/pipelines-runner/base?ref=$BRANCH" | kubectl -n deployments apply -f -
+        ./kustomize build "github.com/platiagro/manifests/pipeline/pipelines-ui/base?ref=$BRANCH" | kubectl -n deployments apply -f -
+        ./kustomize build "github.com/platiagro/manifests/pipeline/pipelines-viewer/base?ref=$BRANCH" | kubectl -n deployments apply -f -
+        ./kustomize build "github.com/platiagro/manifests/pipeline/scheduledworkflow/base?ref=$BRANCH" | kubectl -n deployments apply -f -
+        ./kustomize build "github.com/platiagro/manifests/pipeline/pipeline-visualization-service/base?ref=$BRANCH" | kubectl -n deployments apply -f -
+        sleep 10
+        kubectl wait --for=condition=Ready pods --all --timeout=60s
+        kubectl -n deployments patch svc ml-pipeline --patch \
+          '{ "spec": { "type": "NodePort", "ports": [ { "nodePort": 30000, "port": 8888, "protocol": "TCP", "targetPort": 8888 } ] } }'
+        kubectl -n kubeflow patch svc mysql --patch \
+          '{ "spec": { "type": "NodePort", "ports": [ { "nodePort": 31000, "port": 3306, "protocol": "TCP", "targetPort": 3306 } ] } }'
+        kubectl -n kubeflow patch svc minio-service --patch \
+          '{ "spec": { "type": "NodePort", "ports": [ { "nodePort": 32000, "port": 9000, "protocol": "TCP", "targetPort": 9000 } ] } }'
+      env:
+        BRANCH: v0.2.0-kubeflow-v1.1-branch
+
     - name: Install Seldon
       run: |
-        kubectl apply -k "github.com/platiagro/manifests/cert-manager/cert-manager-crds/base?ref=v0.2.0-kubeflow-v1.1-branch"
-        kubectl apply -k "github.com/platiagro/manifests/seldon/seldon-core-operator/base?ref=v0.2.0-kubeflow-v1.1-branch"
+        kubectl apply -k "github.com/platiagro/manifests/cert-manager/cert-manager-crds/base?ref=$BRANCH"
+        kubectl apply -k "github.com/platiagro/manifests/seldon/seldon-core-operator/base?ref=$BRANCH"
+        sleep 10
+        kubectl wait --for=condition=Ready pods --all --timeout=60s
+      env:
+        BRANCH: v0.2.0-kubeflow-v1.1-branch
+
+    - name: Run jupyter image
+      run: |
+        VERSION=$(python -c "import pipelines; print(pipelines.__version__)")
+        docker run --name jupyter -d -p 8888:8888 platiagro/platiagro-notebook-image:${VERSION}
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install .
+
     - name: Test with pytest
       run: |
         pip install pytest pytest-cov
+        platiagro-init-db
         coverage erase
-        coverage run --branch --source=pipelines -m pytest -v
+        coverage run --branch --source=pipelines -m pytest
         coverage xml -i
       env:
-        MINIO_ENDPOINT: localhost:9000
+        MINIO_ENDPOINT: ${{ steps.lb.outputs.KUBEFLOW_MASTER_IP_ADDRESS }}:32000
         MINIO_ACCESS_KEY: minio
         MINIO_SECRET_KEY: minio123
-        MYSQL_DB_HOST: localhost
+        MYSQL_DB_HOST: ${{ steps.lb.outputs.KUBEFLOW_MASTER_IP_ADDRESS }}:31000
         MYSQL_DB_NAME: platiagro
         MYSQL_DB_USER: root
-        KF_PIPELINES_ENDPOINT: 127.0.0.1:30000
-        KF_PIPELINES_NAMESPACE: kubeflow
-        JUPYTER_ENDPOINT: http://127.0.0.1:8888
+        JUPYTER_ENDPOINT: http://localhost:8888
+        KF_PIPELINES_ENDPOINT: ${{ steps.lb.outputs.KUBEFLOW_MASTER_IP_ADDRESS }}:30000
+        KF_PIPELINES_NAMESPACE: deployments
+
     - name: SonarCloud Scan
+      if: ${{ always() }}
       uses: sonarsource/sonarcloud-github-action@master
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+    - name: Set output variables
+      if: ${{ always() }}
+      id: vars
+      run: |
+        VERSION=$(python -c "import pipelines; print(pipelines.__version__)")
+        if [ ${{ github.ref }} = "refs/heads/master" ]; then
+          echo ::set-output name=TAG::${VERSION}-SNAPSHOT
+        elif [[ ${{ github.ref }} =~ ^refs/heads/v.*-branch$ ]]; then
+          echo ::set-output name=TAG::${VERSION}
+        else
+          echo ::set-output name=TAG::${VERSION}-${{ github.sha }}
+        fi
+        echo ::set-output name=BRANCH::${{ github.ref }}
+        echo ::set-output name=COMMIT::${{ github.sha }}
+
     - name: Build and push image
       if: ${{ always() }}
       uses: docker/build-push-action@v1

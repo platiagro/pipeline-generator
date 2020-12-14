@@ -40,16 +40,14 @@ def format_run_parameters(operator, task, dataset_name):
 
     run_paramenters = []
     for key, value in operator.parameters.items():
-        if value is None or not value:
-            task_parameter = get_task_parameter(task_parameters, key)
-            if task_parameter:
-                parameter_type = task_parameter.get('type')
-                if parameter_type == 'feature':
-                    parameter_multiple = task_parameter.get('multiple', False)
-                    if parameter_multiple:
-                        value = []
-                    else:
-                        value = ''
+        task_parameter = get_task_parameter(task_parameters, key)
+        if task_parameter:
+            parameter_multiple = task_parameter.get('multiple', False)
+            if parameter_multiple:
+                if value is None or not value:
+                    value = []
+                else:
+                    value = value.split(',')
         run_paramenters.append({
             "name": key,
             "value": value
