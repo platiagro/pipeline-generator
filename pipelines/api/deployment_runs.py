@@ -47,4 +47,4 @@ def handle_post_retry_run_deloy(project_id, deployment_id, run_id):
 @bp.route("seldon/test", methods=["POST"])
 def handle_post_deploy_test():
     """Handles POST requests to "seldon/test"."""
-    return sending_requests_to_seldon(request.files.get('file'), url=request.form.get('url'))
+    return sending_requests_to_seldon(request.files.get('file'), experiment_id=request.form.get('experimentId'))
