@@ -328,3 +328,15 @@ def connect_minio():
         secret_key=getenv("MINIO_SECRET_KEY", 'minio123'),
         region=getenv('MINIO_REGION_NAME', 'us-east-1'),
         secure=False,)
+
+
+def prepare_seldon_url(experiment_id):
+    """Handles
+    Args:
+        experiment_id (str) experiment_id.
+    Returns:
+        url.
+    """
+    ip = get_cluster_ip()
+    protocol = get_protocol()
+    return f'{protocol}://{ip}/seldon/deployments/{experiment_id}/api/v1.0/predictions'

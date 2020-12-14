@@ -9,16 +9,15 @@ from kubernetes.client.rest import ApiException
 from kubernetes import client
 from werkzeug.exceptions import BadRequest, NotFound
 
-from pipelines.controllers.pipeline import Pipeline
 from pipelines.controllers.utils import load_kube_config, init_pipeline_client, \
-    format_deployment_pipeline, get_cluster_ip, get_protocol, remove_non_deployable_operators
+    format_deployment_pipeline, prepare_seldon_url
 from pipelines.models import Operator, Task
 
 
 KF_PIPELINES_NAMESPACE = os.getenv('KF_PIPELINES_NAMESPACE', 'deployments')
 
 
-def get_deployment_details(runs, ip, protocol):
+def get_deployment_details(runs):
     """Get deployments run list.
     Args:
         Runs list.
@@ -39,7 +38,7 @@ def get_deployment_details(runs, ip, protocol):
                 deployment_details['createdAt'] = str(created_at.isoformat(
                     timespec='milliseconds')).replace('+00:00', 'Z')
 
-                deployment_details['url'] = f'{protocol}://{ip}/seldon/deployments/{experiment_id}/api/v1.0/predictions'
+                deployment_details['url'] = prepare_seldon_url(experiment_id)
 
                 deployment_runs.append(deployment_details)
 
@@ -57,15 +56,12 @@ def get_deployments():
 
     deployment_runs = []
 
-    protocol = get_protocol()
-    ip = get_cluster_ip()
-
     while True:
         list_runs = kfp_client.list_runs(
             page_token=token, sort_by='created_at desc', page_size=100)
 
         if list_runs.runs:
-            runs = get_deployment_details(list_runs.runs, ip, protocol)
+            runs = get_deployment_details(list_runs.runs)
             deployment_runs.extend(runs)
 
             token = list_runs.next_page_token

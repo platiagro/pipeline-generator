@@ -6,7 +6,7 @@ import pandas as pd
 import requests
 from werkzeug.exceptions import BadRequest, NotFound
 from pipelines.controllers.pipeline import Pipeline
-from pipelines.controllers.utils import remove_non_deployable_operators
+from pipelines.controllers.utils import remove_non_deployable_operators, prepare_seldon_url
 from pipelines.models import Deployment, Experiment, Task
 from pipelines.models.utils import raise_if_project_does_not_exist
 
@@ -53,13 +53,14 @@ def create_deployment_run(project_id, deployment_id, is_experiment_deployment):
     return pipeline.run_pipeline()
 
 
-def sending_requests_to_seldon(file, url):
+def sending_requests_to_seldon(file, experiment_id):
     """Seldon file processing.
     Args:
         file (file): file.
-        url (str): url to be requested.
+        experiment_id (str): the experiment uuid.
 
     """
+    url = prepare_seldon_url(experiment_id)
     request = {}
     try:
         df = pd.read_csv(file)
