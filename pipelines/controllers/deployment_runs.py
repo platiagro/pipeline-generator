@@ -88,5 +88,3 @@ def sending_requests_to_seldon(file, experiment_id):
                 return response.text
             except Exception:
                 raise BadRequest('Error processing file')
-
-
