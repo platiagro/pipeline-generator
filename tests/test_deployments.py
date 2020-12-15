@@ -308,15 +308,14 @@ class TestDeployments(TestCase):
         with app.test_client() as c:
             data = dict(miles="1",
                         file=(io.BytesIO(b'"label","text""true","bla, bla, bla""false","fulano, beltrano."'),
-                              "test.csv"), url=' http://localhost/seldon/1/api/v1.0/predictions')
-            rv = c.post('/projects/uu878/deployments/jj89/runs/seldon/test', content_type='multipart/form-data',
+                              "test.csv"))
+            rv = c.post(f'/projects/uu878/deployments/{EX_ID_1}/runs/seldon/test', content_type='multipart/form-data',
                         data=data)
             self.assertEqual(rv.status_code, 200)
 
             data_jpg = dict(miles="1",
-                            file=(io.BytesIO(b'65789jhgf'),
-                                  "test.jpg"), url=' http://localhost/seldon/1/api/v1.0/predictions')
-            rv = c.post('/projects/uu878/deployments/jj89/runs/seldon/test', content_type='multipart/form-data',
+                            file=(io.BytesIO(b'65789jhgf'), "test.jpg"))
+            rv = c.post(f'/projects/uu878/deployments/{EX_ID_1}/runs/seldon/test', content_type='multipart/form-data',
                         data=data_jpg)
             self.assertEqual(rv.status_code, 200)
 
